@@ -33,7 +33,17 @@ public class GoBackend implements Backend {
 
     @Override
     public void accept(CompiledDefinition def) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("package main\n");
+        sb.append("\n");
+        sb.append("import \"fmt\"\n");
+        sb.append("\n");
+        sb.append("func main() {\n");
+        sb.append("\tfmt.Printf(\"hello, world from kgo!\\n\")\n");
+        sb.append("}\n");
 
+        files.saveToKompiled("hello.go", sb.toString());
+        System.out.println("GoBackend.accept completed successfully.");
     }
 
     @Override

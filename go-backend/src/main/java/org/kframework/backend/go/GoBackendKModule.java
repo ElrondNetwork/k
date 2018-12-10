@@ -15,17 +15,6 @@ import java.util.List;
  */
 public class GoBackendKModule extends AbstractKModule {
 
-    @Override
-    public List<Pair<Class<?>, Boolean>> kompileOptions() {
-        //return Collections.singletonList(Pair.of(OcamlOptions.class, true));
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Pair<Class<?>, Boolean>> krunOptions() {
-        //return Collections.singletonList(Pair.of(OcamlKRunOptions.class, true));
-        return Collections.emptyList();
-    }
 
     @Override
     public List<Module> getKompileModules() {
@@ -42,30 +31,4 @@ public class GoBackendKModule extends AbstractKModule {
         return mods;
     }
 
-    @Override
-    public List<Module> getKRunModules() {
-        return Collections.emptyList();
-        /*return Collections.singletonList(new AbstractModule() {
-            @Override
-            protected void configure() {
-
-                bindOptions(OcamlBackendKModule.this::krunOptions, binder());
-
-                MapBinder<String, Function<org.kframework.definition.Module, Rewriter>> rewriterBinder = MapBinder.newMapBinder(
-                        binder(), TypeLiteral.get(String.class), new TypeLiteral<Function<org.kframework.definition.Module, Rewriter>>() {
-                        });
-                rewriterBinder.addBinding("ocaml").to(OcamlRewriter.class);
-
-                MapBinder<String, Integer> checkPointBinder = MapBinder.newMapBinder(
-                        binder(), String.class, Integer.class, Names.named("checkpointIntervalMap"));
-                checkPointBinder.addBinding("ocaml").toInstance(5000); //TODO(dwightguth): finesse this number
-
-                MapBinder<ToolActivation, ExecutionMode> executionBinder = MapBinder.newMapBinder(binder(),
-                        ToolActivation.class, ExecutionMode.class);
-
-                executionBinder.addBinding(new ToolActivation.OptionActivation("--ocaml-compile")).to(OcamlCompileExecutionMode.class);
-                executionBinder.addBinding(new ToolActivation.OptionActivation("--interpret")).to(InterpreterExecutionMode.class);
-            }
-        });*/
-    }
 }
