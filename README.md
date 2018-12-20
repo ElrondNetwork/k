@@ -8,6 +8,7 @@ This is a readme file for the developers.
 In short:
 ```
 sudo apt-get install build-essential m4 openjdk-8-jdk libgmp-dev libmpfr-dev pkg-config flex z3 libz3-dev maven opam python3
+curl -sSL https://get.haskellstack.org/ | sh
 ```
 
 If you install this list of dependencies, continue directly to the Install section.
@@ -43,7 +44,12 @@ to the installation directory of the JDK (not to be mistaken with JRE).
 You can test if it works by calling `mvn -version` in a Terminal.
 This will provide the information about the JDK Maven is using, in case
 it is the wrong one.
-	
+
+## Haskell Stack
+
+To install, go to <https://docs.haskellstack.org/en/stable/README/> and follow the instructions.
+You may need to do `stack upgrade` to ensure the latest version of Haskell Stack.
+
 ## Miscellaneous
 
 Also required:
