@@ -58,5 +58,11 @@
       <directory>${project.build.directory}/lib</directory>
       <outputDirectory>/lib</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../haskell-backend/target/stack-install</directory>
+      <outputDirectory>/bin</outputDirectory>
+      <fileMode>775</fileMode>
+      <directoryMode>775</directoryMode>
+    </fileSet>
   </fileSets>
 </assembly>
