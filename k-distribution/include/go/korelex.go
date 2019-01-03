@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"unicode/utf8"
@@ -43,27 +42,21 @@ func init() {
 		createRegexRule("#token", TOKENLABEL, nil),
 		createRegexRule("#klabel", KLABELLABEL, nil),
 		createRegexRule("[#a-z]([a-zA-Z0-9])*", KLABEL, nil),
-		createRegexRule("[A-Z]([a-zA-Z0-9'_])*", KLABEL, nil),
+		createRegexRule("[A-Z]([a-zA-Z0-9'_])*", KVARIABLE, nil),
 		createRegexRule("\"([^\"\\\\]|(\\\\.))*\"", STRING, unescapeKString), // matches any string enclosed in ", allowing \"
 		createRegexRule("`([^`\\\\]|(\\\\.))*`", KLABEL, unescapeKLabel),     // matches any string enclosed in `, allowing \`
-
-		//| ('"' ([^'"' '\\']|('\\' _))* '"') as s { STRING (Prelude.unescape_k_string s) }
-		//| "`" (([^'`' '\\']|('\\' _))* as l) '`' { KLABEL (Str.global_replace (Str.regexp "\\\\(.)") "\\1" l) }
-
-		//|   <ID_KLABEL: ["#","a"-"z"](["a"-"z","A"-"Z","0"-"9"])*>
-		//|   <KVARIABLE: (["A"-"Z"](["a"-"z","A"-"Z","0"-"9","'","_"])*) | "_">
 	}
 }
 
 // The parser uses the type <prefix>Lex as a lexer. It must provide
 // the methods Lex(*<prefix>SymType) int and Error(string).
-type koreLex struct {
+type koreLexerImpl struct {
 	line []byte
 }
 
 // The parser calls this method to get each new token.
 // The current implementation skips all whitespaces, then looks for the regex rule that gives the longest match
-func (x *koreLex) Lex(yylval *koreSymType) int {
+func (x *koreLexerImpl) Lex(yylval *koreSymType) int {
 	c, size := x.firstRune()
 	for isWhitespace(c) { // just skip all whitespaces
 		x.line = x.line[size:]
@@ -75,7 +68,7 @@ func (x *koreLex) Lex(yylval *koreSymType) int {
 	return x.regexLex(c, yylval)
 }
 
-func (x *koreLex) regexLex(c rune, yylval *koreSymType) int {
+func (x *koreLexerImpl) regexLex(c rune, yylval *koreSymType) int {
 	maxLength := 0
 	maxIndex := -1
 	for i, krr := range koreLexRegexRules {
@@ -101,8 +94,8 @@ func (x *koreLex) regexLex(c rune, yylval *koreSymType) int {
 	if koreLexRegexRules[maxIndex].postProcessing != nil {
 		yylval.str = koreLexRegexRules[maxIndex].postProcessing(yylval.str)
 	}
-	fmt.Printf("token:%d  i:%d   len:%d    string:%s \n",
-		koreLexRegexRules[maxIndex].token, maxIndex, maxLength, yylval.str)
+	//fmt.Printf("token:%d  i:%d   len:%d    string:%s \n",
+	//	koreLexRegexRules[maxIndex].token, maxIndex, maxLength, yylval.str)
 
 	// trim line
 	x.line = x.line[maxLength:]
@@ -111,7 +104,7 @@ func (x *koreLex) regexLex(c rune, yylval *koreSymType) int {
 }
 
 // Returns the first rune in the slice
-func (x *koreLex) firstRune() (rune, int) {
+func (x *koreLexerImpl) firstRune() (rune, int) {
 	if len(x.line) == 0 {
 		return eof, 0
 	}
@@ -123,6 +116,6 @@ func (x *koreLex) firstRune() (rune, int) {
 }
 
 // The parser calls this method on a parse error.
-func (x *koreLex) Error(s string) {
+func (x *koreLexerImpl) Error(s string) {
 	log.Printf("parse error: %s", s)
 }

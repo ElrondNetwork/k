@@ -25,13 +25,13 @@ func unescapeKString(s []byte) []byte {
 
 func unescapeKLabel(s []byte) []byte {
 	if len(s) < 2 {
-		log.Fatalf("K string should begin and end with '`'. Its length cannot therefore be less than 2. Actual string: %s", s)
+		log.Fatalf("K label should begin and end with '`'. Its length cannot therefore be less than 2. Actual string: %s", s)
 	}
 	if s[0] != '`' {
-		log.Fatalf("K string should begin with '`\"`'. Actual string: %s", s)
+		log.Fatalf("K label should begin with '`\"`'. Actual string: %s", s)
 	}
 	if s[len(s)-1] != '`' {
-		log.Fatalf("K string should end with '`'. Actual string: %s", s)
+		log.Fatalf("K label should end with '`'. Actual string: %s", s)
 	}
 	s = s[1 : len(s)-1]
 	// TODO: escape sequences \` \n etc.

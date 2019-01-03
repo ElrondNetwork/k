@@ -28,13 +28,12 @@ func main() {
 	fmt.Printf("Kast: %s\n", kast)
 
 	//testStr := "Aaa(#token\"#token\\\"0\" `abc` `qw\\`er\"\"` .::K  .K~>.K"
-	x := koreLex{line: []byte(kast)}
-	yylval := koreSymType{}
-	for {
-		token := x.Lex(&yylval)
-		//fmt.Printf("%d  %v\n", token, yylval)
-		if token == eof {
-			break
-		}
-	}
+	//testStr := "#abc"
+	x := koreLexerImpl{line: []byte(kast)}
+	//yylval := koreSymType{}
+
+	result := koreParse(&x)
+	fmt.Println(result)
+	fmt.Printf("%#v\n", lastResult)
+
 }
