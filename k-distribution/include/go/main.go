@@ -25,15 +25,14 @@ func callKast(programPath string) []byte {
 
 func main() {
 	kast := callKast("tests/sum.imp")
-	fmt.Printf("Kast: %s\n", kast)
+	fmt.Printf("Kast: %s\n\n", kast)
 
 	//testStr := "Aaa(#token\"#token\\\"0\" `abc` `qw\\`er\"\"` .::K  .K~>.K"
 	//testStr := "#abc"
 	x := koreLexerImpl{line: []byte(kast)}
 	//yylval := koreSymType{}
 
-	result := koreParse(&x)
-	fmt.Println(result)
-	fmt.Printf("%#v\n", lastResult)
+	koreParse(&x)
+	fmt.Println(lastResult.prettyTreePrint(0))
 
 }
