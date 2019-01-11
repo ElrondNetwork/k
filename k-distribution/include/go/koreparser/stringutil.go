@@ -1,4 +1,4 @@
-package main
+package koreparser
 
 import (
 	"log"

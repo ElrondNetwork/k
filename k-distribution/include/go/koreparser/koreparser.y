@@ -6,7 +6,7 @@
 
 %{
 
-package main
+package koreparser
 
 %}
 
@@ -96,4 +96,10 @@ klist:
 %%
 
 var lastResult K
+
+func Parse(kast []byte) K {
+	lexer := koreLexerImpl{line: kast}
+	koreParse(&lexer)
+	return lastResult
+}
 

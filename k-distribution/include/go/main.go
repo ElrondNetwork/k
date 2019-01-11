@@ -1,16 +1,12 @@
-// This file holds the go generate command to run yacc on the grammar in koreparser.y.
-// To build koreparser:
-//	% go generate
-//	% go build
 
-//go:generate goyacc -o koreparser.go -p "kore" koreparser.y
-
-package main
+package $INTERPRETER_PACKAGE$
 
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"$INCLUDE_KORE_PARSER$"
 )
 
 func callKast(programPath string) []byte {
@@ -23,16 +19,15 @@ func callKast(programPath string) []byte {
 	return out
 }
 
-func main() {
-	kast := callKast("tests/sum.imp")
+func kastParseAndPrint() {
+	testArg := os.Args[1]
+	kast := callKast("tests/" + testArg)
 	fmt.Printf("Kast: %s\n\n", kast)
 
-	//testStr := "Aaa(#token\"#token\\\"0\" `abc` `qw\\`er\"\"` .::K  .K~>.K"
-	//testStr := "#abc"
-	x := koreLexerImpl{line: []byte(kast)}
-	//yylval := koreSymType{}
+	k := koreparser.Parse(kast)
+	fmt.Println(k.PrettyTreePrint(0))
+}
 
-	koreParse(&x)
-	fmt.Println(lastResult.prettyTreePrint(0))
-
+func main() {
+	kastParseAndPrint()
 }

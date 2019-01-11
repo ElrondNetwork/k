@@ -10,11 +10,12 @@ import org.kframework.main.AbstractKModule;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by dwightguth on 5/27/15.
- */
 public class GoBackendKModule extends AbstractKModule {
 
+    @Override
+    public List<Pair<Class<?>, Boolean>> kompileOptions() {
+        return Collections.singletonList(Pair.of(GoOptions.class, true));
+    }
 
     @Override
     public List<Module> getKompileModules() {

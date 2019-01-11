@@ -169,6 +169,10 @@ public class FileUtil {
         return new File(kompiledDir.get(), file);
     }
 
+    public String getKompiledDirectoryName() {
+        return kompiledDir.get().getName();
+    }
+
     public File resolveDefinitionDirectory(String file) {
         return new File(definitionDir.get(), file);
     }
