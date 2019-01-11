@@ -14,7 +14,6 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,28 +44,29 @@ public class GoBackend implements Backend {
         System.out.println("GoBackend.accept started.");
 
         String mainModule = kompileOptions.mainModule(files);
-        packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter");
+        //packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter");
+        packageNameManager = new GoPackageNameManager(files,"main");
 
+        DefinitionToOcamlTempCopy ocamlDef = new DefinitionToOcamlTempCopy(kem, files, globalOptions, kompileOptions, options);
+        DefinitionToGo def = new DefinitionToGo(kem, files, packageNameManager, globalOptions, kompileOptions, options);
+        ocamlDef.initialize(compiledDefinition);
+        def.initialize(compiledDefinition);
 
-//        DefinitionToGoCopied def = new DefinitionToGoCopied(kem, files, globalOptions, kompileOptions, options);
-//        DefinitionToGoFresh fresh = new DefinitionToGoFresh(kem, files, packageNameManager, globalOptions, kompileOptions, options);
-//        def.initialize(compiledDefinition);
-//        fresh.initialize(compiledDefinition);
-//
-//        String ocaml = def.constants();
-//        files.saveToKompiled("constants.ml", ocaml);
-//
-//        files.saveToKompiled("klabel.go", fresh.klabels());
-//        files.saveToKompiled("sort.go", fresh.sorts());
-//
-//        try {
-//            String ocamlDef = def.definition();
-//            files.saveToKompiled("realdef.ml", ocamlDef);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        String goDef = fresh.definition();
-//        files.saveToKompiled("definition.go", goDef);
+        // temporary, for convenience and comparison
+        files.saveToKompiled("constants.ml", ocamlDef.constants());
+
+        files.saveToKompiled("klabel.go", def.klabels());
+        files.saveToKompiled("sort.go", def.sorts());
+
+        // temporary, for convenience and comparison
+        try {
+            files.saveToKompiled("realdef.ml", ocamlDef.definition());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String goDef = def.definition();
+        files.saveToKompiled("definition.go", goDef);
 
         try {
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/stringutil.go"), files.resolveKompiled("koreparser/stringutil.go"));
@@ -77,6 +77,8 @@ public class GoBackend implements Backend {
 
             packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+            packageNameManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/kmodel.go"), files.resolveKompiled("kmodel.go"));
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);
         }

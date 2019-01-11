@@ -1,12 +1,11 @@
-
-package $INTERPRETER_PACKAGE$
+package main
 
 import (
 	"fmt"
+	koreparser "kgoimp/imp-kompiled/koreparser"
 	"log"
 	"os"
 	"os/exec"
-	"$INCLUDE_KORE_PARSER$"
 )
 
 func callKast(programPath string) []byte {
@@ -24,10 +23,12 @@ func kastParseAndPrint() {
 	kast := callKast("tests/" + testArg)
 	fmt.Printf("Kast: %s\n\n", kast)
 
-	k := koreparser.Parse(kast)
+	parserK := koreparser.Parse(kast)
+	k := convertParserModelToKModel(parserK)
 	fmt.Println(k.PrettyTreePrint(0))
 }
 
 func main() {
 	kastParseAndPrint()
+
 }

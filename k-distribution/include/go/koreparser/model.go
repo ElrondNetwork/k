@@ -11,32 +11,7 @@ type K interface {
 }
 
 // KSequence ... a sequence of K items
-type KSequence struct {
-	ks []K
-}
-
-/*
-kitem =
-            | Map of sort * klabel * m
-            | List of sort * klabel * t list
-            | Set of sort * klabel * s
-            | Array of sort * t * t Dynarray.t
-            | Int of Z.t
-            | Float of Gmp.FR.t * int * int
-            | String of string
-            | Bytes of bytes
-            | StringBuffer of Buffer.t
-            | Bool of bool
-            | MInt of int * Z.t
-            | ThreadLocal
-            | Thread of t * t * t * t
-            | Bottom
-            | KApply0 of klabel
-            | KApply1 of klabel * t
-            | KApply2 of klabel * t * t
-            | KApply3 of klabel * t * t * t
-            | KApply4 of klabel * t * t * t * t
-*/
+type KSequence []K
 
 // KItem ...
 type KItem interface {
@@ -44,28 +19,24 @@ type KItem interface {
 
 // KApply ... a type of KItem, TODO: document
 type KApply struct {
-	label string
-	list  []K
+	Label string
+	List  []K
 }
 
 // InjectedKLabel ... a type of KItem, TODO: document
 type InjectedKLabel struct {
-	label string
+	Label string
 }
 
 // KToken ... a type of KItem, TODO: document
 type KToken struct {
-	value string
-	sort  string
+	Value string
+	Sort  string
 }
 
 // KVariable ... a type of KItem, TODO: document
 type KVariable struct {
-	name string
-}
-
-// Bottom ... a type of KItem, TODO: document
-type Bottom struct {
+	Name string
 }
 
 func addIndent(sb *strings.Builder, indent int) {
@@ -85,12 +56,12 @@ func (k KApply) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
 	sb.WriteString("KApply {label:")
-	sb.WriteString(k.label)
+	sb.WriteString(k.Label)
 	sb.WriteString(", list:")
-	if len(k.list) == 0 {
+	if len(k.List) == 0 {
 		sb.WriteString("[] }")
 	} else {
-		for _, childk := range k.list {
+		for _, childk := range k.List {
 			sb.WriteRune('\n')
 			sb.WriteString(childk.PrettyTreePrint(indent + 1))
 		}
@@ -103,32 +74,28 @@ func (k KApply) PrettyTreePrint(indent int) string {
 }
 
 func (k InjectedKLabel) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {label:%s}", k.label))
+	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {label:%s}", k.Label))
 }
 
 func (k KToken) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("KToken {value:%s, sort:%s}", k.value, k.sort))
+	return simplePrint(indent, fmt.Sprintf("KToken {value:%s, sort:%s}", k.Value, k.Sort))
 }
 
 func (k KVariable) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("KVariable {name:%s}", k.name))
-}
-
-func (k Bottom) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, "Bottom")
+	return simplePrint(indent, fmt.Sprintf("KVariable {name:%s}", k.Name))
 }
 
 func (k KSequence) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
 	sb.WriteString("KSequence {")
-	if len(k.ks) == 0 {
+	if len(k) == 0 {
 		sb.WriteString(" <empty> }")
 	} else {
-		for i, childk := range k.ks {
+		for i, childk := range k {
 			sb.WriteString("\n")
 			sb.WriteString(childk.PrettyTreePrint(indent + 1))
-			if i < len(k.ks)-1 {
+			if i < len(k)-1 {
 				sb.WriteString(" ~>")
 			}
 		}

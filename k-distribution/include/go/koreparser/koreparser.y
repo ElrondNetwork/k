@@ -36,15 +36,15 @@ top:
 ksequence:
 	kitem KSEQ kitem
 	{
-		$$ = KSequence { ks:[]K{$1, $3} }
+		$$ = KSequence([]K{$1, $3})
 	}
 |	ksequence KSEQ kitem
 	{
-		$$ = KSequence { ks:append($1.ks, $3) }
+		$$ = append($1, $3)
 	}
 |	DOTK
 	{
-		$$ = KSequence { ks:nil }
+		$$ = nil
 	}
 
 k:
@@ -60,19 +60,19 @@ k:
 kitem:
 	KLABEL '(' klist ')'
 	{
-		$$ = KApply { label:string($1), list:$3 }
+		$$ = KApply { Label:string($1), List:$3 }
 	}
 |   KLABELLABEL '(' KLABEL ')'
     {
-        $$ = InjectedKLabel { label:string($3) }
+        $$ = InjectedKLabel { Label:string($3) }
     }
 | 	TOKENLABEL '(' STRING ',' STRING ')'
 	{
-		$$ = KToken { value: string($3), sort: string($5) }
+		$$ = KToken { Value: string($3), Sort: string($5) }
 	}
 |   KVARIABLE
     {
-        $$ = KVariable { name: string($1) }
+        $$ = KVariable { Name: string($1) }
     }
 
 klist:
