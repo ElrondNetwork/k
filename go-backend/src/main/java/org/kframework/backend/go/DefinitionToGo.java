@@ -4,7 +4,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -17,7 +16,6 @@ import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
 import org.kframework.compile.ExpandMacros;
 import org.kframework.compile.GenerateSortPredicateRules;
-import org.kframework.compile.IncompleteCellUtils;
 import org.kframework.compile.LiftToKSequence;
 import org.kframework.compile.RewriteToTop;
 import org.kframework.definition.Constructors;
@@ -38,7 +36,6 @@ import org.kframework.kore.KORE;
 import org.kframework.kore.KSequence;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
-import org.kframework.kore.TransformK;
 import org.kframework.kore.VisitK;
 import org.kframework.main.GlobalOptions;
 import org.kframework.parser.concrete2kore.ParserUtils;
@@ -48,8 +45,6 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import scala.Function1;
-import scala.Tuple2;
-import scala.collection.Seq;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,11 +53,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.kframework.Collections.*;
+import static org.kframework.backend.go.CopiedStaticMethods.*;
 import static org.kframework.definition.Constructors.*;
 import static org.kframework.kore.KORE.*;
 
@@ -110,7 +105,7 @@ public class DefinitionToGo {
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
-       // this.threadCellExists = containsThreadCell(def);
+        // this.threadCellExists = containsThreadCell(def);
         this.exitCodePattern = def.exitCodePattern;
         ModuleTransformer splitThreadCell = this.threadCellExists ?
                 ModuleTransformer.fromSentenceTransformer(new
@@ -275,6 +270,29 @@ public class DefinitionToGo {
         mods.stream().forEach(m -> klabels.addAll(mutable(m.definedKLabels())));
     }
 
+    public String freshDefinition() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+
+        sb.append("func freshFunction (s Sort, config K, counter int) K {\n");
+        sb.append("\tswitch s {\n");
+        for (Sort sort : iterable(mainModule.freshFunctionFor().keys())) {
+            sb.append("\t\tcase ");
+            GoStringUtil.appendSortVariableName(sb, sort);
+            sb.append(":\n");
+            sb.append("\t\t\treturn ");
+            KLabel freshFunction = mainModule.freshFunctionFor().apply(sort);
+            GoStringUtil.appendFunctionName(sb, freshFunction);
+            sb.append("(Int(counter), config)\n");
+        }
+        sb.append("\t\tdefault:\n");
+        sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.name())\n");
+        sb.append("\t}\n");
+        sb.append("}\n\n");
+
+        return sb.toString();
+    }
+
     public String definition() {
         Set<KLabel> functions;
         Set<KLabel> anywhereKLabels;
@@ -321,35 +339,31 @@ public class DefinitionToGo {
         List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("import (\n");
+        sb.append("\t\"fmt\"\n");
+        sb.append(")\n\n");
+
+        // constants := arity == 0 && !impure
+        Set<KLabel> impurities = functions.stream().filter(lbl -> mainModule.attributesFor().apply(lbl).contains(Attribute.IMPURE_KEY)).collect(Collectors.toSet());
+        impurities.addAll(ancestors(impurities, dependencies));
+        Set<KLabel> constants = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
 
         for (List<KLabel> component : functionOrder) {
             for (KLabel functionLabel : component) {
 
                 String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
                 if (hook.equals("KREFLECTION.fresh")) {
-                    sb.append("func freshFunction (s Sort, config K, counter int) K {\n");
-                    sb.append("\tswitch s {\n");
-                    for (Sort sort : iterable(mainModule.freshFunctionFor().keys())) {
-                        sb.append("\t\tcase ");
-                        GoStringUtil.appendSortVariableName(sb, sort);
-                        sb.append(":\n");
-                        sb.append("\t\t\treturn ");
-                        KLabel freshFunction = mainModule.freshFunctionFor().apply(sort);
-                        GoStringUtil.appendFunctionName(sb, freshFunction);
-                        sb.append("(Int(counter), config)\n");
-                    }
-                    sb.append("\t\tdefault:\n");
-                    sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.name())\n");
-                    sb.append("\t}\n");
-                    sb.append("}\n\n");
+                    sb.append("// fresh function call here! :)\n");
                 }
                 if (functions.contains(functionLabel)) {
                     // prepare arity/params
                     int arity = getArity(functionLabel);
                     StringBuilder cParamDeclaration = new StringBuilder();
                     StringBuilder cParamCall = new StringBuilder();
-                    createParameterDeclarationAndCall(arity, cParamDeclaration, cParamCall);
+                    GoStringUtil.createParameterDeclarationAndCall(arity, cParamDeclaration, cParamCall);
+
+                    boolean panicAtTheEnd = true;
 
                     // start typing
                     sb.append("func ");
@@ -359,19 +373,25 @@ public class DefinitionToGo {
                         GoStringUtil.appendFunctionName(sb, functionLabel);
                     }
                     sb.append("(").append(cParamDeclaration.toString()).append(" config K) K {\n");
-                    sb.append("\t//lbl := ");
-                    GoStringUtil.appendKlabelVariableName(sb, functionLabel);
-                    sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
-                    sb.append("\t//sort := ");
-                    GoStringUtil.appendSortVariableName(sb, mainModule.sortFor().apply(functionLabel));
-                    sb.append("\n");
+
 
                     // hook implementation
                     String namespace = hook.substring(0, hook.indexOf('.'));
                     String function = hook.substring(namespace.length() + 1);
                     if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
-                        sb.append("\t//hook scenario\n");
-                        sb.append("\t//").append(namespace).append(".hook_").append(function).append("(c, lbl, sort, config, freshFunction)\n");
+                        panicAtTheEnd = false;
+                        sb.append("\t//hook: ").append(hook).append("\n");
+                        sb.append("\tlbl := ");
+                        GoStringUtil.appendKlabelVariableName(sb, functionLabel);
+                        sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
+                        sb.append("\tsort := ");
+                        GoStringUtil.appendSortVariableName(sb, mainModule.sortFor().apply(functionLabel));
+                        sb.append("\n\treturn ");
+                        GoStringUtil.appendHookMethodName(sb, namespace, function);
+                        sb.append("(");
+                        sb.append(cParamCall);
+                        sb.append("lbl, sort, config)\n");
+
                         if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
                             sb.append("\t// eval ???\n");
                         }
@@ -386,17 +406,69 @@ public class DefinitionToGo {
                                 .filter(sort -> mainModule.sortAttributesFor().contains(sort)).forEach(sort -> {
                             String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
                             if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
+                                sb.append("\t// predicate rule: ").append(sortHook).append("\n");
                                 sb.append("\t");
                                 sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sort));
-                                sb.append(" // predicate rule: ").append(sortHook);
                                 sb.append("\n");
                             }
                         });
                     }
 
-                    sb.append("\tpanic(\"Stuck!\")\n");
+                    if (panicAtTheEnd) {
+                        sb.append("\tpanic(\"Stuck!\")\n");
+                    }
                     sb.append("}\n\n");
 
+
+                    if (constants.contains(functionLabel)) {
+                        sb.append("//var ");
+                        GoStringUtil.appendConstFunctionName(sb, functionLabel);
+                        sb.append(" K = ");
+                        GoStringUtil.appendFunctionName(sb, functionLabel);
+                        sb.append("(internedBottom)\n\n");
+                    } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
+                        sb.append("//memoization not yet implemented. Function name: ");
+                        sb.append(functionLabel);
+                        sb.append("\n\n");
+                        //encodeMemoizationOfFunction(sb, conn, functionLabel, functionName, arity);
+                    }
+
+                } else if (functionLabel.name().isEmpty()) {
+                    //placeholder for eval function
+                    // TODO: output eval function in separate file, eval.go
+                    sb.append("func eval (c K, config K) K {\n");
+                    sb.append("\tkApply, typeOk := c.(KApply)\n");
+                    sb.append("\tif !typeOk {\n");
+                    sb.append("\t\treturn c\n");
+                    sb.append("\t}\n");
+                    sb.append("\tswitch kApply.Label {\n");
+                    for (KLabel label : Sets.union(functions, anywhereKLabels)) {
+                        sb.append("\t\tcase ");
+                        GoStringUtil.appendKlabelVariableName(sb, label);
+                        sb.append(":\n");
+
+                        // arity check
+                        int arity = getArity(label);
+                        sb.append("\t\t\tif len(kApply.List) != ").append(arity).append(" {\n");
+                        sb.append("\t\t\t\tpanic(fmt.Sprintf(\"");
+                        GoStringUtil.appendFunctionName(sb, label);
+                        sb.append(" function arity violated. Expected arity: ").append(arity);
+                        sb.append(". Nr. params provided: %d\", len(kApply.List)))\n");
+                        sb.append("\t\t\t}\n");
+
+                        // function call
+                        sb.append("\t\t\treturn ");
+                        GoStringUtil.appendFunctionName(sb, label);
+                        sb.append("(");
+                        for (int i = 0; i < arity; i++) {
+                            sb.append("kApply.List[").append(i).append("], ");
+                        }
+                        sb.append("config)\n");
+                    }
+                    sb.append("\t\tdefault:\n");
+                    sb.append("\t\t\treturn c\n");
+                    sb.append("\t}\n");
+                    sb.append("}\n\n");
                 }
             }
         }
@@ -412,18 +484,6 @@ public class DefinitionToGo {
         }
         assert arities.size() == 1;
         return arities.iterator().next();
-    }
-
-    private static void createParameterDeclarationAndCall(int arity, StringBuilder cParamDeclaration, StringBuilder cParamCall) {
-        if (arity == 1) {
-            cParamDeclaration.append("c K,");
-            cParamCall.append("c, ");
-        } else if (arity > 1) {
-            for (int i = 0; i < arity; i++) {
-                cParamDeclaration.append("c").append(i).append(" K, ");
-                cParamCall.append("c").append(i).append(", ");
-            }
-        }
     }
 
     private List<List<KLabel>> sortFunctions(SetMultimap<KLabel, Rule> functionRules,
@@ -518,7 +578,7 @@ public class DefinitionToGo {
             if (kseq.items().size() != 1 || !(kseq.items().get(0) instanceof KApply)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }
-            KApply function = (KApply)kseq.items().get(0);
+            KApply function = (KApply) kseq.items().get(0);
             if (function.items().size() != 1 || !(function.items().get(0) instanceof KSequence)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }

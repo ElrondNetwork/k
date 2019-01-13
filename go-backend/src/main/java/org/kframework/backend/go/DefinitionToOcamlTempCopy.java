@@ -81,13 +81,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -96,6 +93,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.kframework.Collections.*;
+import static org.kframework.backend.go.CopiedStaticMethods.*;
 import static org.kframework.definition.Constructors.*;
 import static org.kframework.kore.KORE.*;
 
@@ -1177,29 +1175,6 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                 continue;
             stream(mainModule.productionsFor().apply(label)).map(p -> Tuple2.apply(p.klabel().get(), stream(p.items()).filter(pi -> pi instanceof NonTerminal).count())).distinct().forEach(action);
         }
-    }
-
-    private static <V> Set<V> ancestors(
-            Collection<? extends V> startNodes, DirectedGraph<V, ?> graph)
-    {
-        Queue<V> queue = new LinkedList<V>();
-        Set<V> visited = new LinkedHashSet<V>();
-        queue.addAll(startNodes);
-        visited.addAll(startNodes);
-        while(!queue.isEmpty())
-        {
-            V v = queue.poll();
-            Collection<V> neighbors = graph.getPredecessors(v);
-            for (V n : neighbors)
-            {
-                if (!visited.contains(n))
-                {
-                    queue.offer(n);
-                    visited.add(n);
-                }
-            }
-        }
-        return visited;
     }
 
     private Set<KLabel> constants;

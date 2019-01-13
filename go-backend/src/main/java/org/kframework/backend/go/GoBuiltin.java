@@ -25,17 +25,17 @@ public class GoBuiltin {
         ImmutableMap.Builder<String, Function<Sort, String>> builder = ImmutableMap.builder();
         builder.put("K.K", s -> "return Bool(true)");
         builder.put("K.KItem", s -> "// almost certainly incomplete, original: [_] -> [Bool true] | _ -> [Bool false] ???????");
-        builder.put("INT.Int", s -> "if _, isInt := c.(Int); isInt" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("FLOAT.Float", s -> "if _, isFloat := c.(Float); isFloat" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("STRING.String", s -> "if _, isString := c.(String); isString" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BYTES.Bytes", s -> "if _, isBytes := c.(Bytes); isInt" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BUFFER.StringBuffer", s -> "if _, isSb := c.(StringBuffer); isSb" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BOOL.Bool", s -> "if _, isBool := c.(Bool); isBool " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MINT.MInt", s -> "if _, isMInt := c.(MInt); isMInt " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MAP.Map", s -> "if mp, isMap := c.(Map); isMap && mp.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("SET.Set", s -> "if set, isSet := c.(Set); isSet && set.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("LIST.List", s -> "if list, isList := c.(List); isList && list.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("ARRAY.Array", s -> "if arr, isArr := c.(Array); isArr && arr.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("INT.Int", s -> "if _, t := c.(Int); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("FLOAT.Float", s -> "if _, t := c.(Float); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("STRING.String", s -> "if _, t := c.(String); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BYTES.Bytes", s -> "if _, t := c.(Bytes); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BUFFER.StringBuffer", s -> "if _, t := c.(StringBuffer); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BOOL.Bool", s -> "if _, t := c.(Bool); t " + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("MINT.MInt", s -> "if _, t := c.(MInt); t " + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("MAP.Map", s -> "if mp, t := c.(Map); t && mp.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("SET.Set", s -> "if set, t := c.(Set); t && set.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("LIST.List", s -> "if list, t := c.(List); t && list.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("ARRAY.Array", s -> "if arr, t := c.(Array); t && arr.Sort == " + GoStringUtil.sortVariableName(s) + RETURN_BOOL_TRUE_BLOCK);
         PREDICATE_RULES = builder.build();
     }
 }

@@ -45,7 +45,7 @@ public class GoBackend implements Backend {
 
         String mainModule = kompileOptions.mainModule(files);
         //packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter");
-        packageNameManager = new GoPackageNameManager(files,"main");
+        packageNameManager = new GoPackageNameManager(files, "main");
 
         DefinitionToOcamlTempCopy ocamlDef = new DefinitionToOcamlTempCopy(kem, files, globalOptions, kompileOptions, options);
         DefinitionToGo def = new DefinitionToGo(kem, files, packageNameManager, globalOptions, kompileOptions, options);
@@ -57,6 +57,7 @@ public class GoBackend implements Backend {
 
         files.saveToKompiled("klabel.go", def.klabels());
         files.saveToKompiled("sort.go", def.sorts());
+        files.saveToKompiled("fresh.go", def.freshDefinition());
 
         // temporary, for convenience and comparison
         try {
@@ -69,18 +70,34 @@ public class GoBackend implements Backend {
         files.saveToKompiled("definition.go", goDef);
 
         try {
+            // lexer, parser
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/stringutil.go"), files.resolveKompiled("koreparser/stringutil.go"));
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/model.go"), files.resolveKompiled("koreparser/model.go"));
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/korelex.go"), files.resolveKompiled("koreparser/korelex.go"));
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/koreparser.y"), files.resolveKompiled("koreparser/koreparser.y"));
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/gen.go"), files.resolveKompiled("koreparser/gen.go"));
 
-            packageNameManager.copyFileAndReplaceGoPackages(
-                    files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+            // interpreter
             packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/kmodel.go"), files.resolveKompiled("kmodel.go"));
+            packageNameManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/init.go"), files.resolveKompiled("init.go"));
+            packageNameManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+
+            // builtin hook files
+            for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {
+                String fileName = "hooks_" + hookNamespace.toLowerCase() + ".go";
+                packageNameManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/hooks/" + fileName),
+                        files.resolveKompiled(fileName));
+            }
+
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
 
         try {

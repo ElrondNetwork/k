@@ -12,6 +12,7 @@ public class GoPackageNameManager {
 
     private final FileUtil files;
     private final String interpreterPackageName;
+
     private final String koreParserPackageName;
     private final String koreParserInclude;
 
@@ -29,7 +30,10 @@ public class GoPackageNameManager {
 
         try {
             Path goSrcPath = new File(goSrc).getCanonicalFile().toPath();
-            Path koreParserAbsPath = files.resolveKompiled("./koreparser").getCanonicalFile().toPath();
+
+            // koreparser path init
+            // TODO: make package output path configurable
+            Path koreParserAbsPath = files.resolveKompiled("./" + koreParserPackageName).getCanonicalFile().toPath();
             Path koreParserRelPath = goSrcPath.relativize(koreParserAbsPath);
             koreParserInclude = koreParserRelPath.toString();
         } catch (IOException e) {
