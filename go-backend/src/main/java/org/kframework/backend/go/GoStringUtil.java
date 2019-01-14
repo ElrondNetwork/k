@@ -1,8 +1,10 @@
 package org.kframework.backend.go;
 
 import com.google.common.collect.ImmutableMap;
+import org.kframework.definition.Rule;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;
+import org.kframework.unparser.ToKast;
 
 import java.util.regex.Pattern;
 
@@ -178,9 +180,31 @@ class GoStringUtil {
         appendAlphanumericEncodedString(sb, lbl.name());
     }
 
+    static String functionName(KLabel lbl) {
+        StringBuilder sb = new StringBuilder();
+        appendFunctionName(sb, lbl);
+        return sb.toString();
+    }
+
+    static String memoFunctionName(KLabel lbl) {
+        StringBuilder sb = new StringBuilder();
+        appendMemoFunctionName(sb, lbl);
+        return sb.toString();
+    }
+
     static void appendConstFunctionName(StringBuilder sb, KLabel lbl) {
         sb.append("const");
         appendAlphanumericEncodedString(sb, lbl.name());
+    }
+
+    static String variableName(String varName) {
+        if (varName.equals("_")) {
+            return "_";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("var");
+        appendAlphanumericEncodedString(sb, varName);
+        return sb.toString();
     }
 
     public static String enquoteString(String value) {
@@ -263,6 +287,18 @@ class GoStringUtil {
                 cParamCall.append(EVAL_ARG_NAME).append(i).append(", ");
             }
         }
+    }
+
+    static void appendRuleComment(StringBuilder sb, Rule r) {
+        sb.append("\t// {| rule ");
+        sb.append(ToKast.apply(r.body()).replace("|}", "| )"));
+        sb.append(" requires ");
+        sb.append(ToKast.apply(r.requires()).replace("|)", "| )"));
+        sb.append(" ensures ");
+        sb.append(ToKast.apply(r.ensures()).replace("|)", "| )"));
+        sb.append(" ");
+        sb.append(r.att().toString().replace("|)", "| )"));
+        sb.append(" |}\n");
     }
 
 }

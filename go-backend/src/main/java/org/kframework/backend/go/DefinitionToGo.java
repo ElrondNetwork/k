@@ -9,6 +9,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.builtin.Sorts;
@@ -52,6 +53,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -91,6 +93,10 @@ public class DefinitionToGo {
     }
 
     private Module mainModule;
+
+    DefinitionData definitionData() {
+        return new DefinitionData(mainModule);
+    }
 //
 //    public void initialize(CompiledDefinition def) {
 //        //TODO: add module preprocessing
@@ -405,13 +411,16 @@ public class DefinitionToGo {
 
                 boolean panicAtTheEnd = true;
 
+                String functionName;
+                if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
+                    functionName = GoStringUtil.memoFunctionName(functionLabel);
+                } else {
+                    functionName = GoStringUtil.functionName(functionLabel);
+                }
+
                 // start typing
                 sb.append("func ");
-                if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    GoStringUtil.appendMemoFunctionName(sb, functionLabel);
-                } else {
-                    GoStringUtil.appendFunctionName(sb, functionLabel);
-                }
+                sb.append(functionName);
                 sb.append("(").append(cParamDeclaration.toString()).append(" config K) K {\n");
 
 
@@ -454,6 +463,10 @@ public class DefinitionToGo {
                     });
                 }
 
+                // main!
+                convertFunction(functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList()),
+                        sb, functionName, RuleType.FUNCTION);
+
                 if (panicAtTheEnd) {
                     sb.append("\tpanic(\"Stuck!\")\n");
                 }
@@ -485,6 +498,96 @@ public class DefinitionToGo {
         }
         assert arities.size() == 1;
         return arities.iterator().next();
+    }
+
+    private void convertFunction(List<Rule> rules, StringBuilder sb, String functionName, RuleType type) {
+        int ruleNum = 0;
+        for (Rule r : rules) {
+            if (hasLookups(r)) {
+                //ruleNum = convert(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
+                sb.append("\t// rule with lookups\n");
+            } else {
+                sb.append("\t// rule without lookups\n");
+                ruleNum = convert(r, sb, type, ruleNum, functionName);
+            }
+        }
+    }
+
+    private int convert(Rule r, StringBuilder sb, RuleType type, int ruleNum, String functionName) {
+        try {
+            GoStringUtil.appendRuleComment(sb, r);
+
+            //sb.append("// | ");
+            K left = RewriteToTop.toLeft(r.body());
+            K requires = r.requires();
+            VarInfo vars = new VarInfo();
+
+            // convertLHS
+            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), false, false);
+            if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
+                KApply kapp = (KApply) ((KSequence) left).items().get(0);
+                lhsVisitor.applyTuple(kapp.klist().items());
+            } else {
+                lhsVisitor.apply(left);
+            }
+            //String result = convert(vars);
+            String suffix = "";
+            boolean when = true;
+            if (type == RuleType.REGULAR && options.checkRaces) {
+                sb.append(" when start_after < ").append(ruleNum);
+                when = false;
+            }
+//            if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
+//                suffix = convertSideCondition(sb, requires, vars, Collections.emptyList(), when, type, ruleNum);
+//            }
+            lhsVisitor.writeIndent();
+            sb.append("// rhs here!\n");
+            for (String varName : vars.vars.values()) {
+                if (!varName.equals("_")) {
+                    lhsVisitor.writeIndent();
+                    sb.append("doNothingWithVar(").append(varName).append(") // temp\n");
+                }
+            }
+            lhsVisitor.writeIndent();
+            sb.append("return internedBottom\n");
+
+            //convertRHS(sb, type, r, vars, suffix, ruleNum, functionName, true);
+
+            lhsVisitor.endAllBlocks();
+            sb.append("\n");
+            return ruleNum + 1;
+        } catch (NoSuchElementException e) {
+            System.err.println(r);
+            throw e;
+        } catch (KEMException e) {
+            e.exception.addTraceFrame("while compiling rule at " + r.att().getOptional(Source.class).map(Object::toString).orElse("<none>") + ":" + r.att().getOptional(Location.class).map(Object::toString).orElse("<none>"));
+            throw e;
+        }
+    }
+
+    private int numLookups(Rule r) {
+        class Holder {
+            int i;
+        }
+        Holder h = new Holder();
+        new VisitK() {
+            @Override
+            public void apply(KApply k) {
+                if (ConvertDataStructureToLookup.isLookupKLabel(k)) {
+                    h.i++;
+                }
+                super.apply(k);
+            }
+        }.apply(r.requires());
+        return h.i;
+    }
+
+    private boolean hasLookups(Rule r) {
+        return numLookups(r) > 0;
+    }
+
+    private int sortFunctionRules(Rule a1, Rule a2) {
+        return Boolean.compare(a1.att().contains("owise"), a2.att().contains("owise"));
     }
 
     private List<List<KLabel>> sortFunctions(SetMultimap<KLabel, Rule> functionRules,

@@ -63,8 +63,7 @@ public class GoBackend implements Backend {
         try {
             files.saveToKompiled("realdef.ml", ocamlDef.definition());
 
-            String goDef = def.definition();
-            files.saveToKompiled("definition.go", goDef);
+            files.saveToKompiled("definition.go", def.definition());
             files.saveToKompiled("eval.go", def.evalDefinition());
         } catch (Exception e) {
             e.printStackTrace();

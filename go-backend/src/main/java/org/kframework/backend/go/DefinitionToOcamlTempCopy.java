@@ -132,7 +132,6 @@ public class DefinitionToOcamlTempCopy implements Serializable {
     private transient ImmutableMap<String, Function<String, String>> sortHooks;
     public static final ImmutableMap<String, Function<String, String>> defSortHooks;
     public static final ImmutableMap<String, Function<String, String>> userSortHooks;
-    public static final ImmutableMap<String, Function<Sort, String>> sortVarHooks;
     public static final ImmutableMap<String, Function<Sort, String>> predicateRules;
 
     static {
@@ -179,22 +178,6 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         builder.put("BYTES.Bytes", s -> "(Bytes (Bytes.of_string " + enquoteString(StringUtil.unquoteKString(s)) + "))");
         builder.put("BUFFER.StringBuffer", DefinitionToOcamlTempCopy::stringBufferConstant);
         defSortHooks = builder.build();
-    }
-
-    static {
-        ImmutableMap.Builder<String, Function<Sort, String>> builder = ImmutableMap.builder();
-        builder.put("BOOL.Bool", s -> "Bool _");
-        builder.put("MINT.MInt", s -> "MInt _");
-        builder.put("INT.Int", s -> "Int _");
-        builder.put("FLOAT.Float", s -> "Float _");
-        builder.put("STRING.String", s -> "String _");
-        builder.put("BYTES.Bytes", s -> "Bytes _");
-        builder.put("BUFFER.StringBuffer", s -> "StringBuffer _");
-        builder.put("LIST.List", s -> "List (" + encodeStringToIdentifier(s) + ",_,_)");
-        builder.put("ARRAY.Array", s -> "Array (" + encodeStringToIdentifier(s) + ",_,_)");
-        builder.put("MAP.Map", s -> "Map (" + encodeStringToIdentifier(s) + ",_,_)");
-        builder.put("SET.Set", s -> "Set (" + encodeStringToIdentifier(s) + ",_,_)");
-        sortVarHooks = builder.build();
     }
 
     static {
@@ -2264,7 +2247,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                                     Sort s = head.att().getOptional(Sort.class).orElse(Sort(""));
                                     if (mainModule.sortAttributesFor().contains(s)) {
                                         String hook = mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-                                        if (!sortVarHooks.containsKey(hook)) {
+                                        if (!GoBuiltin.OCAML_SORT_VAR_HOOKS.containsKey(hook)) {
                                             h.b = true;
                                         }
                                     } else {
@@ -2714,9 +2697,9 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         Sort s = k.att().getOptional(Sort.class).orElse(Sort(""));
         if (mainModule.sortAttributesFor().contains(s)) {
             String hook = mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-            if (sortVarHooks.containsKey(hook)) {
+            if (GoBuiltin.OCAML_SORT_VAR_HOOKS.containsKey(hook)) {
                 sb.append("(");
-                sb.append(sortVarHooks.get(hook).apply(s));
+                sb.append(GoBuiltin.OCAML_SORT_VAR_HOOKS.get(hook).apply(s));
                 sb.append(" as ").append(varName).append(")");
                 return;
             }
@@ -2950,7 +2933,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                     }
                     if (mainModule.sortAttributesFor().contains(s)) {
                         String hook2 = mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-                        if (sortVarHooks.containsKey(hook2)) {
+                        if (GoBuiltin.OCAML_SORT_VAR_HOOKS.containsKey(hook2)) {
                             if (k.klist().items().size() == 1) {
                                 KSequence item = (KSequence) k.klist().items().get(0);
                                 if (item.items().size() == 1 &&
