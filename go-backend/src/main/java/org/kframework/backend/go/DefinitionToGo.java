@@ -293,9 +293,57 @@ public class DefinitionToGo {
         return sb.toString();
     }
 
+    /**
+     * WARNING: depends on fields functions and anywhereKLabels, only run after definition()
+     * TODO: untangle this dependency
+     */
+    public String evalDefinition() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+
+        sb.append("import \"fmt\"\n\n");
+
+        sb.append("func eval(c K, config K) K {\n");
+        sb.append("\tkApply, typeOk := c.(KApply)\n");
+        sb.append("\tif !typeOk {\n");
+        sb.append("\t\treturn c\n");
+        sb.append("\t}\n");
+        sb.append("\tswitch kApply.Label {\n");
+        for (KLabel label : Sets.union(functions, anywhereKLabels)) {
+            sb.append("\t\tcase ");
+            GoStringUtil.appendKlabelVariableName(sb, label);
+            sb.append(":\n");
+
+            // arity check
+            int arity = getArity(label);
+            sb.append("\t\t\tif len(kApply.List) != ").append(arity).append(" {\n");
+            sb.append("\t\t\t\tpanic(fmt.Sprintf(\"");
+            GoStringUtil.appendFunctionName(sb, label);
+            sb.append(" function arity violated. Expected arity: ").append(arity);
+            sb.append(". Nr. params provided: %d\", len(kApply.List)))\n");
+            sb.append("\t\t\t}\n");
+
+            // function call
+            sb.append("\t\t\treturn ");
+            GoStringUtil.appendFunctionName(sb, label);
+            sb.append("(");
+            for (int i = 0; i < arity; i++) {
+                sb.append("kApply.List[").append(i).append("], ");
+            }
+            sb.append("config)\n");
+        }
+        sb.append("\t\tdefault:\n");
+        sb.append("\t\t\treturn c\n");
+        sb.append("\t}\n");
+        sb.append("}\n\n");
+
+        return sb.toString();
+    }
+
+    Set<KLabel> functions;
+    Set<KLabel> anywhereKLabels;
+
     public String definition() {
-        Set<KLabel> functions;
-        Set<KLabel> anywhereKLabels;
         DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         //TODO: warning! duplicate code with DefinitionToOcaml
@@ -336,146 +384,99 @@ public class DefinitionToGo {
             }
         }
         klabelRuleMap.putAll(anywhereRules);
-        List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies);
 
         StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
-        sb.append("import (\n");
-        sb.append("\t\"fmt\"\n");
-        sb.append(")\n\n");
 
         // constants := arity == 0 && !impure
+        List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies); // result no longer required
         Set<KLabel> impurities = functions.stream().filter(lbl -> mainModule.attributesFor().apply(lbl).contains(Attribute.IMPURE_KEY)).collect(Collectors.toSet());
         impurities.addAll(ancestors(impurities, dependencies));
         Set<KLabel> constants = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
 
-        for (List<KLabel> component : functionOrder) {
-            for (KLabel functionLabel : component) {
+        for (KLabel functionLabel : Sets.union(functions, anywhereKLabels)) {
+            String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
+            if (functions.contains(functionLabel)) {
+                // prepare arity/params
+                int arity = getArity(functionLabel);
+                StringBuilder cParamDeclaration = new StringBuilder();
+                StringBuilder cParamCall = new StringBuilder();
+                GoStringUtil.createParameterDeclarationAndCall(arity, cParamDeclaration, cParamCall);
 
-                String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
-                if (hook.equals("KREFLECTION.fresh")) {
-                    sb.append("// fresh function call here! :)\n");
+                boolean panicAtTheEnd = true;
+
+                // start typing
+                sb.append("func ");
+                if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
+                    GoStringUtil.appendMemoFunctionName(sb, functionLabel);
+                } else {
+                    GoStringUtil.appendFunctionName(sb, functionLabel);
                 }
-                if (functions.contains(functionLabel)) {
-                    // prepare arity/params
-                    int arity = getArity(functionLabel);
-                    StringBuilder cParamDeclaration = new StringBuilder();
-                    StringBuilder cParamCall = new StringBuilder();
-                    GoStringUtil.createParameterDeclarationAndCall(arity, cParamDeclaration, cParamCall);
+                sb.append("(").append(cParamDeclaration.toString()).append(" config K) K {\n");
 
-                    boolean panicAtTheEnd = true;
 
-                    // start typing
-                    sb.append("func ");
-                    if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                        GoStringUtil.appendMemoFunctionName(sb, functionLabel);
-                    } else {
-                        GoStringUtil.appendFunctionName(sb, functionLabel);
+                // hook implementation
+                String namespace = hook.substring(0, hook.indexOf('.'));
+                String function = hook.substring(namespace.length() + 1);
+                if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
+                    panicAtTheEnd = false;
+                    sb.append("\t//hook: ").append(hook).append("\n");
+                    sb.append("\tlbl := ");
+                    GoStringUtil.appendKlabelVariableName(sb, functionLabel);
+                    sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
+                    sb.append("\tsort := ");
+                    GoStringUtil.appendSortVariableName(sb, mainModule.sortFor().apply(functionLabel));
+                    sb.append("\n\treturn ");
+                    GoStringUtil.appendHookMethodName(sb, namespace, function);
+                    sb.append("(");
+                    sb.append(cParamCall);
+                    sb.append("lbl, sort, config)\n");
+
+                    if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
+                        sb.append("\t// eval ???\n");
                     }
-                    sb.append("(").append(cParamDeclaration.toString()).append(" config K) K {\n");
+                } else if (!hook.equals(".")) {
+                    kem.registerCompilerWarning("missing entry for hook " + hook);
+                }
 
-
-                    // hook implementation
-                    String namespace = hook.substring(0, hook.indexOf('.'));
-                    String function = hook.substring(namespace.length() + 1);
-                    if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
-                        panicAtTheEnd = false;
-                        sb.append("\t//hook: ").append(hook).append("\n");
-                        sb.append("\tlbl := ");
-                        GoStringUtil.appendKlabelVariableName(sb, functionLabel);
-                        sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
-                        sb.append("\tsort := ");
-                        GoStringUtil.appendSortVariableName(sb, mainModule.sortFor().apply(functionLabel));
-                        sb.append("\n\treturn ");
-                        GoStringUtil.appendHookMethodName(sb, namespace, function);
-                        sb.append("(");
-                        sb.append(cParamCall);
-                        sb.append("lbl, sort, config)\n");
-
-                        if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
-                            sb.append("\t// eval ???\n");
+                // predicate
+                if (mainModule.attributesFor().apply(functionLabel).contains(Attribute.PREDICATE_KEY, Sort.class)) {
+                    Sort predicateSort = (mainModule.attributesFor().apply(functionLabel).get(Attribute.PREDICATE_KEY, Sort.class));
+                    stream(mainModule.definedSorts()).filter(s -> mainModule.subsorts().greaterThanEq(predicateSort, s)).distinct()
+                            .filter(sort -> mainModule.sortAttributesFor().contains(sort)).forEach(sort -> {
+                        String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
+                        if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
+                            sb.append("\t// predicate rule: ").append(sortHook).append("\n");
+                            sb.append("\t");
+                            sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sort));
+                            sb.append("\n");
                         }
-                    } else if (!hook.equals(".")) {
-                        kem.registerCompilerWarning("missing entry for hook " + hook);
-                    }
+                    });
+                }
 
-                    // predicate
-                    if (mainModule.attributesFor().apply(functionLabel).contains(Attribute.PREDICATE_KEY, Sort.class)) {
-                        Sort predicateSort = (mainModule.attributesFor().apply(functionLabel).get(Attribute.PREDICATE_KEY, Sort.class));
-                        stream(mainModule.definedSorts()).filter(s -> mainModule.subsorts().greaterThanEq(predicateSort, s)).distinct()
-                                .filter(sort -> mainModule.sortAttributesFor().contains(sort)).forEach(sort -> {
-                            String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
-                            if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
-                                sb.append("\t// predicate rule: ").append(sortHook).append("\n");
-                                sb.append("\t");
-                                sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sort));
-                                sb.append("\n");
-                            }
-                        });
-                    }
-
-                    if (panicAtTheEnd) {
-                        sb.append("\tpanic(\"Stuck!\")\n");
-                    }
-                    sb.append("}\n\n");
+                if (panicAtTheEnd) {
+                    sb.append("\tpanic(\"Stuck!\")\n");
+                }
+                sb.append("}\n\n");
 
 
-                    if (constants.contains(functionLabel)) {
-                        sb.append("//var ");
-                        GoStringUtil.appendConstFunctionName(sb, functionLabel);
-                        sb.append(" K = ");
-                        GoStringUtil.appendFunctionName(sb, functionLabel);
-                        sb.append("(internedBottom)\n\n");
-                    } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                        sb.append("//memoization not yet implemented. Function name: ");
-                        sb.append(functionLabel);
-                        sb.append("\n\n");
-                        //encodeMemoizationOfFunction(sb, conn, functionLabel, functionName, arity);
-                    }
-
-                } else if (functionLabel.name().isEmpty()) {
-                    //placeholder for eval function
-                    // TODO: output eval function in separate file, eval.go
-                    sb.append("func eval (c K, config K) K {\n");
-                    sb.append("\tkApply, typeOk := c.(KApply)\n");
-                    sb.append("\tif !typeOk {\n");
-                    sb.append("\t\treturn c\n");
-                    sb.append("\t}\n");
-                    sb.append("\tswitch kApply.Label {\n");
-                    for (KLabel label : Sets.union(functions, anywhereKLabels)) {
-                        sb.append("\t\tcase ");
-                        GoStringUtil.appendKlabelVariableName(sb, label);
-                        sb.append(":\n");
-
-                        // arity check
-                        int arity = getArity(label);
-                        sb.append("\t\t\tif len(kApply.List) != ").append(arity).append(" {\n");
-                        sb.append("\t\t\t\tpanic(fmt.Sprintf(\"");
-                        GoStringUtil.appendFunctionName(sb, label);
-                        sb.append(" function arity violated. Expected arity: ").append(arity);
-                        sb.append(". Nr. params provided: %d\", len(kApply.List)))\n");
-                        sb.append("\t\t\t}\n");
-
-                        // function call
-                        sb.append("\t\t\treturn ");
-                        GoStringUtil.appendFunctionName(sb, label);
-                        sb.append("(");
-                        for (int i = 0; i < arity; i++) {
-                            sb.append("kApply.List[").append(i).append("], ");
-                        }
-                        sb.append("config)\n");
-                    }
-                    sb.append("\t\tdefault:\n");
-                    sb.append("\t\t\treturn c\n");
-                    sb.append("\t}\n");
-                    sb.append("}\n\n");
+                if (constants.contains(functionLabel)) {
+                    sb.append("//var ");
+                    GoStringUtil.appendConstFunctionName(sb, functionLabel);
+                    sb.append(" K = ");
+                    GoStringUtil.appendFunctionName(sb, functionLabel);
+                    sb.append("(internedBottom)\n\n");
+                } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
+                    sb.append("//memoization not yet implemented. Function name: ");
+                    sb.append(functionLabel);
+                    sb.append("\n\n");
+                    //encodeMemoizationOfFunction(sb, conn, functionLabel, functionName, arity);
                 }
             }
         }
 
         return sb.toString();
     }
-
 
     private int getArity(KLabel functionLabel) {
         Set<Integer> arities = stream(mainModule.productionsFor().apply(functionLabel)).map(Production::arity).collect(Collectors.toSet());
