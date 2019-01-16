@@ -55,11 +55,22 @@ public class GoStringBuilder {
         return this;
     }
 
+    public GoStringBuilder endOneBlockNoNewline() {
+        indent--;
+        writeIndent();
+        sb.append("}");
+        return this;
+    }
+
+    public GoStringBuilder endOneBlock() {
+        endOneBlockNoNewline();
+        newLine();
+        return this;
+    }
+
     public GoStringBuilder endAllBlocks(int finalIndent) {
         while (indent > finalIndent) {
-            indent--;
-            writeIndent();
-            sb.append("}\n");
+            endOneBlock();
         }
         return this;
     }

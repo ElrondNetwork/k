@@ -427,21 +427,31 @@ public class DefinitionToGo {
                 String namespace = hook.substring(0, hook.indexOf('.'));
                 String function = hook.substring(namespace.length() + 1);
                 if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
-                    sb.append("\t//hook: ").append(hook).append("\n");
-                    sb.append("\tlbl := ");
+                    sb.writeIndent().append("//hook: ").append(hook).newLine();
+
+                    sb.writeIndent().append("lbl := ");
                     GoStringUtil.appendKlabelVariableName(sb.sb(), functionLabel);
-                    sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
-                    sb.append("\tsort := ");
+                    sb.append(" // ").append(functionLabel.name()).newLine(); // just for readability
+                    sb.writeIndent().append("sort := ");
                     GoStringUtil.appendSortVariableName(sb.sb(), mainModule.sortFor().apply(functionLabel));
-                    sb.append("\n\treturn ");
+                    sb.newLine();
+
+                    sb.writeIndent().append("if hookRes, hookErr := ");
                     GoStringUtil.appendHookMethodName(sb.sb(), namespace, function);
                     sb.append("(");
                     sb.append(functionVars.callParameters());
-                    sb.append("lbl, sort, config)\n");
+                    sb.append("lbl, sort, config); hookErr == nil");
+                    sb.beginBlock();
 
                     if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
                         sb.append("\t// eval ???\n");
                     }
+
+                    sb.writeIndent().append("return hookRes").newLine();
+
+                    sb.endOneBlockNoNewline().append(" else if _, errTypeOk := hookErr.(*hookNotImplementedError); !errTypeOk ").beginBlock();
+                    sb.writeIndent().append("panic(\"Unexpected error occured while running hook function.\")").newLine();
+                    sb.endOneBlock().newLine();
                 } else if (!hook.equals(".")) {
                     kem.registerCompilerWarning("missing entry for hook " + hook);
                 }
