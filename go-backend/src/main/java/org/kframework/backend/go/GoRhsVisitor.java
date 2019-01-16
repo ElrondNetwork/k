@@ -1,5 +1,6 @@
 package org.kframework.backend.go;
 
+import org.kframework.kil.Attribute;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -60,22 +61,34 @@ class GoRhsVisitor extends VisitK {
             sb.append("}");
         } else if (k.klabel().name().equals("#Bottom")) {
             sb.append("Bottom{}");
+        } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
+            applyFunction(k);
         } else {
-            sb.append("KApply{Label: ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
-            sb.append(", List: []K{");
-            sb.increaseIndent();
-            for (K item : k.klist().items()) {
-                newlineNext = true;
-                apply(item);
-                sb.append(",");
-            }
-            sb.decreaseIndent();
-            sb.newLine();
-            sb.writeIndent();
-            sb.append("}}");
+            applyKApplyAsIs(k);
         }
         end();
+    }
+
+    private void applyKApplyAsIs(KApply k) {
+        sb.append("KApply{Label: ");
+        GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
+        sb.append(", List: []K{");
+        sb.increaseIndent();
+        for (K item : k.klist().items()) {
+            newlineNext = true;
+            apply(item);
+            sb.append(",");
+        }
+        sb.decreaseIndent();
+        sb.newLine();
+        sb.writeIndent();
+        sb.append("}}");
+    }
+
+    private void applyFunction(KApply k) {
+        String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
+        sb.append("/* applyFunction:").append(hook).append(" */ ");
+        applyKApplyAsIs(k);
     }
 
     @Override

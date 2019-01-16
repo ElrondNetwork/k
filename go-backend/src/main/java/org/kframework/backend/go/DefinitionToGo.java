@@ -95,7 +95,7 @@ public class DefinitionToGo {
     private Module mainModule;
 
     DefinitionData definitionData() {
-        return new DefinitionData(mainModule);
+        return new DefinitionData(mainModule, functions, anywhereKLabels);
     }
 //
 //    public void initialize(CompiledDefinition def) {
@@ -543,9 +543,14 @@ public class DefinitionToGo {
                 sb.append(" when start_after < ").append(ruleNum);
                 when = false;
             }
-//            if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
-//                suffix = convertSideCondition(sb, requires, vars, Collections.emptyList(), when, type, ruleNum);
-//            }
+            if (!requires.equals(KSequence(BooleanUtils.TRUE)) /*|| !result.equals("true")*/) {
+                sb.writeIndent().append("/* REQUIRES */ doNothingWithVar(func () K").beginBlock();
+                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, vars, this.definitionData());
+                sideCondVisitor.apply(requires);
+                //suffix = convertSideCondition(sb, requires, vars, Collections.emptyList(), when, type, ruleNum);
+                sb.newLine();
+                sb.endOneBlockNoNewline().append(" () ) // temp, for debugging only").newLine();
+            }
             sb.writeIndent();
             sb.append("// rhs here!\n");
 
