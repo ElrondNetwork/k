@@ -93,6 +93,7 @@ public class DefinitionToGo {
     }
 
     private Module mainModule;
+    private Map<KLabel, KLabel> collectionFor;
 
     DefinitionData definitionData() {
         return new DefinitionData(mainModule, functions, anywhereKLabels);
@@ -138,7 +139,7 @@ public class DefinitionToGo {
                 .andThen(liftToKSequence);
         mainModule = pipeline.apply(def.executionModule());
         //mainModule = def.executionModule();
-        //collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
+        collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
         //filteredMapConstructors = ConvertDataStructureToLookup.filteredMapConstructors(mainModule);
     }
 
@@ -151,50 +152,102 @@ public class DefinitionToGo {
         klabels.add(KORE.KLabel("unsignedBytes"));
         addOpaqueKLabels(klabels);
 
-        StringBuilder sb = new StringBuilder();
+        GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
         sb.append("type KLabel int\n\n");
 
         // const declaration
         sb.append("const (\n");
+        sb.increaseIndent();
         for (KLabel klabel : klabels) {
-            sb.append("\t");
-            GoStringUtil.appendKlabelVariableName(sb, klabel);
+            sb.writeIndent();
+            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
             sb.append(" KLabel = iota\n");
         }
+        sb.decreaseIndent();
         sb.append(")\n");
 
         // klabel name method
-        sb.append("func (s KLabel) name () string {\n");
-        sb.append("\tswitch s {\n");
+        sb.append("func (kl KLabel) name () string").beginBlock();
+        sb.append("\tswitch kl").beginBlock();
         for (KLabel klabel : klabels) {
-            sb.append("\t\tcase ");
-            GoStringUtil.appendKlabelVariableName(sb, klabel);
+            sb.writeIndent().append("case ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
             sb.append(":\n");
-            sb.append("\t\t\treturn ");
+            sb.writeIndent().append("\treturn ");
             sb.append(GoStringUtil.enquoteString(klabel.name()));
             sb.append("\n");
         }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Unexpected KLabel.\")\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
+        sb.writeIndent().append("default:\n");
+        sb.writeIndent().append("\tpanic(\"Unexpected KLabel.\")\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
 
         // parse klabel function
-        sb.append("func parseKLabel (name string) KLabel {\n");
-        sb.append("\tswitch name {\n");
+        sb.append("func parseKLabel (name string) KLabel").beginBlock();
+        sb.append("\tswitch name").beginBlock();
         for (KLabel klabel : klabels) {
-            sb.append("\t\tcase ");
+            sb.writeIndent().append("case ");
             sb.append(GoStringUtil.enquoteString(klabel.name()));
             sb.append(":\n");
-            sb.append("\t\t\treturn ");
-            GoStringUtil.appendKlabelVariableName(sb, klabel);
+            sb.writeIndent().append("\treturn ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
             sb.append("\n");
         }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Parsing KLabel failed. Unexpected KLabel name:\" + name)\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
+        sb.writeIndent().append("default:\n");
+        sb.writeIndent().append("\tpanic(\"Parsing KLabel failed. Unexpected KLabel name:\" + name)\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
+
+        // collection for
+        sb.append("func (kl KLabel) collectionFor() KLabel").beginBlock();
+        sb.append("\tswitch kl").beginBlock();
+        for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
+            sb.writeIndent().append("case ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getKey());
+            sb.append(":\n");
+            sb.writeIndent().append("\treturn ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getValue());
+            sb.append("\n");
+        }
+        sb.writeIndent().append("default:\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method collectionFor for KLabel \" + kl.name())\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
+
+        // unit for
+        sb.append("func (kl KLabel) unitFor() KLabel").beginBlock();
+        sb.append("\tswitch kl").beginBlock();
+        for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
+            sb.writeIndent().append("case ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
+            sb.append(":\n");
+            sb.writeIndent().append("\treturn ");
+            KLabel unitLabel = KLabel(mainModule.attributesFor().apply(label).get(Attribute.UNIT_KEY));
+            GoStringUtil.appendKlabelVariableName(sb.sb(), unitLabel);
+            sb.append("\n");
+        }
+        sb.writeIndent().append("default:\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method unitFor for KLabel \" + kl.name())\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
+
+        // el for
+        sb.append("func (kl KLabel) elFor() KLabel").beginBlock();
+        sb.append("\tswitch kl").beginBlock();
+        for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
+            sb.writeIndent().append("case ");
+            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
+            sb.append(":\n");
+            sb.writeIndent().append("\treturn ");
+            KLabel elLabel = KLabel(mainModule.attributesFor().apply(label).get("element"));
+            GoStringUtil.appendKlabelVariableName(sb.sb(), elLabel);
+            sb.append("\n");
+        }
+        sb.writeIndent().append("default:\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method elFor for KLabel \" + kl.name())\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
 
         return sb.toString();
     }
@@ -544,12 +597,13 @@ public class DefinitionToGo {
                 when = false;
             }
             if (!requires.equals(KSequence(BooleanUtils.TRUE)) /*|| !result.equals("true")*/) {
-                sb.writeIndent().append("/* REQUIRES */ doNothingWithVar(func () K").beginBlock();
+                sb.writeIndent().append("/* REQUIRES */").newLine();
+                sb.writeIndent().append("if ");
+                // condition starts here
                 GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, vars, this.definitionData());
                 sideCondVisitor.apply(requires);
-                //suffix = convertSideCondition(sb, requires, vars, Collections.emptyList(), when, type, ruleNum);
-                sb.newLine();
-                sb.endOneBlockNoNewline().append(" () ) // temp, for debugging only").newLine();
+                // condition ends
+                sb.beginBlock();
             }
             sb.writeIndent();
             sb.append("// rhs here!\n");
@@ -562,6 +616,8 @@ public class DefinitionToGo {
             }
             GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, vars, this.definitionData());
             K right = RewriteToTop.toRight(r.body());
+            sb.writeIndent();
+            sb.append("return ");
             rhsVisitor.apply(right);
             sb.append("\n");
 

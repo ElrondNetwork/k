@@ -1,6 +1,5 @@
 package org.kframework.backend.go;
 
-import org.kframework.kil.Attribute;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -16,30 +15,21 @@ import org.kframework.parser.outer.Outer;
 import org.kframework.utils.errorsystem.KEMException;
 
 class GoRhsVisitor extends VisitK {
-    private final GoStringBuilder sb;
-    private final VarInfo vars;
-    private final DefinitionData data;
+    protected final GoStringBuilder sb;
+    protected final VarInfo vars;
+    protected final DefinitionData data;
 
-    private boolean returnWritten = false;
     private boolean newlineNext = false;
 
-    private void start() {
-        if (!returnWritten) {
+    protected void start() {
+        if (newlineNext) {
+            sb.newLine();
             sb.writeIndent();
-            sb.append("return ");
-            returnWritten = true;
-        } else {
-            if (newlineNext) {
-                sb.newLine();
-                sb.writeIndent();
-                newlineNext = false;
-            }
+            newlineNext = false;
         }
     }
 
-    private void end() {
-        //sb.newLine();
-        //newlineNext = true;
+    protected void end() {
     }
 
     public GoRhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data) {
@@ -62,7 +52,7 @@ class GoRhsVisitor extends VisitK {
         } else if (k.klabel().name().equals("#Bottom")) {
             sb.append("Bottom{}");
         } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
-            applyFunction(k);
+            applyKApplyExecute(k);
         } else {
             applyKApplyAsIs(k);
         }
@@ -70,7 +60,7 @@ class GoRhsVisitor extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        sb.append("KApply{Label: ");
+        sb.append("/* as-is */ KApply{Label: ");
         GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
         sb.append(", List: []K{");
         sb.increaseIndent();
@@ -85,10 +75,22 @@ class GoRhsVisitor extends VisitK {
         sb.append("}}");
     }
 
-    private void applyFunction(KApply k) {
-        String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
-        sb.append("/* applyFunction:").append(hook).append(" */ ");
-        applyKApplyAsIs(k);
+    protected void applyKApplyExecute(KApply k) {
+        sb.append("/* execute: */"); // comment
+        GoStringUtil.appendFunctionName(sb.sb(), k.klabel()); // func name
+        if (k.items().size() == 0) { // call parameters
+            sb.append("(config)");
+        } else {
+            sb.append("(");
+            sb.increaseIndent();
+            for(K item : k.items()) {
+                newlineNext = true;
+                apply(item);
+                sb.append(",");
+            }
+            sb.newLine().writeIndent().append("config)");
+            sb.decreaseIndent();
+        }
     }
 
     @Override
@@ -156,13 +158,13 @@ class GoRhsVisitor extends VisitK {
 
     @Override
     public void apply(KSequence k) {
-        start();
         int size = k.items().size();
         sb.append("/* KSequence size=").append(size).append(" */ ");
         if (size == 0) {
         } else if (size == 1) {
             apply(k.items().get(0));
         } else {
+            start();
             boolean first = true;
             for (K item : k.items()) {
                 if (first) {
@@ -172,9 +174,8 @@ class GoRhsVisitor extends VisitK {
                 }
                 apply(item);
             }
-
+            end();
         }
-        end();
     }
 
     @Override
