@@ -16,29 +16,6 @@ type KSequence struct {
 	ks []K
 }
 
-/*
-kitem =
-            | Map of sort * klabel * m
-            | List of sort * klabel * t list
-            | Set of sort * klabel * s
-            | Array of sort * t * t Dynarray.t
-            | Int of Z.t
-            | Float of Gmp.FR.t * int * int
-            | String of string
-            | Bytes of bytes
-            | StringBuffer of Buffer.t
-            | Bool of bool
-            | MInt of int * Z.t
-            | ThreadLocal
-            | Thread of t * t * t * t
-            | Bottom
-            | KApply0 of klabel
-            | KApply1 of klabel * t
-            | KApply2 of klabel * t * t
-            | KApply3 of klabel * t * t * t
-            | KApply4 of klabel * t * t * t * t
-*/
-
 // KItem ...
 type KItem interface {
 }
