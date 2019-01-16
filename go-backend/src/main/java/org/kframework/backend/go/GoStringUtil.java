@@ -266,30 +266,7 @@ class GoStringUtil {
         sb.append(methodName);
     }
 
-    private static final String EVAL_ARG_NAME = "c";
-
-    /**
-     * Helps create function definitions and function calls with number of arguments given by the arity parameter.
-     *
-     * @param arity             number of parameters
-     * @param cParamDeclaration output section of function declaration here
-     * @param cParamCall        output section of function call here
-     */
-    static void createParameterDeclarationAndCall(int arity, StringBuilder cParamDeclaration, StringBuilder cParamCall) {
-        if (arity == 0) {
-            // nothing needs to be added
-        } else if (arity == 1) {
-            cParamDeclaration.append(EVAL_ARG_NAME).append(" K,");
-            cParamCall.append(EVAL_ARG_NAME).append(", ");
-        } else if (arity > 1) {
-            for (int i = 1; i <= arity; i++) {
-                cParamDeclaration.append(EVAL_ARG_NAME).append(i).append(" K, ");
-                cParamCall.append(EVAL_ARG_NAME).append(i).append(", ");
-            }
-        }
-    }
-
-    static void appendRuleComment(StringBuilder sb, Rule r) {
+    static void appendRuleComment(GoStringBuilder sb, Rule r) {
         sb.append("\t// {| rule ");
         sb.append(ToKast.apply(r.body()).replace("|}", "| )"));
         sb.append(" requires ");

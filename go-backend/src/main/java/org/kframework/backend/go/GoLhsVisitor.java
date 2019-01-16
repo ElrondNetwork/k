@@ -16,47 +16,38 @@ import org.kframework.parser.outer.Outer;
 import java.util.List;
 
 class GoLhsVisitor extends VisitK {
-    private final StringBuilder sb;
+    private final GoStringBuilder sb;
     private final VarInfo vars;
     private final DefinitionData data;
 
-    private boolean inBooleanExp;
-    private boolean topAnywherePre;
-    private boolean topAnywherePost;
+    private final FunctionVars functionVars;
 
-    private int indentDepth = 1;
-    private String subject = "c";
-
-    public void writeIndent() {
-        for (int i = 0; i < indentDepth; i++) {
-            sb.append('\t');
-        }
-    }
-
-    public void beginBlock() {
-        sb.append(" {\n");
-        indentDepth++;
-    }
-
-    public void endAllBlocks() {
-        while (indentDepth > 1) {
-            indentDepth--;
-            writeIndent();
-            sb.append("}\n");
-        }
-    }
-
-    public GoLhsVisitor(StringBuilder sb, VarInfo vars, DefinitionData data, boolean useNativeBooleanExp, boolean anywhereRule) {
+    public GoLhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data, FunctionVars functionVars) {
         this.sb = sb;
         this.vars = vars;
         this.data = data;
-        this.inBooleanExp = useNativeBooleanExp;
-        this.topAnywherePre = anywhereRule;
-        this.topAnywherePost = anywhereRule;
+        this.functionVars = functionVars;
     }
 
-    private void lhsTypeIf(String castVar, String type) {
-        writeIndent();
+    private String nextSubject = null;
+    private int nextFunctionVarIndex = 0;
+
+    private String consumeSubject() {
+        if (nextSubject != null) {
+            String subj = nextSubject;
+            nextSubject = null;
+            return subj;
+        }
+        if (nextFunctionVarIndex < functionVars.arity()) {
+            String subj = functionVars.varName(nextFunctionVarIndex);
+            nextFunctionVarIndex++;
+            return subj;
+        }
+        return "BAD_SUBJ";
+    }
+
+    private void lhsTypeIf(String castVar, String subject, String type) {
+        sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
         sb.append(subject).append(".(").append(type).append("); t");
     }
@@ -65,25 +56,27 @@ class GoLhsVisitor extends VisitK {
     public void apply(KApply k) {
         if (k.klabel().name().equals("#KToken")) {
             //magic down-ness
-            lhsTypeIf("kt", "KToken");
+            lhsTypeIf("kt", consumeSubject(), "KToken");
             sb.append(" && kt.Sort == ");
             Sort sort = Outer.parseSort(((KToken) ((KSequence) k.klist().items().get(0)).items().get(0)).s());
-            GoStringUtil.appendSortVariableName(sb, sort);
-            beginBlock();
-            subject = "kt.Value";
+            GoStringUtil.appendSortVariableName(sb.sb(), sort);
+            sb.beginBlock("lhs #KToken");
+            nextSubject = "kt.Value";
             apply(((KSequence) k.klist().items().get(1)).items().get(0));
         } else if (k.klabel().name().equals("#Bottom")) {
-            lhsTypeIf("_", "Bottom");
+            lhsTypeIf("_", consumeSubject(), "Bottom");
         } else {
-            topAnywherePre = false;
-            lhsTypeIf("kapp", "KApply");
+            lhsTypeIf("kapp", consumeSubject(), "KApply");
             sb.append(" && kapp.Label == ");
-            GoStringUtil.appendKlabelVariableName(sb, k.klabel());
-            beginBlock();
-            applyTuple(k.klist().items());
+            GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
+            sb.beginBlock("lhs KApply");
+            int i = 0;
+            for (K item : k.klist().items()) {
+                nextSubject = "kapp.List[" + i + "]";
+                apply(item);
+            }
         }
     }
-
 
     void applyTuple(List<K> items) {
         for (K item : items) {
@@ -93,7 +86,7 @@ class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        writeIndent();
+        sb.writeIndent();
         sb.append("// apply KAs\n");
     }
 
@@ -104,58 +97,62 @@ class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KToken k) {
-        writeIndent();
+        sb.writeIndent();
         sb.append("// apply KToken\n");
+        sb.writeIndent();
+        sb.append("if ").append(consumeSubject()).append(" == ");
+        GoRhsVisitor.appendKTokenRepresentation(sb.sb(), k, data);
+        sb.beginBlock();
     }
 
     @Override
     public void apply(KVariable k) {
         String varName = GoStringUtil.variableName(k.name());
 
+        if (vars.vars.containsKey(k)) {
+            sb.writeIndent();
+            sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
+            sb.beginBlock("apply KVariable, which reappears:" + k.name());
+            vars.vars.put(k, varName);
+            return;
+        }
+
         vars.vars.put(k, varName);
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
             String hook = data.mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-            if (GoBuiltin.OCAML_SORT_VAR_HOOKS.containsKey(hook)) {
-                // comment
-                writeIndent();
-                sb.append("// apply KVariable with hook:").append(hook);
-                sb.append("\n");
-
-                // code
-                writeIndent();
+            if (GoBuiltin.GO_SORT_VAR_HOOKS.containsKey(hook)) {
+                sb.writeIndent();
                 String pattern = GoBuiltin.GO_SORT_VAR_HOOKS.get(hook);
                 sb.append(String.format(pattern,
-                        varName, subject, GoStringUtil.sortVariableName(s)));
-                beginBlock();
+                        varName, consumeSubject(), GoStringUtil.sortVariableName(s)));
+                sb.beginBlock("apply KVariable with hook:" + hook);
                 return;
             }
         }
 
         if (varName.equals("_")) {
             // no code here, it is redundant
-            writeIndent();
+            sb.writeIndent();
             sb.append("//");
-            sb.append(varName).append(" := ").append(subject).append(" // apply KVariable\n");
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // apply KVariable\n");
         } else {
-            writeIndent();
-            sb.append(varName).append(" := ").append(subject).append(" // apply KVariable\n");
+            sb.writeIndent();
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // apply KVariable\n");
         }
     }
 
     @Override
     public void apply(KSequence k) {
-        writeIndent();
-        sb.append("// apply KSequence size:" + k.items().size() +"\n");
+        sb.writeIndent();
+        sb.append("// apply KSequence size:" + k.items().size() + "\n");
         if (k.items().size() == 1) {
-            subject = "c";
             apply(k.items().get(0));
             return;
         }
 
         int i = 1;
         for (K item : k.items()) {
-            subject = "c" + i;
             apply(item);
             i++;
         }
@@ -163,12 +160,10 @@ class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(InjectedKLabel k) {
-        lhsTypeIf("ikl", "InjectedKLabel");
+        lhsTypeIf("ikl", consumeSubject(), "InjectedKLabel");
         sb.append(" && ikl.Sort == ");
-        GoStringUtil.appendKlabelVariableName(sb, k.klabel());
-        beginBlock();
+        GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
+        sb.beginBlock();
     }
 
-    private void apply(List<K> items, boolean klist) {
-    }
 }

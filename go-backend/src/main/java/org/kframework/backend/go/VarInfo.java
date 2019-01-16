@@ -25,4 +25,5 @@ class VarInfo {
         this.listVars = listVars;
         this.termCache = termCache;
     }
+
 }

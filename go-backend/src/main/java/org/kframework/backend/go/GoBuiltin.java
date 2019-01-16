@@ -3,6 +3,7 @@ package org.kframework.backend.go;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.kframework.kore.Sort;
+import org.kframework.utils.StringUtil;
 
 import java.util.function.Function;
 
@@ -57,6 +58,28 @@ public class GoBuiltin {
         OCAML_SORT_VAR_HOOKS = builder.build();
     }
 
+
+    public static final ImmutableMap<String, Function<String, String>> GO_SORT_TOKEN_HOOKS;
+    static {
+        ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
+        builder.put("BOOL.Bool", s -> "Bool(" + s + ")");
+        builder.put("MINT.MInt", s -> "MInt(" + s + ")");
+//        builder.put("MINT.MInt", s -> {
+//            MIntBuiltin m = MIntBuiltin.of(s);
+//            return "(MInt (" + m.precision() + ", Z.of_string \"" + m.value() + "))";
+//        });
+        builder.put("INT.Int", s -> "Int(" + s + ")");
+        builder.put("FLOAT.Float", s -> "Float(" + s + ")");
+//        builder.put("FLOAT.Float", s -> {
+//            FloatBuiltin f = FloatBuiltin.of(s);
+//            return "(round_to_range(Float ((Gmp.FR.from_string_prec_base " + f.precision() + " Gmp.GMP_RNDN 10 \"" + f.value() + "\"), " + f.exponent() + ", " + f.precision() + ")))";
+//        });
+        builder.put("STRING.String", s -> "String (" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + ")");
+        builder.put("BYTES.Bytes", s -> "Bytes([]byte(" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + "))");
+        builder.put("BUFFER.StringBuffer", s -> "StringBuffer{}");
+        GO_SORT_TOKEN_HOOKS = builder.build();
+    }
+
     public static final ImmutableMap<String, String> GO_SORT_VAR_HOOKS;
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
@@ -64,7 +87,7 @@ public class GoBuiltin {
         builder.put("MINT.MInt", "if %1$s, t := %2$s.(MInt); t.");
         builder.put("INT.Int",   "if %1$s, t := %2$s.(Int); t");
         builder.put("FLOAT.Float",  "if %1$s, t := %2$s.(Float); t");
-        builder.put("STRING.String", "if %1$s, t := %2$s.(String);");
+        builder.put("STRING.String", "if %1$s, t := %2$s.(String); t");
         builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(Bytes); t.(Bytes); t");
         builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(StringBuffer); t");
         builder.put("LIST.List", "if %1$s, t := %2$s.(List); t && %1$s.Sort == %3$s");

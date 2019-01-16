@@ -391,7 +391,7 @@ public class DefinitionToGo {
         }
         klabelRuleMap.putAll(anywhereRules);
 
-        StringBuilder sb = new StringBuilder();
+        GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 
         // constants := arity == 0 && !impure
@@ -405,11 +405,7 @@ public class DefinitionToGo {
             if (functions.contains(functionLabel)) {
                 // prepare arity/params
                 int arity = getArity(functionLabel);
-                StringBuilder cParamDeclaration = new StringBuilder();
-                StringBuilder cParamCall = new StringBuilder();
-                GoStringUtil.createParameterDeclarationAndCall(arity, cParamDeclaration, cParamCall);
-
-                boolean panicAtTheEnd = true;
+                FunctionVars functionVars = new FunctionVars(arity);
 
                 String functionName;
                 if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
@@ -418,27 +414,29 @@ public class DefinitionToGo {
                     functionName = GoStringUtil.functionName(functionLabel);
                 }
 
+                assert sb.currentIndent() == 0;
+
                 // start typing
                 sb.append("func ");
                 sb.append(functionName);
-                sb.append("(").append(cParamDeclaration.toString()).append(" config K) K {\n");
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config K) K");
+                sb.beginBlock();
 
 
                 // hook implementation
                 String namespace = hook.substring(0, hook.indexOf('.'));
                 String function = hook.substring(namespace.length() + 1);
                 if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
-                    panicAtTheEnd = false;
                     sb.append("\t//hook: ").append(hook).append("\n");
                     sb.append("\tlbl := ");
-                    GoStringUtil.appendKlabelVariableName(sb, functionLabel);
+                    GoStringUtil.appendKlabelVariableName(sb.sb(), functionLabel);
                     sb.append(" // ").append(functionLabel.name()).append("\n"); // just for readability
                     sb.append("\tsort := ");
-                    GoStringUtil.appendSortVariableName(sb, mainModule.sortFor().apply(functionLabel));
+                    GoStringUtil.appendSortVariableName(sb.sb(), mainModule.sortFor().apply(functionLabel));
                     sb.append("\n\treturn ");
-                    GoStringUtil.appendHookMethodName(sb, namespace, function);
+                    GoStringUtil.appendHookMethodName(sb.sb(), namespace, function);
                     sb.append("(");
-                    sb.append(cParamCall);
+                    sb.append(functionVars.callParameters());
                     sb.append("lbl, sort, config)\n");
 
                     if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
@@ -464,24 +462,23 @@ public class DefinitionToGo {
                 }
 
                 // main!
-                convertFunction(functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList()),
-                        sb, functionName, RuleType.FUNCTION);
+                List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
+                convertFunction(rules, sb, functionName, RuleType.FUNCTION, functionVars);
 
-                if (panicAtTheEnd) {
-                    sb.append("\tpanic(\"Stuck!\")\n");
-                }
-                sb.append("}\n\n");
+                sb.append("\tpanic(\"Stuck!\")\n");
+                sb.endAllBlocks(0);
+                sb.append("\n");
 
-
+                // not yet sure if we're keeping these
                 if (constants.contains(functionLabel)) {
                     sb.append("//var ");
-                    GoStringUtil.appendConstFunctionName(sb, functionLabel);
+                    GoStringUtil.appendConstFunctionName(sb.sb(), functionLabel);
                     sb.append(" K = ");
-                    GoStringUtil.appendFunctionName(sb, functionLabel);
+                    GoStringUtil.appendFunctionName(sb.sb(), functionLabel);
                     sb.append("(internedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
                     sb.append("//memoization not yet implemented. Function name: ");
-                    sb.append(functionLabel);
+                    sb.append(functionLabel.toString());
                     sb.append("\n\n");
                     //encodeMemoizationOfFunction(sb, conn, functionLabel, functionName, arity);
                 }
@@ -500,7 +497,7 @@ public class DefinitionToGo {
         return arities.iterator().next();
     }
 
-    private void convertFunction(List<Rule> rules, StringBuilder sb, String functionName, RuleType type) {
+    private void convertFunction(List<Rule> rules, GoStringBuilder sb, String functionName, RuleType type, FunctionVars functionVars) {
         int ruleNum = 0;
         for (Rule r : rules) {
             if (hasLookups(r)) {
@@ -508,22 +505,21 @@ public class DefinitionToGo {
                 sb.append("\t// rule with lookups\n");
             } else {
                 sb.append("\t// rule without lookups\n");
-                ruleNum = convert(r, sb, type, ruleNum, functionName);
+                ruleNum = convert(r, sb, type, ruleNum, functionName, functionVars);
             }
         }
     }
 
-    private int convert(Rule r, StringBuilder sb, RuleType type, int ruleNum, String functionName) {
+    private int convert(Rule r, GoStringBuilder sb, RuleType type, int ruleNum, String functionName, FunctionVars functionVars) {
         try {
             GoStringUtil.appendRuleComment(sb, r);
 
-            //sb.append("// | ");
             K left = RewriteToTop.toLeft(r.body());
             K requires = r.requires();
             VarInfo vars = new VarInfo();
 
             // convertLHS
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), false, false);
+            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), functionVars);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) ((KSequence) left).items().get(0);
                 lhsVisitor.applyTuple(kapp.klist().items());
@@ -540,20 +536,23 @@ public class DefinitionToGo {
 //            if (!requires.equals(KSequence(BooleanUtils.TRUE)) || !result.equals("true")) {
 //                suffix = convertSideCondition(sb, requires, vars, Collections.emptyList(), when, type, ruleNum);
 //            }
-            lhsVisitor.writeIndent();
+            sb.writeIndent();
             sb.append("// rhs here!\n");
+
             for (String varName : vars.vars.values()) {
                 if (!varName.equals("_")) {
-                    lhsVisitor.writeIndent();
+                    sb.writeIndent();
                     sb.append("doNothingWithVar(").append(varName).append(") // temp\n");
                 }
             }
-            lhsVisitor.writeIndent();
-            sb.append("return internedBottom\n");
+            GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, vars, this.definitionData());
+            K right = RewriteToTop.toRight(r.body());
+            rhsVisitor.apply(right);
+            sb.append("\n");
 
             //convertRHS(sb, type, r, vars, suffix, ruleNum, functionName, true);
 
-            lhsVisitor.endAllBlocks();
+            sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
             sb.append("\n");
             return ruleNum + 1;
         } catch (NoSuchElementException e) {
