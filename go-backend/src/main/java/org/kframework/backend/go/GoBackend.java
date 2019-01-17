@@ -62,6 +62,8 @@ public class GoBackend implements Backend {
         // temporary, for convenience and comparison
         try {
             files.saveToKompiled("realdef.ml", ocamlDef.definition());
+            String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
+            files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
             files.saveToKompiled("definition.go", def.definition());
             files.saveToKompiled("eval.go", def.evalDefinition());

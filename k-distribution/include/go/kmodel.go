@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	koreparser "kgoimp/imp-kompiled/koreparser"
+	koreparser "$INCLUDE_KORE_PARSER$"
 	"strings"
 )
 
@@ -46,7 +46,7 @@ type KVariable struct {
 type Map struct {
     Sort Sort
     Label KLabel
-    data map[K]bool
+    data map[K]K
 }
 
 // Set ... a type of KItem, TODO: document
@@ -117,7 +117,7 @@ func convertParserModelToKModel(pk koreparser.K) K {
 		}
 		return KSequence{ks: convertedKs}
 	default:
-		panic("Unknown parser model K type.")
+		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
 	}
 }
 

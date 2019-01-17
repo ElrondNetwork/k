@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	koreparser "kgoimp/imp-kompiled/koreparser"
+	koreparser "$INCLUDE_KORE_PARSER$"
 	"log"
 	"os"
 	"os/exec"
@@ -24,8 +24,17 @@ func kastParseAndPrint() {
 	fmt.Printf("Kast: %s\n\n", kast)
 
 	parserK := koreparser.Parse(kast)
-	k := convertParserModelToKModel(parserK)
-	fmt.Println(k.PrettyTreePrint(0))
+	kinput := convertParserModelToKModel(parserK)
+	fmt.Println("input:")
+	fmt.Println(kinput.PrettyTreePrint(0))
+
+	m := make(map[K]K)
+	m[KToken{Sort: sortKConfigVar, Value: "$PGM"}] = kinput
+	kmap := Map{Sort: sortMap, Label: lbl_Map_, data: m}
+	evalK := KApply{Label: topCellInitializer, List: []K{kmap}}
+	kresult := eval(evalK, Bottom{})
+	fmt.Println("\n\noutput:")
+	fmt.Println(kresult.PrettyTreePrint(0))
 }
 
 func main() {

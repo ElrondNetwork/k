@@ -93,6 +93,7 @@ public class DefinitionToGo {
     }
 
     private Module mainModule;
+    private KLabel topCellInitializer;
     private Map<KLabel, KLabel> collectionFor;
 
     DefinitionData definitionData() {
@@ -138,8 +139,10 @@ public class DefinitionToGo {
                 .andThen(generatePredicates)
                 .andThen(liftToKSequence);
         mainModule = pipeline.apply(def.executionModule());
+        topCellInitializer = def.topCellInitializer;
         //mainModule = def.executionModule();
         collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
+
         //filteredMapConstructors = ConvertDataStructureToLookup.filteredMapConstructors(mainModule);
     }
 
@@ -362,6 +365,10 @@ public class DefinitionToGo {
 
         sb.append("import \"fmt\"\n\n");
 
+        sb.append("const topCellInitializer KLabel = ");
+        GoStringUtil.appendKlabelVariableName(sb, topCellInitializer);
+        sb.append("\n\n");
+
         sb.append("func eval(c K, config K) K {\n");
         sb.append("\tkApply, typeOk := c.(KApply)\n");
         sb.append("\tif !typeOk {\n");
@@ -528,7 +535,12 @@ public class DefinitionToGo {
                 List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
                 convertFunction(rules, sb, functionName, RuleType.FUNCTION, functionVars);
 
-                sb.append("\tpanic(\"Stuck!\")\n");
+                // TODO: will have to convert to a nice returned error
+                sb.writeIndent().append("panic(\"Stuck! Function: ").append(functionName).append(" Args:\"");
+                for(String fv : functionVars.getVarNames()) {
+                    sb.append(" + \"\\n\\t").append(fv).append(":\" + ").append(fv).append(".PrettyTreePrint(0)");
+                }
+                sb.append(")").newLine();
                 sb.endAllBlocks(0);
                 sb.append("\n");
 

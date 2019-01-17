@@ -1,5 +1,9 @@
 package org.kframework.backend.go;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.stream.Stream;
+
 class FunctionVars {
 
     private static final String EVAL_ARG_NAME = "c";
@@ -48,6 +52,19 @@ class FunctionVars {
             sb.append(", ");
         }
         return sb.toString();
+    }
+
+    public Iterable<String> getVarNames() {
+        return new Iterable<String>() {
+            @Override
+            public Iterator<String> iterator() {
+                return Arrays.stream(varNames).iterator();
+            }
+        };
+    }
+
+    public Stream<String> varNamesStream() {
+        return Arrays.stream(varNames);
     }
 
 }
