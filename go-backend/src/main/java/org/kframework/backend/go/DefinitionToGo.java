@@ -18,12 +18,10 @@ import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
 import org.kframework.compile.ExpandMacros;
 import org.kframework.compile.GenerateSortPredicateRules;
 import org.kframework.compile.RewriteToTop;
-import org.kframework.definition.Constructors;
 import org.kframework.definition.Module;
 import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Production;
 import org.kframework.definition.Rule;
-import org.kframework.definition.Sentence;
 import org.kframework.kil.Attribute;
 import org.kframework.kompile.CompiledDefinition;
 import org.kframework.kompile.Kompile;
@@ -48,18 +46,15 @@ import scala.Function1;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.kframework.Collections.*;
 import static org.kframework.backend.go.CopiedStaticMethods.*;
-import static org.kframework.definition.Constructors.*;
 import static org.kframework.kore.KORE.*;
 
 public class DefinitionToGo {
@@ -74,7 +69,6 @@ public class DefinitionToGo {
     private boolean threadCellExists;
     private transient Rule exitCodePattern;
     public GoOptions options;
-    private Map<String, List<KLabel>> klabelsForEachPredicate;
 
     public DefinitionToGo(
             KExceptionManager kem,
@@ -111,26 +105,10 @@ public class DefinitionToGo {
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
-        // this.threadCellExists = containsThreadCell(def);
         this.exitCodePattern = def.exitCodePattern;
-        ModuleTransformer splitThreadCell = this.threadCellExists ?
-                ModuleTransformer.fromSentenceTransformer(new
-                        SplitThreadsCell(def.executionModule())::convert, "split threads cell into thread local and global") :
-                ModuleTransformer.fromSentenceTransformer(s -> s, "identity function -- no transformation");
-        ModuleTransformer preprocessKLabelPredicates = ModuleTransformer.fromSentenceTransformer(new PreprocessKLabelPredicates(def.executionModule())::convert, "preprocess klabel predicates");
-        Sentence thread = Constructors.Production(KLabel("#Thread"), Sorts.KItem(), Seq(
-                Terminal("#Thread"), Terminal("("),
-                NonTerminal(Sorts.K()), Terminal(","),
-                NonTerminal(Sorts.K()), Terminal(","),
-                NonTerminal(Sorts.K()), Terminal(","),
-                NonTerminal(Sorts.K()), Terminal(")")));
-        Sentence bottom = Constructors.Production(KLabel("#Bottom"), Sorts.KItem(), Seq(Terminal("#Bottom")));
-        Sentence threadLocal = Constructors.Production(KLabel("#ThreadLocal"), Sorts.KItem(), Seq(Terminal("#ThreadLocal")));
-        Function1<Module, Module> pipeline = preprocessKLabelPredicates
-                .andThen(splitThreadCell)
-                .andThen(mod -> Constructors.Module(mod.name(), mod.imports(),
-                        Stream.concat(stream(mod.localSentences()),
-                                Stream.<Sentence>of(thread, bottom, threadLocal)).collect(org.kframework.Collections.toSet()), mod.att()))
+        ModuleTransformer identity = ModuleTransformer.fromSentenceTransformer(s -> s, "identity function -- no transformation");
+
+        Function1<Module, Module> pipeline = identity
                 .andThen(convertLookups)
                 .andThen(expandMacros)
                 .andThen(deconstructInts)
@@ -138,8 +116,6 @@ public class DefinitionToGo {
         mainModule = pipeline.apply(def.executionModule());
         topCellInitializer = def.topCellInitializer;
         collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
-
-        //filteredMapConstructors = ConvertDataStructureToLookup.filteredMapConstructors(mainModule);
     }
 
     public String klabels() {
@@ -436,12 +412,6 @@ public class DefinitionToGo {
 
         //TODO: warning! duplicate code with DefinitionToOcaml
         SetMultimap<KLabel, Rule> klabelRuleMap = HashMultimap.create(functionRules);
-        klabelsForEachPredicate = new HashMap<>();
-        for (KLabel functionLabel : klabelRuleMap.keySet()) {
-            if (mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).contains("klabelPredicate")) {
-                klabelsForEachPredicate.put(functionLabel.name(), computeKLabelsForPredicate(functionRules.get(functionLabel)));
-            }
-        }
         klabelRuleMap.putAll(anywhereRules);
 
         GoStringBuilder sb = new GoStringBuilder();
