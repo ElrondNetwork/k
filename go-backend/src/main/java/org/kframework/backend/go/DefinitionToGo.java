@@ -417,6 +417,8 @@ public class DefinitionToGo {
         GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 
+        sb.append("import \"fmt\"\n\n");
+
         // constants := arity == 0 && !impure
         List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies); // result no longer required
         Set<KLabel> impurities = functions.stream().filter(lbl -> mainModule.attributesFor().apply(lbl).contains(Attribute.IMPURE_KEY)).collect(Collectors.toSet());
@@ -472,7 +474,9 @@ public class DefinitionToGo {
 
                     sb.writeIndent().append("return hookRes").newLine();
 
-                    sb.endOneBlockNoNewline().append(" else if _, errTypeOk := hookErr.(*hookNotImplementedError); !errTypeOk ").beginBlock();
+                    sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
+                    sb.writeIndent().append("fmt.Println(\"Warning! Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
+                    sb.endOneBlockNoNewline().append(" else").beginBlock();
                     sb.writeIndent().append("panic(\"Unexpected error occured while running hook function.\")").newLine();
                     sb.endOneBlock().newLine();
                 } else if (!hook.equals(".")) {
