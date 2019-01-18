@@ -558,10 +558,16 @@ public class DefinitionToGo {
 
             K left = RewriteToTop.toLeft(r.body());
             K requires = r.requires();
+            K right = RewriteToTop.toRight(r.body());
             VarInfo vars = new VarInfo();
 
+            // check which variables are actually used in requires or rhs
+            AccumulateVariableNames accumVarNames = new AccumulateVariableNames();
+            accumVarNames.apply(requires);
+            accumVarNames.apply(right);
+
             // convertLHS
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), functionVars);
+            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), functionVars, accumVarNames.getVarNames());
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) left;
                 lhsVisitor.applyTuple(kapp.klist().items());
@@ -584,23 +590,13 @@ public class DefinitionToGo {
                 // condition ends
                 sb.beginBlock();
             }
-            sb.writeIndent();
-            sb.append("// rhs here!\n");
 
-            for (String varName : vars.vars.values()) {
-                if (!varName.equals("_")) {
-                    sb.writeIndent();
-                    sb.append("doNothingWithVar(").append(varName).append(") // temp\n");
-                }
-            }
+            sb.writeIndent().append("// rhs here:").newLine();
             GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, vars, this.definitionData());
-            K right = RewriteToTop.toRight(r.body());
             sb.writeIndent();
             sb.append("return ");
             rhsVisitor.apply(right);
             sb.append("\n");
-
-            //convertRHS(sb, type, r, vars, suffix, ruleNum, functionName, true);
 
             sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
             sb.append("\n");

@@ -12,8 +12,10 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.List;
+import java.util.Set;
 
 class GoLhsVisitor extends VisitK {
     private final GoStringBuilder sb;
@@ -21,12 +23,14 @@ class GoLhsVisitor extends VisitK {
     private final DefinitionData data;
 
     private final FunctionVars functionVars;
+    private final Set<String> usedVariableNames;
 
-    public GoLhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data, FunctionVars functionVars) {
+    public GoLhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data, FunctionVars functionVars, Set<String> usedVariableNames) {
         this.sb = sb;
         this.vars = vars;
         this.data = data;
         this.functionVars = functionVars;
+        this.usedVariableNames = usedVariableNames;
     }
 
     private String nextSubject = null;
@@ -64,7 +68,7 @@ class GoLhsVisitor extends VisitK {
             lhsTypeIf("kt", consumeSubject(), "KToken");
             sb.append(" && kt.Sort == ");
             GoStringUtil.appendSortVariableName(sb.sb(), sort);
-            sb.beginBlock("lhs #KToken");
+            sb.beginBlock("lhs KApply #KToken");
             nextSubject = "kt.Value";
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
@@ -91,8 +95,7 @@ class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        sb.writeIndent();
-        sb.append("// apply KAs\n");
+        throw KEMException.internalError("GoLhsVisitor.apply(KAs) not implemented.");
     }
 
     @Override
@@ -103,11 +106,10 @@ class GoLhsVisitor extends VisitK {
     @Override
     public void apply(KToken k) {
         sb.writeIndent();
-        sb.append("// apply KToken\n");
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == ");
         GoRhsVisitor.appendKTokenRepresentation(sb.sb(), k, data);
-        sb.beginBlock();
+        sb.beginBlock("lhs KToken");
     }
 
     @Override
@@ -137,13 +139,16 @@ class GoLhsVisitor extends VisitK {
         }
 
         if (varName.equals("_")) {
-            // no code here, it is redundant
             sb.writeIndent();
-            sb.append("//");
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // apply KVariable\n");
+            sb.append("// "); // no code here, it is redundant
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
+        } else if (!usedVariableNames.contains(k.name())) {
+            sb.writeIndent();
+            sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable not used\n");
         } else {
             sb.writeIndent();
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // apply KVariable\n");
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ok\n");
         }
     }
 

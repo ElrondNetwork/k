@@ -99,9 +99,7 @@ class GoRhsVisitor extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        start();
-        sb.append("/* rhs KAs */");
-        end();
+        throw KEMException.internalError("GoRhsVisitor.apply(KAs) not implemented.");
     }
 
     @Override
@@ -112,7 +110,7 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KToken k) {
         start();
-        sb.append("/* KToken */ ");
+        sb.append("/* rhs KToken */ ");
         appendKTokenRepresentation(sb.sb(), k, data);
         end();
     }
