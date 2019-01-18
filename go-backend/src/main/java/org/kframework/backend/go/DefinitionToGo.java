@@ -17,7 +17,6 @@ import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
 import org.kframework.compile.ExpandMacros;
 import org.kframework.compile.GenerateSortPredicateRules;
-import org.kframework.compile.LiftToKSequence;
 import org.kframework.compile.RewriteToTop;
 import org.kframework.definition.Constructors;
 import org.kframework.definition.Module;
@@ -109,7 +108,6 @@ public class DefinitionToGo {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
-        ModuleTransformer liftToKSequence = ModuleTransformer.fromSentenceTransformer(new LiftToKSequence()::lift, "lift K into KSequence");
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
@@ -136,11 +134,9 @@ public class DefinitionToGo {
                 .andThen(convertLookups)
                 .andThen(expandMacros)
                 .andThen(deconstructInts)
-                .andThen(generatePredicates)
-                .andThen(liftToKSequence);
+                .andThen(generatePredicates);
         mainModule = pipeline.apply(def.executionModule());
         topCellInitializer = def.topCellInitializer;
-        //mainModule = def.executionModule();
         collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
 
         //filteredMapConstructors = ConvertDataStructureToLookup.filteredMapConstructors(mainModule);
@@ -418,17 +414,14 @@ public class DefinitionToGo {
         anywhereKLabels = new HashSet<>();
         stream(mainModule.rules()).filter(r -> !r.att().contains(Attribute.MACRO_KEY) && !r.att().contains(Attribute.ALIAS_KEY)).forEach(r -> {
             K left = RewriteToTop.toLeft(r.body());
-            if (left instanceof KSequence) {
-                KSequence kseq = (KSequence) left;
-                if (kseq.items().size() == 1 && kseq.items().get(0) instanceof KApply) {
-                    KApply kapp = (KApply) kseq.items().get(0);
-                    if (mainModule.attributesFor().apply(kapp.klabel()).contains(Attribute.FUNCTION_KEY)) {
-                        functionRules.put(kapp.klabel(), r);
-                    }
-                    if (r.att().contains("anywhere")) {
-                        anywhereRules.put(kapp.klabel(), r);
-                        anywhereKLabels.add(kapp.klabel());
-                    }
+            if (left instanceof KApply) {
+                KApply kapp = (KApply) left;
+                if (mainModule.attributesFor().apply(kapp.klabel()).contains(Attribute.FUNCTION_KEY)) {
+                    functionRules.put(kapp.klabel(), r);
+                }
+                if (r.att().contains("anywhere")) {
+                    anywhereRules.put(kapp.klabel(), r);
+                    anywhereKLabels.add(kapp.klabel());
                 }
             }
         });
@@ -537,7 +530,7 @@ public class DefinitionToGo {
 
                 // TODO: will have to convert to a nice returned error
                 sb.writeIndent().append("panic(\"Stuck! Function: ").append(functionName).append(" Args:\"");
-                for(String fv : functionVars.getVarNames()) {
+                for (String fv : functionVars.getVarNames()) {
                     sb.append(" + \"\\n\\t").append(fv).append(":\" + ").append(fv).append(".PrettyTreePrint(0)");
                 }
                 sb.append(")").newLine();
@@ -596,7 +589,7 @@ public class DefinitionToGo {
             // convertLHS
             GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), functionVars);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
-                KApply kapp = (KApply) ((KSequence) left).items().get(0);
+                KApply kapp = (KApply) left;
                 lhsVisitor.applyTuple(kapp.klist().items());
             } else {
                 lhsVisitor.apply(left);
@@ -608,7 +601,7 @@ public class DefinitionToGo {
                 sb.append(" when start_after < ").append(ruleNum);
                 when = false;
             }
-            if (!requires.equals(KSequence(BooleanUtils.TRUE)) /*|| !result.equals("true")*/) {
+            if (!requires.equals(BooleanUtils.TRUE) /*|| !result.equals("true")*/) {
                 sb.writeIndent().append("/* REQUIRES */").newLine();
                 sb.writeIndent().append("if ");
                 // condition starts here
@@ -751,28 +744,23 @@ public class DefinitionToGo {
             K body = r.body();
             K lhs = RewriteToTop.toLeft(body);
             K rhs = RewriteToTop.toRight(body);
-            if (rhs.equals(KSequence(BooleanUtils.FALSE)) && r.att().contains("owise")) {
+            if (rhs.equals(BooleanUtils.FALSE) && r.att().contains("owise")) {
                 continue;
             }
-            if (!rhs.equals(KSequence(BooleanUtils.TRUE))) {
+            if (!rhs.equals(BooleanUtils.TRUE)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }
             if (!(lhs instanceof KSequence)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }
-            KSequence kseq = (KSequence) lhs;
-            if (kseq.items().size() != 1 || !(kseq.items().get(0) instanceof KApply)) {
+            if (!(lhs instanceof KApply)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }
-            KApply function = (KApply) kseq.items().get(0);
-            if (function.items().size() != 1 || !(function.items().get(0) instanceof KSequence)) {
+            KApply function = (KApply) lhs;
+            if (!(function.items().get(0) instanceof InjectedKLabel)) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }
-            kseq = (KSequence) function.items().get(0);
-            if (kseq.items().size() != 1 || !(kseq.items().get(0) instanceof InjectedKLabel)) {
-                throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
-            }
-            InjectedKLabel injection = (InjectedKLabel) kseq.items().get(0);
+            InjectedKLabel injection = (InjectedKLabel) function.items().get(0);
             if (injection.klabel() instanceof KVariable) {
                 throw KEMException.compilerError("Unexpected form for klabel predicate rule, expected predicate(_) => false [owise] or predicate(#klabel(`klabel`)) => true.", r);
             }

@@ -42,12 +42,16 @@ class GoRhsVisitor extends VisitK {
     public void apply(KApply k) {
         start();
         if (k.klabel().name().equals("#KToken")) {
+            assert k.klist().items().size() == 2;
+            KToken ktoken = (KToken) k.klist().items().get(0);
+            Sort sort = Outer.parseSort(ktoken.s());
+            K value = k.klist().items().get(1);
+
             //magic down-ness
             sb.append("KToken{Sort: ");
-            Sort sort = Outer.parseSort(((KToken) ((KSequence) k.klist().items().get(0)).items().get(0)).s());
             GoStringUtil.appendSortVariableName(sb.sb(), sort);
             sb.append(", Value:");
-            apply(((KSequence) k.klist().items().get(1)).items().get(0));
+            apply(value);
             sb.append("}");
         } else if (k.klabel().name().equals("#Bottom")) {
             sb.append("Bottom{}");
@@ -76,7 +80,7 @@ class GoRhsVisitor extends VisitK {
     }
 
     protected void applyKApplyExecute(KApply k) {
-        sb.append("/* execute: */"); // comment
+        sb.append("/* execute: */ "); // comment
         GoStringUtil.appendFunctionName(sb.sb(), k.klabel()); // func name
         if (k.items().size() == 0) { // call parameters
             sb.append("(config)");
@@ -108,7 +112,7 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KToken k) {
         start();
-        sb.append("/* KToken */");
+        sb.append("/* KToken */ ");
         appendKTokenRepresentation(sb.sb(), k, data);
         end();
     }

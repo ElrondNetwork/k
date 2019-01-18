@@ -55,14 +55,18 @@ class GoLhsVisitor extends VisitK {
     @Override
     public void apply(KApply k) {
         if (k.klabel().name().equals("#KToken")) {
+            assert k.klist().items().size() == 2;
+            KToken ktoken = (KToken) k.klist().items().get(0);
+            Sort sort = Outer.parseSort(ktoken.s());
+            K value = k.klist().items().get(1);
+
             //magic down-ness
             lhsTypeIf("kt", consumeSubject(), "KToken");
             sb.append(" && kt.Sort == ");
-            Sort sort = Outer.parseSort(((KToken) ((KSequence) k.klist().items().get(0)).items().get(0)).s());
             GoStringUtil.appendSortVariableName(sb.sb(), sort);
             sb.beginBlock("lhs #KToken");
             nextSubject = "kt.Value";
-            apply(((KSequence) k.klist().items().get(1)).items().get(0));
+            apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             lhsTypeIf("_", consumeSubject(), "Bottom");
         } else {
@@ -74,6 +78,7 @@ class GoLhsVisitor extends VisitK {
             for (K item : k.klist().items()) {
                 nextSubject = "kapp.List[" + i + "]";
                 apply(item);
+                i++;
             }
         }
     }
