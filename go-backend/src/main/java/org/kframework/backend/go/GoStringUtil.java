@@ -1,6 +1,5 @@
 package org.kframework.backend.go;
 
-import com.google.common.collect.ImmutableMap;
 import org.kframework.definition.Rule;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;
@@ -246,24 +245,6 @@ class GoStringUtil {
         }
         result.append(delimiter);
         return result.toString();
-    }
-
-    private static final ImmutableMap<String, String> GO_RESERVED_TO_REPLACEMENTS;
-
-    static {
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("range", "lrange");
-        GO_RESERVED_TO_REPLACEMENTS = builder.build();
-    }
-
-    static void appendHookMethodName(StringBuilder sb, String objectName, String methodName) {
-        sb.append(objectName.toLowerCase());
-        sb.append("Hooks.");
-        if (GO_RESERVED_TO_REPLACEMENTS.containsKey(methodName)) {
-            // replace Go reserved words with some non-conflicting ones
-            methodName = GO_RESERVED_TO_REPLACEMENTS.get(methodName);
-        }
-        sb.append(methodName);
     }
 
     static void appendRuleComment(GoStringBuilder sb, Rule r) {

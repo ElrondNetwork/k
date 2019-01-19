@@ -18,6 +18,18 @@ public class GoBuiltin {
         HOOK_NAMESPACES = builder.build();
     }
 
+    /**
+     * Some K framework function hook names are not suitable for Go. Here are the replacements.
+     */
+    public static final ImmutableMap<String, String> GO_FRIENDLY_HOOK_NAMES;
+
+    static {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        builder.put("LIST.range", "listRange"); // range is a reserved word in Go
+        builder.put("MAP.keys_list", "keysList"); // underscores
+        builder.put("MAP.in_keys", "inKeys"); // underscores
+        GO_FRIENDLY_HOOK_NAMES = builder.build();
+    }
 
     public static final ImmutableMap<String, Function<Sort, String>> PREDICATE_RULES;
     private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn Bool(true)\n\t}";

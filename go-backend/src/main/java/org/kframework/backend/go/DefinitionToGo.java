@@ -11,6 +11,7 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
+import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConvertDataStructureToLookup;
@@ -449,9 +450,9 @@ public class DefinitionToGo {
 
 
                 // hook implementation
-                String namespace = hook.substring(0, hook.indexOf('.'));
-                String function = hook.substring(namespace.length() + 1);
-                if (GoBuiltin.HOOK_NAMESPACES.contains(namespace) || options.hookNamespaces.contains(namespace)) {
+                FunctionHookName funcHook = new FunctionHookName(hook);
+                if (GoBuiltin.HOOK_NAMESPACES.contains(funcHook.getNamespace()) ||
+                        options.hookNamespaces.contains(funcHook.getNamespace())) {
                     sb.writeIndent().append("//hook: ").append(hook).newLine();
 
                     sb.writeIndent().append("lbl := ");
@@ -462,7 +463,7 @@ public class DefinitionToGo {
                     sb.newLine();
 
                     sb.writeIndent().append("if hookRes, hookErr := ");
-                    GoStringUtil.appendHookMethodName(sb.sb(), namespace, function);
+                    sb.append(funcHook.getGoHookObjName()).append(".").append(funcHook.getGoFuncName());
                     sb.append("(");
                     sb.append(functionVars.callParameters());
                     sb.append("lbl, sort, config); hookErr == nil");
