@@ -3,6 +3,8 @@ package org.kframework.backend.go;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.kframework.backend.go.codegen.DefinitionToGo;
+import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.compile.Backend;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;

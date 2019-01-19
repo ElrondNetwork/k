@@ -11,7 +11,7 @@ import java.util.Set;
 // TODO: see if we still need them, is yes, move to k-distribution, or somewhere common
 public class CopiedStaticMethods {
 
-    static <V> Set<V> ancestors(
+    public static <V> Set<V> ancestors(
             Collection<? extends V> startNodes, DirectedGraph<V, ?> graph) {
         Queue<V> queue = new LinkedList<V>();
         Set<V> visited = new LinkedHashSet<V>();

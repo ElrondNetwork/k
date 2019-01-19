@@ -1,15 +1,11 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.strings;
 
 import org.kframework.definition.Rule;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.Sort;
 import org.kframework.unparser.ToKast;
 
-import java.util.regex.Pattern;
-
-class GoStringUtil {
-
-    public static final Pattern identChar = Pattern.compile("[A-Za-z0-9_]");
+public class GoStringUtil {
 
     private static final String[] ASCII_READABLE_ENCODING = new String[]{
             null,// 00
@@ -142,7 +138,7 @@ class GoStringUtil {
             null// 7f
     };
 
-    static void appendAlphanumericEncodedString(StringBuilder sb, String name) {
+    public static void appendAlphanumericEncodedString(StringBuilder sb, String name) {
         for (int i = 0; i < name.length(); i++) {
             int charAt = (int) name.charAt(i);
             if (charAt < 128 && ASCII_READABLE_ENCODING[charAt] != null) {
@@ -153,50 +149,50 @@ class GoStringUtil {
         }
     }
 
-    static void appendKlabelVariableName(StringBuilder sb, KLabel klabel) {
+    public static void appendKlabelVariableName(StringBuilder sb, KLabel klabel) {
         sb.append("lbl");
         appendAlphanumericEncodedString(sb, klabel.name());
     }
 
-    static void appendSortVariableName(StringBuilder sb, Sort sort) {
+    public static void appendSortVariableName(StringBuilder sb, Sort sort) {
         sb.append("sort");
         appendAlphanumericEncodedString(sb, sort.name());
     }
 
-    static String sortVariableName(Sort sort) {
+    public static String sortVariableName(Sort sort) {
         StringBuilder sb = new StringBuilder();
         appendSortVariableName(sb, sort);
         return sb.toString();
     }
 
-    static void appendFunctionName(StringBuilder sb, KLabel lbl) {
+    public static void appendFunctionName(StringBuilder sb, KLabel lbl) {
         sb.append("eval");
         appendAlphanumericEncodedString(sb, lbl.name());
     }
 
-    static void appendMemoFunctionName(StringBuilder sb, KLabel lbl) {
+    public static void appendMemoFunctionName(StringBuilder sb, KLabel lbl) {
         sb.append("memo");
         appendAlphanumericEncodedString(sb, lbl.name());
     }
 
-    static String functionName(KLabel lbl) {
+    public static String functionName(KLabel lbl) {
         StringBuilder sb = new StringBuilder();
         appendFunctionName(sb, lbl);
         return sb.toString();
     }
 
-    static String memoFunctionName(KLabel lbl) {
+    public static String memoFunctionName(KLabel lbl) {
         StringBuilder sb = new StringBuilder();
         appendMemoFunctionName(sb, lbl);
         return sb.toString();
     }
 
-    static void appendConstFunctionName(StringBuilder sb, KLabel lbl) {
+    public static void appendConstFunctionName(StringBuilder sb, KLabel lbl) {
         sb.append("const");
         appendAlphanumericEncodedString(sb, lbl.name());
     }
 
-    static String variableName(String varName) {
+    public static String variableName(String varName) {
         if (varName.equals("_")) {
             return "_";
         }
@@ -247,7 +243,7 @@ class GoStringUtil {
         return result.toString();
     }
 
-    static void appendRuleComment(GoStringBuilder sb, Rule r) {
+    public static void appendRuleComment(GoStringBuilder sb, Rule r) {
         sb.append("\t// {| rule ");
         sb.append(ToKast.apply(r.body()).replace("|}", "| )"));
         sb.append(" requires ");

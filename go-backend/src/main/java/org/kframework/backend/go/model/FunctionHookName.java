@@ -1,6 +1,6 @@
 package org.kframework.backend.go.model;
 
-import org.kframework.backend.go.GoBuiltin;
+import org.kframework.backend.go.codegen.GoBuiltin;
 
 public class FunctionHookName {
 

@@ -1,15 +1,15 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.model;
 
 import org.kframework.definition.Module;
 import org.kframework.kore.KLabel;
 
 import java.util.Set;
 
-class DefinitionData {
+public class DefinitionData {
 
-    final Module mainModule;
-    final Set<KLabel> functions;
-    final Set<KLabel> anywhereKLabels;
+    public final Module mainModule;
+    public final Set<KLabel> functions;
+    public final Set<KLabel> anywhereKLabels;
 
     public DefinitionData(Module mainModule, Set<KLabel> functions, Set<KLabel> anywhereKLabels) {
         this.mainModule = mainModule;

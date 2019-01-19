@@ -1,5 +1,10 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.codegen;
 
+import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.FunctionParams;
+import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.strings.GoStringBuilder;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -21,9 +26,9 @@ import java.util.Set;
 class GoLhsVisitor extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
-    private final FunctionVars functionVars;
-    private final VarInfo lhsVars;
-    private final VarInfo rhsVars;
+    private final FunctionParams functionVars;
+    private final RuleVars lhsVars;
+    private final RuleVars rhsVars;
 
     /**
      * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
@@ -31,7 +36,7 @@ class GoLhsVisitor extends VisitK {
      */
     private final Set<KVariable> alreadySeenVariables = new HashSet<>();
 
-    public GoLhsVisitor(GoStringBuilder sb, DefinitionData data, FunctionVars functionVars, VarInfo lhsVars, VarInfo rhsVars) {
+    public GoLhsVisitor(GoStringBuilder sb, DefinitionData data, FunctionParams functionVars, RuleVars lhsVars, RuleVars rhsVars) {
         this.sb = sb;
         this.data = data;
         this.functionVars = functionVars;

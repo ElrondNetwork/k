@@ -1,7 +1,8 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.Sort;
 import org.kframework.utils.StringUtil;
 

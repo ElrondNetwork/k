@@ -1,4 +1,4 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.model;
 
 import org.kframework.kore.KLabel;
 import org.kframework.kore.KVariable;
@@ -6,11 +6,11 @@ import org.kframework.kore.KVariable;
 import java.util.HashMap;
 import java.util.Map;
 
-class VarInfo {
+public class RuleVars {
     private final Map<KVariable, String> kVarToName = new HashMap<>();
-    final Map<String, KLabel> listVars = new HashMap<>();
+    public final Map<String, KLabel> listVars = new HashMap<>(); // TEMP
 
-    VarInfo() {
+    public RuleVars() {
     }
 
     public void putVar(KVariable kv, String varName) {

@@ -1,4 +1,4 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
@@ -11,7 +11,16 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
+import org.kframework.backend.go.GoOptions;
+import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
+import org.kframework.backend.go.model.FunctionParams;
+import org.kframework.backend.go.model.RuleType;
+import org.kframework.backend.go.processors.AccumulateRuleVars;
+import org.kframework.backend.go.processors.PrecomputePredicates;
+import org.kframework.backend.go.strings.GoStringBuilder;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConvertDataStructureToLookup;
@@ -431,7 +440,7 @@ public class DefinitionToGo {
             if (functions.contains(functionLabel)) {
                 // prepare arity/params
                 int arity = getArity(functionLabel);
-                FunctionVars functionVars = new FunctionVars(arity);
+                FunctionParams functionVars = new FunctionParams(arity);
 
                 String functionName;
                 if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
@@ -540,7 +549,7 @@ public class DefinitionToGo {
         return arities.iterator().next();
     }
 
-    private void convertFunction(List<Rule> rules, GoStringBuilder sb, String functionName, RuleType type, FunctionVars functionVars) {
+    private void convertFunction(List<Rule> rules, GoStringBuilder sb, String functionName, RuleType type, FunctionParams functionVars) {
         int ruleNum = 0;
         for (Rule r : rules) {
             if (hasLookups(r)) {
@@ -553,7 +562,7 @@ public class DefinitionToGo {
         }
     }
 
-    private int convert(Rule r, GoStringBuilder sb, RuleType type, int ruleNum, String functionName, FunctionVars functionVars) {
+    private int convert(Rule r, GoStringBuilder sb, RuleType type, int ruleNum, String functionName, FunctionParams functionVars) {
         try {
             GoStringUtil.appendRuleComment(sb, r);
 
@@ -562,7 +571,7 @@ public class DefinitionToGo {
             K right = RewriteToTop.toRight(r.body());
 
             // we need the variables beforehand, so we retrieve them here
-            AccumulateVars accumLhsVars = new AccumulateVars();
+            AccumulateRuleVars accumLhsVars = new AccumulateRuleVars();
             accumLhsVars.apply(left);
 
             // some evaluations can be precomputed
@@ -573,7 +582,7 @@ public class DefinitionToGo {
 
             // check which variables are actually used in requires or in rhs
             // note: this has to happen *after* PrecomputePredicates does its job
-            AccumulateVars accumRhsVars = new AccumulateVars();
+            AccumulateRuleVars accumRhsVars = new AccumulateRuleVars();
             accumRhsVars.apply(requires);
             accumRhsVars.apply(right);
 

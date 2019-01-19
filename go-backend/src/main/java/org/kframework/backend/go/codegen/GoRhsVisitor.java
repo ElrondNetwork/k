@@ -1,5 +1,10 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.codegen;
 
+import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.processors.PrecomputePredicates;
+import org.kframework.backend.go.strings.GoStringBuilder;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.Sorts;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
@@ -18,7 +23,7 @@ import org.kframework.utils.errorsystem.KEMException;
 class GoRhsVisitor extends VisitK {
     protected final GoStringBuilder sb;
     protected final DefinitionData data;
-    private final VarInfo lhsVars;
+    private final RuleVars lhsVars;
 
     private boolean newlineNext = false;
 
@@ -33,7 +38,7 @@ class GoRhsVisitor extends VisitK {
     protected void end() {
     }
 
-    public GoRhsVisitor(GoStringBuilder sb, DefinitionData data, VarInfo lhsVars) {
+    public GoRhsVisitor(GoStringBuilder sb, DefinitionData data, RuleVars lhsVars) {
         this.sb = sb;
         this.data = data;
         this.lhsVars = lhsVars;

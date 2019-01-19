@@ -1,15 +1,15 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.model;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-class FunctionVars {
+public class FunctionParams {
 
     private static final String EVAL_ARG_NAME = "c";
     private final String[] varNames;
 
-    public FunctionVars(int arity) {
+    public FunctionParams(int arity) {
         varNames = new String[arity];
         if (arity == 0) {
             // nothing

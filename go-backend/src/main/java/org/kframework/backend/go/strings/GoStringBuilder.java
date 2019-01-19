@@ -1,4 +1,4 @@
-package org.kframework.backend.go;
+package org.kframework.backend.go.strings;
 
 /**
  * Wrapper around a StringBuilder that accumulates Go code. Also handles tabsIndent.
