@@ -14,6 +14,7 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -116,12 +117,22 @@ public class GoBackend implements Backend {
                 }
 
                 if (options.quickTest != null) {
+                    //save .vscode config, it is convenient VSCode users for debugging
+                    copyFileAndReplaceVsCodeConfig(
+                            files.resolveKBase("include/go/vscode_launch.json"),
+                            files.resolveKompiled(".vscode/launch.json"),
+                            options.quickTest);
+
+                    // execute
                     String execCommand = "./" + files.getKompiledDirectoryName();
                     exit = pb.command(execCommand, options.quickTest).directory(files.resolveKompiled(".")).inheritIO().start().waitFor();
                     if (exit != 0) {
                         throw KEMException.criticalError("interpreter returned nonzero exit code: " + exit + "\nExamine output to see errors.");
                     }
+
+
                 }
+
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -132,6 +143,12 @@ public class GoBackend implements Backend {
 
 
         System.out.println("GoBackend.accept completed successfully.");
+    }
+
+    private void copyFileAndReplaceVsCodeConfig(File srcFile, File destFile, String testProgramFileName) throws IOException {
+        String contents = FileUtils.readFileToString(srcFile);
+        contents = contents.replaceAll("%INPUT_PGM_FILE%", testProgramFileName);
+        FileUtil.save(destFile, contents);
     }
 
     @Override
