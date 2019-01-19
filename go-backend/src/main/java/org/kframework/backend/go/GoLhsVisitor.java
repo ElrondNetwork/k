@@ -14,23 +14,29 @@ import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
 import org.kframework.utils.errorsystem.KEMException;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 class GoLhsVisitor extends VisitK {
     private final GoStringBuilder sb;
-    private final VarInfo vars;
     private final DefinitionData data;
-
     private final FunctionVars functionVars;
-    private final Set<String> usedVariableNames;
+    private final VarInfo lhsVars;
+    private final VarInfo rhsVars;
 
-    public GoLhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data, FunctionVars functionVars, Set<String> usedVariableNames) {
+    /**
+     * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
+     * This structure keeps track of that.
+     */
+    private final Set<KVariable> alreadySeenVariables = new HashSet<>();
+
+    public GoLhsVisitor(GoStringBuilder sb, DefinitionData data, FunctionVars functionVars, VarInfo lhsVars, VarInfo rhsVars) {
         this.sb = sb;
-        this.vars = vars;
         this.data = data;
         this.functionVars = functionVars;
-        this.usedVariableNames = usedVariableNames;
+        this.lhsVars = lhsVars;
+        this.rhsVars = rhsVars;
     }
 
     private String nextSubject = null;
@@ -108,32 +114,43 @@ class GoLhsVisitor extends VisitK {
         sb.writeIndent();
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == ");
-        GoRhsVisitor.appendKTokenRepresentation(sb.sb(), k, data);
+        GoRhsVisitor.appendKTokenRepresentation(sb, k, data);
         sb.beginBlock("lhs KToken");
     }
 
     @Override
     public void apply(KVariable k) {
-        String varName = GoStringUtil.variableName(k.name());
+        String varName = lhsVars.getVarName(k);
 
-        if (vars.vars.containsKey(k)) {
+        if (alreadySeenVariables.contains(k)) {
             sb.writeIndent();
             sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
-            sb.beginBlock("apply KVariable, which reappears:" + k.name());
-            vars.vars.put(k, varName);
+            sb.beginBlock("lhs KVariable, which reappears:" + k.name());
+            alreadySeenVariables.add(k);
             return;
         }
 
-        vars.vars.put(k, varName);
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
             String hook = data.mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-            if (GoBuiltin.GO_SORT_VAR_HOOKS.containsKey(hook)) {
+            if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook)) {
+                // these ones don't need to get passed a sort name
+                // but if the variable doesn't appear on the RHS, we must make it '_'
                 sb.writeIndent();
-                String pattern = GoBuiltin.GO_SORT_VAR_HOOKS.get(hook);
+                String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
+                String declarationVarName = rhsVars.containsVar(k) ? varName : "_";
+                sb.append(String.format(pattern,
+                        declarationVarName, consumeSubject()));
+                sb.beginBlock("lhs KVariable with hook:" + hook);
+                return;
+            } else if (GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook)) {
+                // these ones need to get passed a sort name
+                // since the variable is used in the condition, we never have to make it '_'
+                sb.writeIndent();
+                String pattern = GoBuiltin.SORT_VAR_HOOKS_2.get(hook);
                 sb.append(String.format(pattern,
                         varName, consumeSubject(), GoStringUtil.sortVariableName(s)));
-                sb.beginBlock("apply KVariable with hook:" + hook);
+                sb.beginBlock("lhs KVariable with hook:" + hook);
                 return;
             }
         }
@@ -142,7 +159,7 @@ class GoLhsVisitor extends VisitK {
             sb.writeIndent();
             sb.append("// "); // no code here, it is redundant
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
-        } else if (!usedVariableNames.contains(k.name())) {
+        } else if (!rhsVars.containsVar(k)) {
             sb.writeIndent();
             sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable not used\n");
@@ -155,17 +172,13 @@ class GoLhsVisitor extends VisitK {
     @Override
     public void apply(KSequence k) {
         sb.writeIndent();
-        sb.append("// apply KSequence size:" + k.items().size() + "\n");
+        sb.append("// lhs KSequence size:" + k.items().size() + "\n");
         if (k.items().size() == 1) {
             apply(k.items().get(0));
             return;
         }
 
-        int i = 1;
-        for (K item : k.items()) {
-            apply(item);
-            i++;
-        }
+        throw KEMException.internalError("Method not implemented for KSequences of size different from 1");
     }
 
     @Override

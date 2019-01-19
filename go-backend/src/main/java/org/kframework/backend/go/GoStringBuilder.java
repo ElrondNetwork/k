@@ -1,22 +1,18 @@
 package org.kframework.backend.go;
 
 /**
- * Wrapper around a StringBuilder that accumulates Go code. Also handles indent.
+ * Wrapper around a StringBuilder that accumulates Go code. Also handles tabsIndent.
  */
 public class GoStringBuilder {
 
     public static final int FUNCTION_BODY_INDENT = 1;
 
     private StringBuilder sb;
-    private int indent = 0;
+    private int tabsIndent = 0; // main indent
+    private int spacesIndent = 0; // only for special cases
 
     public GoStringBuilder() {
         sb = new StringBuilder();
-    }
-
-    public GoStringBuilder(StringBuilder sb, int indent) {
-        this.sb = sb;
-        this.indent = indent;
     }
 
     public GoStringBuilder append(String s) {
@@ -35,15 +31,18 @@ public class GoStringBuilder {
     }
 
     public GoStringBuilder writeIndent() {
-        for (int i = 0; i < indent; i++) {
+        for (int i = 0; i < tabsIndent; i++) {
             sb.append('\t');
+        }
+        for (int i = 0; i < spacesIndent; i++) {
+            sb.append(' ');
         }
         return this;
     }
 
     public GoStringBuilder beginBlock() {
         sb.append(" {\n");
-        indent++;
+        tabsIndent++;
         return this;
     }
 
@@ -51,12 +50,12 @@ public class GoStringBuilder {
         sb.append(" { // ");
         sb.append(comment);
         sb.append('\n');
-        indent++;
+        tabsIndent++;
         return this;
     }
 
     public GoStringBuilder endOneBlockNoNewline() {
-        indent--;
+        tabsIndent--;
         writeIndent();
         sb.append("}");
         return this;
@@ -69,22 +68,35 @@ public class GoStringBuilder {
     }
 
     public GoStringBuilder endAllBlocks(int finalIndent) {
-        while (indent > finalIndent) {
+        while (tabsIndent > finalIndent) {
             endOneBlock();
         }
         return this;
     }
 
     public void increaseIndent() {
-        indent++;
+        tabsIndent++;
     }
 
     public int currentIndent() {
-        return indent;
+        return tabsIndent;
     }
 
     public void decreaseIndent() {
-        indent--;
+        tabsIndent--;
+    }
+
+    /**
+     * Add some spaces to each indent <br/>
+     * e.g. in the if-condition, it's nice to align stuff like newlines after '&&' to the 'if'
+     * @param reference the spaces indent should have the width of this string, e.g. "if "
+     */
+    public void enableMiniIndent(String reference) {
+        spacesIndent = reference.length();
+    }
+
+    public void disableMiniIndent() {
+        spacesIndent = 0;
     }
 
     public String toString() {

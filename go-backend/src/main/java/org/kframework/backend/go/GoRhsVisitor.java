@@ -1,5 +1,6 @@
 package org.kframework.backend.go;
 
+import org.kframework.builtin.Sorts;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -16,8 +17,8 @@ import org.kframework.utils.errorsystem.KEMException;
 
 class GoRhsVisitor extends VisitK {
     protected final GoStringBuilder sb;
-    protected final VarInfo vars;
     protected final DefinitionData data;
+    private final VarInfo lhsVars;
 
     private boolean newlineNext = false;
 
@@ -32,10 +33,10 @@ class GoRhsVisitor extends VisitK {
     protected void end() {
     }
 
-    public GoRhsVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data) {
+    public GoRhsVisitor(GoStringBuilder sb, DefinitionData data, VarInfo lhsVars) {
         this.sb = sb;
-        this.vars = vars;
         this.data = data;
+        this.lhsVars = lhsVars;
     }
 
     @Override
@@ -110,12 +111,23 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KToken k) {
         start();
-        sb.append("/* rhs KToken */ ");
-        appendKTokenRepresentation(sb.sb(), k, data);
+        appendKTokenComment(k);
+        appendKTokenRepresentation(sb, k, data);
         end();
     }
 
-    public static void appendKTokenRepresentation(StringBuilder sb, KToken k, DefinitionData data) {
+    protected void appendKTokenComment(KToken k) {
+        if (k.sort().equals(Sorts.Bool()) && k.att().contains(PrecomputePredicates.COMMENT_KEY)) {
+            sb.append("/* rhs precomputed ").append(k.att().get(PrecomputePredicates.COMMENT_KEY)).append(" */ ");
+        } else{
+            sb.append("/* rhs KToken */ ");
+        }
+    }
+
+    /**
+     * This one is also used by the GoLhsVisitor.
+     * */
+    public static void appendKTokenRepresentation(GoStringBuilder sb, KToken k, DefinitionData data) {
         if (data.mainModule.sortAttributesFor().contains(k.sort())) {
             String hook = data.mainModule.sortAttributesFor().apply(k.sort()).<String>getOptional("hook").orElse("");
             if (GoBuiltin.GO_SORT_TOKEN_HOOKS.containsKey(hook)) {
@@ -125,7 +137,7 @@ class GoRhsVisitor extends VisitK {
         }
 
         sb.append(" KToken{Sort: ");
-        GoStringUtil.appendSortVariableName(sb, k.sort());
+        GoStringUtil.appendSortVariableName(sb.sb(), k.sort());
         sb.append(", Value: ");
         sb.append(GoStringUtil.enquoteString(k.s()));
         sb.append("}");
@@ -134,15 +146,14 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KVariable v) {
         start();
-        String varName = GoStringUtil.variableName(v.name());
+        String varName = lhsVars.getVarName(v);
 
-        if (vars.vars.get(v).isEmpty() && varName.startsWith("?")) {
+        if (!lhsVars.containsVar(v) && varName.startsWith("?")) {
             throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
-        } else if (vars.vars.get(v).isEmpty()) {
+        } else if (!lhsVars.containsVar(v)) {
             sb.append("panic(\"Stuck!\")");
         } else {
-            String varOccurrence = vars.vars.get(v).iterator().next();
-            KLabel listVar = vars.listVars.get(vars.vars.get(v).iterator().next());
+            KLabel listVar = lhsVars.listVars.get(varName);
             if (listVar != null) {
                 sb.append("List{Sort: ");
                 GoStringUtil.appendSortVariableName(sb.sb(), data.mainModule.sortFor().apply(listVar));
@@ -152,7 +163,7 @@ class GoRhsVisitor extends VisitK {
                 //sb.append(varOccurrance);
                 sb.append(" /* ??? */}");
             } else {
-                sb.append(varOccurrence);
+                sb.append(varName);
             }
         }
         end();
@@ -161,23 +172,12 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KSequence k) {
         int size = k.items().size();
-        sb.append("/* KSequence size=").append(size).append(" */ ");
-        if (size == 0) {
-        } else if (size == 1) {
+        sb.append("/* rhs KSequence size=").append(size).append(" */ ");
+        if (size == 1) {
             apply(k.items().get(0));
-        } else {
-            start();
-            boolean first = true;
-            for (K item : k.items()) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
-                apply(item);
-            }
-            end();
         }
+
+        throw KEMException.internalError("Method not implemented for KSequences of size different from 1");
     }
 
     @Override

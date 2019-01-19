@@ -80,7 +80,16 @@ public class GoBuiltin {
         GO_SORT_TOKEN_HOOKS = builder.build();
     }
 
-    public static final ImmutableMap<String, String> GO_SORT_VAR_HOOKS;
+    /**
+     * Sort var hooks for basic types.
+     */
+    public static final ImmutableMap<String, String> SORT_VAR_HOOKS_1;
+
+    /**
+     * Sort var hooks for collection types, the sort needs to be checked too.
+     */
+    public static final ImmutableMap<String, String> SORT_VAR_HOOKS_2;
+
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         builder.put("BOOL.Bool", "if %1$s, t := %2$s.(Bool); t");
@@ -90,10 +99,12 @@ public class GoBuiltin {
         builder.put("STRING.String", "if %1$s, t := %2$s.(String); t");
         builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(Bytes); t.(Bytes); t");
         builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(StringBuffer); t");
+        SORT_VAR_HOOKS_1 = builder.build();
+        builder = ImmutableMap.builder();
         builder.put("LIST.List", "if %1$s, t := %2$s.(List); t && %1$s.Sort == %3$s");
         builder.put("ARRAY.Array",  "if %1$s, t := %2$s.(Array); t && %1$s.Sort == %3$s");
         builder.put("MAP.Map", "if %1$s, t := %2$s.(Map); t && %1$s.Sort == %3$s");
         builder.put("SET.Set",  "if %1$s, t := %2$s.(Set); t && %1$s.Sort == %3$s");
-        GO_SORT_VAR_HOOKS = builder.build();
+        SORT_VAR_HOOKS_2 = builder.build();
     }
 }

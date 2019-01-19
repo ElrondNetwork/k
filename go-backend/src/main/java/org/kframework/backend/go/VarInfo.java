@@ -1,8 +1,5 @@
 package org.kframework.backend.go;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
-import org.kframework.kore.K;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.KVariable;
 
@@ -10,20 +7,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 class VarInfo {
-    final SetMultimap<KVariable, String> vars;
-    final Map<String, KLabel> listVars;
-    final Map<K, String> termCache;
+    private final Map<KVariable, String> kVarToName = new HashMap<>();
+    final Map<String, KLabel> listVars = new HashMap<>();
 
-    VarInfo() { this(HashMultimap.create(), new HashMap<>(), new HashMap<>()); }
-
-    VarInfo(VarInfo vars) {
-        this(HashMultimap.create(vars.vars), new HashMap<>(vars.listVars), new HashMap<>(vars.termCache));
+    VarInfo() {
     }
 
-    VarInfo(SetMultimap<KVariable, String> vars, Map<String, KLabel> listVars, Map<K, String> termCache) {
-        this.vars = vars;
-        this.listVars = listVars;
-        this.termCache = termCache;
+    public void putVar(KVariable kv, String varName) {
+        kVarToName.put(kv, varName);
+    }
+
+    public boolean containsVar(KVariable kv) {
+        return kVarToName.containsKey(kv);
+    }
+
+    public String getVarName(KVariable kv) {
+        return kVarToName.get(kv);
     }
 
 }

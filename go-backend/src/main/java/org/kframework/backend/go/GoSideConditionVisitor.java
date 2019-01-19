@@ -1,7 +1,9 @@
 package org.kframework.backend.go;
 
+import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.KApply;
+import org.kframework.kore.KToken;
 
 public class GoSideConditionVisitor extends GoRhsVisitor {
 
@@ -10,8 +12,8 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
     private ExpressionType expectedExprType = ExpressionType.BOOLEAN;
     private int depthFromFuncIsTrue = -1;
 
-    public GoSideConditionVisitor(GoStringBuilder sb, VarInfo vars, DefinitionData data) {
-        super(sb, vars, data);
+    public GoSideConditionVisitor(GoStringBuilder sb, DefinitionData data, VarInfo lhsVars) {
+        super(sb, data, lhsVars);
     }
 
     @Override
@@ -86,5 +88,14 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
         super.apply(k);
     }
 
+    @Override
+    public void apply(KToken k) {
+        if (expectedExprType == ExpressionType.BOOLEAN && k.sort().equals(Sorts.Bool())) {
+            appendKTokenComment(k);
+            sb.append(k.s()); // true or false, directly
+            return;
+        }
 
+        super.apply(k);
+    }
 }

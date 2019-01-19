@@ -101,7 +101,7 @@ public class DefinitionToGo {
     public void initialize(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
-        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
+        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convertVars data structures to lookups");
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
@@ -543,7 +543,7 @@ public class DefinitionToGo {
         int ruleNum = 0;
         for (Rule r : rules) {
             if (hasLookups(r)) {
-                //ruleNum = convert(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
+                //ruleNum = convertVars(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
                 sb.append("\t// rule with lookups\n");
             } else {
                 sb.append("\t// rule without lookups\n");
@@ -559,45 +559,69 @@ public class DefinitionToGo {
             K left = RewriteToTop.toLeft(r.body());
             K requires = r.requires();
             K right = RewriteToTop.toRight(r.body());
-            VarInfo vars = new VarInfo();
 
-            // check which variables are actually used in requires or rhs
-            AccumulateVariableNames accumVarNames = new AccumulateVariableNames();
-            accumVarNames.apply(requires);
-            accumVarNames.apply(right);
+            // we need the variables beforehand, so we retrieve them here
+            AccumulateVars accumLhsVars = new AccumulateVars();
+            accumLhsVars.apply(left);
 
-            // convertLHS
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, vars, this.definitionData(), functionVars, accumVarNames.getVarNames());
+            // some evaluations can be precomputed
+            PrecomputePredicates optimizeTransf = new PrecomputePredicates(
+                    this.definitionData(), accumLhsVars.vars());
+            requires = optimizeTransf.apply(requires);
+            right = optimizeTransf.apply(right);
+
+            // check which variables are actually used in requires or in rhs
+            // note: this has to happen *after* PrecomputePredicates does its job
+            AccumulateVars accumRhsVars = new AccumulateVars();
+            accumRhsVars.apply(requires);
+            accumRhsVars.apply(right);
+
+            // output LHS
+            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, this.definitionData(), functionVars,
+                    accumLhsVars.vars(),
+                    accumRhsVars.vars());
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) left;
                 lhsVisitor.applyTuple(kapp.klist().items());
             } else {
                 lhsVisitor.apply(left);
             }
-            //String result = convert(vars);
-            String suffix = "";
-            boolean when = true;
-            if (type == RuleType.REGULAR && options.checkRaces) {
-                sb.append(" when start_after < ").append(ruleNum);
-                when = false;
-            }
-            if (!requires.equals(BooleanUtils.TRUE) /*|| !result.equals("true")*/) {
+
+//            boolean when = true;
+//            if (type == RuleType.REGULAR && options.checkRaces) {
+//                sb.append(" when start_after < ").append(ruleNum);
+//                when = false;
+//            }
+
+            // output requires
+            if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.writeIndent().append("/* REQUIRES */").newLine();
                 sb.writeIndent().append("if ");
+                sb.enableMiniIndent("if ");
                 // condition starts here
-                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, vars, this.definitionData());
+                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, this.definitionData(),
+                        accumLhsVars.vars());
                 sideCondVisitor.apply(requires);
                 // condition ends
+                sb.disableMiniIndent();
                 sb.beginBlock();
+            } else if (requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
+                // just a comment, so we know what happened
+                sb.writeIndent().append("/* REQUIRES precomputed ");
+                sb.append(requires.att().get(PrecomputePredicates.COMMENT_KEY));
+                sb.append(" */").newLine();
             }
 
+            // output RHS
             sb.writeIndent().append("// rhs here:").newLine();
-            GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, vars, this.definitionData());
+            GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, this.definitionData(),
+                    accumLhsVars.vars());
             sb.writeIndent();
             sb.append("return ");
             rhsVisitor.apply(right);
             sb.append("\n");
 
+            // done
             sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
             sb.append("\n");
             return ruleNum + 1;
