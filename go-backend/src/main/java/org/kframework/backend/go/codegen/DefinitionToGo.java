@@ -22,7 +22,6 @@ import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
-import org.kframework.builtin.Sorts;
 import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
 import org.kframework.compile.ExpandMacros;
@@ -34,28 +33,24 @@ import org.kframework.definition.Production;
 import org.kframework.definition.Rule;
 import org.kframework.kil.Attribute;
 import org.kframework.kompile.CompiledDefinition;
-import org.kframework.kompile.Kompile;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
-import org.kframework.kore.KORE;
 import org.kframework.kore.KSequence;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.main.GlobalOptions;
-import org.kframework.parser.concrete2kore.ParserUtils;
-import org.kframework.utils.StringUtil;
 import org.kframework.utils.algorithms.SCCTarjan;
 import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import scala.Function1;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -97,16 +92,10 @@ public class DefinitionToGo {
 
     private Module mainModule;
     private KLabel topCellInitializer;
-    private Map<KLabel, KLabel> collectionFor;
 
-    DefinitionData definitionData() {
-        return new DefinitionData(mainModule, functions, anywhereKLabels);
+    public DefinitionData definitionData() {
+        return new DefinitionData(mainModule, functions, anywhereKLabels, functionParams, topCellInitializer);
     }
-//
-//    public void initialize(CompiledDefinition def) {
-//        //TODO: add module preprocessing
-//        mainModule = def.executionModule();
-//    }
 
     public void initialize(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
@@ -125,278 +114,10 @@ public class DefinitionToGo {
                 .andThen(generatePredicates);
         mainModule = pipeline.apply(def.executionModule());
         topCellInitializer = def.topCellInitializer;
-        collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
-    }
-
-    public String klabels() {
-        Set<KLabel> klabels = mutable(mainModule.definedKLabels());
-        klabels.add(KORE.KLabel("#Bottom"));
-        klabels.add(KORE.KLabel("littleEndianBytes"));
-        klabels.add(KORE.KLabel("bigEndianBytes"));
-        klabels.add(KORE.KLabel("signedBytes"));
-        klabels.add(KORE.KLabel("unsignedBytes"));
-        addOpaqueKLabels(klabels);
-
-        GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
-        sb.append("type KLabel int\n\n");
-
-        // const declaration
-        sb.append("const (\n");
-        sb.increaseIndent();
-        for (KLabel klabel : klabels) {
-            sb.writeIndent();
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
-            sb.append(" KLabel = iota\n");
-        }
-        sb.decreaseIndent();
-        sb.append(")\n");
-
-        // klabel name method
-        sb.append("func (kl KLabel) name () string").beginBlock();
-        sb.append("\tswitch kl").beginBlock();
-        for (KLabel klabel : klabels) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
-            sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            sb.append(GoStringUtil.enquoteString(klabel.name()));
-            sb.append("\n");
-        }
-        sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Unexpected KLabel.\")\n");
-        sb.endOneBlock();
-        sb.endOneBlock().newLine();
-
-        // parse klabel function
-        sb.append("func parseKLabel (name string) KLabel").beginBlock();
-        sb.append("\tswitch name").beginBlock();
-        for (KLabel klabel : klabels) {
-            sb.writeIndent().append("case ");
-            sb.append(GoStringUtil.enquoteString(klabel.name()));
-            sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
-            sb.append("\n");
-        }
-        sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Parsing KLabel failed. Unexpected KLabel name:\" + name)\n");
-        sb.endOneBlock();
-        sb.endOneBlock().newLine();
-
-        // collection for
-        sb.append("func (kl KLabel) collectionFor() KLabel").beginBlock();
-        sb.append("\tswitch kl").beginBlock();
-        for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getKey());
-            sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getValue());
-            sb.append("\n");
-        }
-        sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method collectionFor for KLabel \" + kl.name())\n");
-        sb.endOneBlock();
-        sb.endOneBlock().newLine();
-
-        // unit for
-        sb.append("func (kl KLabel) unitFor() KLabel").beginBlock();
-        sb.append("\tswitch kl").beginBlock();
-        for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
-            sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            KLabel unitLabel = KLabel(mainModule.attributesFor().apply(label).get(Attribute.UNIT_KEY));
-            GoStringUtil.appendKlabelVariableName(sb.sb(), unitLabel);
-            sb.append("\n");
-        }
-        sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method unitFor for KLabel \" + kl.name())\n");
-        sb.endOneBlock();
-        sb.endOneBlock().newLine();
-
-        // el for
-        sb.append("func (kl KLabel) elFor() KLabel").beginBlock();
-        sb.append("\tswitch kl").beginBlock();
-        for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
-            sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            KLabel elLabel = KLabel(mainModule.attributesFor().apply(label).get("element"));
-            GoStringUtil.appendKlabelVariableName(sb.sb(), elLabel);
-            sb.append("\n");
-        }
-        sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method elFor for KLabel \" + kl.name())\n");
-        sb.endOneBlock();
-        sb.endOneBlock().newLine();
-
-        return sb.toString();
-    }
-
-    public String sorts() {
-        Set<Sort> sorts = mutable(mainModule.definedSorts());
-        sorts.add(Sorts.Bool());
-        sorts.add(Sorts.MInt());
-        sorts.add(Sorts.Int());
-        sorts.add(Sorts.String());
-        sorts.add(Sorts.Float());
-        sorts.add(Sorts.StringBuffer());
-        sorts.add(Sorts.Bytes());
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
-        sb.append("type Sort int\n\n");
-
-        // const declaration
-        sb.append("const (\n");
-        for (Sort s : sorts) {
-            sb.append("\t");
-            GoStringUtil.appendSortVariableName(sb, s);
-            sb.append(" Sort = iota\n");
-        }
-        sb.append(")\n\n");
-
-        // sort name method
-        sb.append("func (s Sort) name () string {\n");
-        sb.append("\tswitch s {\n");
-        for (Sort sort : sorts) {
-            sb.append("\t\tcase ");
-            GoStringUtil.appendSortVariableName(sb, sort);
-            sb.append(":\n");
-            sb.append("\t\t\treturn ");
-            sb.append(GoStringUtil.enquoteString(sort.name()));
-            sb.append("\n");
-        }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Unexpected Sort.\")\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
-
-        // parse sort function
-        sb.append("func parseSort (name string) Sort {\n");
-        sb.append("\tswitch name {\n");
-        for (Sort sort : sorts) {
-            sb.append("\t\tcase ");
-            sb.append(GoStringUtil.enquoteString(sort.name()));
-            sb.append(":\n");
-            sb.append("\t\t\treturn ");
-            GoStringUtil.appendSortVariableName(sb, sort);
-            sb.append("\n");
-        }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Parsing Sort failed. Unexpected Sort name:\" + name)\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
-
-        return sb.toString();
-    }
-
-    /**
-     * TODO: not sure if needed
-     */
-    private void addOpaqueKLabels(Set<KLabel> klabels) {
-        if (options.klabels == null)
-            return;
-        File definitionFile = files.resolveWorkingDirectory(options.klabels).getAbsoluteFile();
-        List<File> lookupDirectories = kompileOptions.outerParsing.includes.stream().map(files::resolveWorkingDirectory).collect(Collectors.toList());
-        lookupDirectories.add(Kompile.BUILTIN_DIRECTORY);
-        Set<Module> mods = new ParserUtils(files::resolveWorkingDirectory, kem, globalOptions).loadModules(
-                new HashSet<>(),
-                "require " + StringUtil.enquoteCString(definitionFile.getPath()),
-                Source.apply(definitionFile.getAbsolutePath()),
-                definitionFile.getParentFile(),
-                lookupDirectories,
-                new HashSet<>(), false);
-        mods.stream().forEach(m -> klabels.addAll(mutable(m.definedKLabels())));
-    }
-
-    public String freshDefinition() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
-
-        sb.append("func freshFunction (s Sort, config K, counter int) K {\n");
-        sb.append("\tswitch s {\n");
-        for (Sort sort : iterable(mainModule.freshFunctionFor().keys())) {
-            sb.append("\t\tcase ");
-            GoStringUtil.appendSortVariableName(sb, sort);
-            sb.append(":\n");
-            sb.append("\t\t\treturn ");
-            KLabel freshFunction = mainModule.freshFunctionFor().apply(sort);
-            GoStringUtil.appendFunctionName(sb, freshFunction);
-            sb.append("(Int(counter), config)\n");
-        }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.name())\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
-
-        return sb.toString();
-    }
-
-    /**
-     * WARNING: depends on fields functions and anywhereKLabels, only run after definition()
-     * TODO: untangle this dependency
-     */
-    public String evalDefinition() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
-
-        sb.append("import \"fmt\"\n\n");
-
-        sb.append("const topCellInitializer KLabel = ");
-        GoStringUtil.appendKlabelVariableName(sb, topCellInitializer);
-        sb.append("\n\n");
-
-        sb.append("func eval(c K, config K) K {\n");
-        sb.append("\tkApply, typeOk := c.(KApply)\n");
-        sb.append("\tif !typeOk {\n");
-        sb.append("\t\treturn c\n");
-        sb.append("\t}\n");
-        sb.append("\tswitch kApply.Label {\n");
-        for (KLabel label : Sets.union(functions, anywhereKLabels)) {
-            sb.append("\t\tcase ");
-            GoStringUtil.appendKlabelVariableName(sb, label);
-            sb.append(":\n");
-
-            // arity check
-            int arity = getArity(label);
-            sb.append("\t\t\tif len(kApply.List) != ").append(arity).append(" {\n");
-            sb.append("\t\t\t\tpanic(fmt.Sprintf(\"");
-            GoStringUtil.appendFunctionName(sb, label);
-            sb.append(" function arity violated. Expected arity: ").append(arity);
-            sb.append(". Nr. params provided: %d\", len(kApply.List)))\n");
-            sb.append("\t\t\t}\n");
-
-            // function call
-            sb.append("\t\t\treturn ");
-            GoStringUtil.appendFunctionName(sb, label);
-            sb.append("(");
-            for (int i = 0; i < arity; i++) {
-                sb.append("kApply.List[").append(i).append("], ");
-            }
-            sb.append("config)\n");
-        }
-        sb.append("\t\tdefault:\n");
-        sb.append("\t\t\treturn c\n");
-        sb.append("\t}\n");
-        sb.append("}\n\n");
-
-        return sb.toString();
-    }
-
-    Set<KLabel> functions;
-    Set<KLabel> anywhereKLabels;
-
-    public String definition() {
-        DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         //TODO: warning! duplicate code with DefinitionToOcaml
-        SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
-        ListMultimap<KLabel, Rule> anywhereRules = ArrayListMultimap.create();
+        functionRules = HashMultimap.create();
+        anywhereRules = ArrayListMultimap.create();
         anywhereKLabels = new HashSet<>();
         stream(mainModule.rules()).filter(r -> !r.att().contains(Attribute.MACRO_KEY) && !r.att().contains(Attribute.ALIAS_KEY)).forEach(r -> {
             K left = RewriteToTop.toLeft(r.body());
@@ -421,8 +142,28 @@ public class DefinitionToGo {
         }
 
         //TODO: warning! duplicate code with DefinitionToOcaml
-        SetMultimap<KLabel, Rule> klabelRuleMap = HashMultimap.create(functionRules);
+        klabelRuleMap = HashMultimap.create(functionRules);
         klabelRuleMap.putAll(anywhereRules);
+
+        // prepare arity/params
+        functionParams = new HashMap<>();
+        for (KLabel label : Sets.union(functions, anywhereKLabels)) {
+            int arity = getArity(label);
+            FunctionParams functionVars = new FunctionParams(arity);
+            functionParams.put(label, functionVars);
+        }
+
+    }
+
+    SetMultimap<KLabel, Rule> functionRules;
+    ListMultimap<KLabel, Rule> anywhereRules;
+    Set<KLabel> functions;
+    Set<KLabel> anywhereKLabels;
+    SetMultimap<KLabel, Rule> klabelRuleMap;
+    Map<KLabel, FunctionParams> functionParams;
+
+    public String definition() {
+        DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
@@ -438,9 +179,7 @@ public class DefinitionToGo {
         for (KLabel functionLabel : Sets.union(functions, anywhereKLabels)) {
             String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
             if (functions.contains(functionLabel)) {
-                // prepare arity/params
-                int arity = getArity(functionLabel);
-                FunctionParams functionVars = new FunctionParams(arity);
+                FunctionParams functionVars = functionParams.get(functionLabel);
 
                 String functionName;
                 if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {

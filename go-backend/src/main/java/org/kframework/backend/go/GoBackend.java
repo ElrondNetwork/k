@@ -4,7 +4,12 @@ package org.kframework.backend.go;
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.kframework.backend.go.codegen.DefinitionToGo;
+import org.kframework.backend.go.codegen.EvalFunctionGen;
+import org.kframework.backend.go.codegen.FreshFunctionGen;
 import org.kframework.backend.go.codegen.GoBuiltin;
+import org.kframework.backend.go.codegen.KLabelsGen;
+import org.kframework.backend.go.codegen.SortsGen;
+import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.compile.Backend;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
@@ -58,9 +63,10 @@ public class GoBackend implements Backend {
         // temporary, for convenience and comparison
         files.saveToKompiled("constants.ml", ocamlDef.constants());
 
-        files.saveToKompiled("klabel.go", def.klabels());
-        files.saveToKompiled("sort.go", def.sorts());
-        files.saveToKompiled("fresh.go", def.freshDefinition());
+        DefinitionData data = def.definitionData();
+        files.saveToKompiled("klabel.go", new KLabelsGen(data, packageNameManager).klabels());
+        files.saveToKompiled("sort.go", new SortsGen(data, packageNameManager).sorts());
+        files.saveToKompiled("fresh.go", new FreshFunctionGen(data, packageNameManager).freshDefinition());
 
         // temporary, for convenience and comparison
         try {
@@ -69,7 +75,7 @@ public class GoBackend implements Backend {
             files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
             files.saveToKompiled("definition.go", def.definition());
-            files.saveToKompiled("eval.go", def.evalDefinition());
+            files.saveToKompiled("eval.go", new EvalFunctionGen(data, packageNameManager).evalDefinition());
         } catch (Exception e) {
             e.printStackTrace();
         }
