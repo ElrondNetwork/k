@@ -23,12 +23,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class GoLhsVisitor extends VisitK {
+public class GoLhsVisitor extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
     private final FunctionParams functionVars;
     private final RuleVars lhsVars;
     private final RuleVars rhsVars;
+
+    private int kitemIndex = 0;
+
+    public enum ExpressionType { IF, STATEMENT, NOTHING }
+
+    private ExpressionType topExpressionType = null;
+
+    private void initTopExpressionType(ExpressionType et) {
+        if (topExpressionType == null) {
+            topExpressionType = et;
+        }
+    }
+
+    public ExpressionType getTopExpressionType() {
+        if (topExpressionType == null) {
+            throw new RuntimeException("Generated expresstion type not initialized.");
+        }
+        return topExpressionType;
+    }
 
     /**
      * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
@@ -61,7 +80,12 @@ class GoLhsVisitor extends VisitK {
         return "BAD_SUBJ";
     }
 
+    public void setNextSubject(String subj) {
+        nextSubject = subj;
+    }
+
     private void lhsTypeIf(String castVar, String subject, String type) {
+        initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
         sb.append(subject).append(".(").append(type).append("); t");
@@ -76,22 +100,27 @@ class GoLhsVisitor extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            lhsTypeIf("kt", consumeSubject(), "KToken");
-            sb.append(" && kt.Sort == ");
+            String ktVar = "kt" + kitemIndex;
+            kitemIndex++;
+            lhsTypeIf(ktVar, consumeSubject(), "KToken");
+            sb.append(" && ").append(ktVar).append(".Sort == ");
             GoStringUtil.appendSortVariableName(sb.sb(), sort);
             sb.beginBlock("lhs KApply #KToken");
-            nextSubject = "kt.Value";
+            nextSubject = ktVar + ".Value";
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             lhsTypeIf("_", consumeSubject(), "Bottom");
         } else {
-            lhsTypeIf("kapp", consumeSubject(), "KApply");
-            sb.append(" && kapp.Label == ");
+            String kappVar = "kapp" + kitemIndex;
+            kitemIndex++;
+            lhsTypeIf(kappVar, consumeSubject(), "KApply");
+            sb.append(" && ").append(kappVar).append(".Label == ");
             GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
-            sb.beginBlock("lhs KApply");
+            sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
+            sb.beginBlock("lhs KApply " + k.klabel().name());
             int i = 0;
             for (K item : k.klist().items()) {
-                nextSubject = "kapp.List[" + i + "]";
+                nextSubject = kappVar + ".List[" + i + "]";
                 apply(item);
                 i++;
             }
@@ -116,7 +145,7 @@ class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KToken k) {
-        sb.writeIndent();
+        initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == ");
         GoRhsVisitor.appendKTokenRepresentation(sb, k, data);
@@ -128,6 +157,7 @@ class GoLhsVisitor extends VisitK {
         String varName = lhsVars.getVarName(k);
 
         if (alreadySeenVariables.contains(k)) {
+            initTopExpressionType(ExpressionType.IF);
             sb.writeIndent();
             sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
@@ -141,6 +171,7 @@ class GoLhsVisitor extends VisitK {
             if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook)) {
                 // these ones don't need to get passed a sort name
                 // but if the variable doesn't appear on the RHS, we must make it '_'
+                initTopExpressionType(ExpressionType.IF);
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
                 String declarationVarName = rhsVars.containsVar(k) ? varName : "_";
@@ -151,6 +182,7 @@ class GoLhsVisitor extends VisitK {
             } else if (GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook)) {
                 // these ones need to get passed a sort name
                 // since the variable is used in the condition, we never have to make it '_'
+                initTopExpressionType(ExpressionType.IF);
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_2.get(hook);
                 sb.append(String.format(pattern,
@@ -160,30 +192,49 @@ class GoLhsVisitor extends VisitK {
             }
         }
 
-        if (varName.equals("_")) {
+        if (varName == null) {
+            initTopExpressionType(ExpressionType.NOTHING);
+            sb.writeIndent();
+            sb.append("// varName=null").newLine();
+        } else if (varName.equals("_")) {
+            initTopExpressionType(ExpressionType.NOTHING);
             sb.writeIndent();
             sb.append("// "); // no code here, it is redundant
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
         } else if (!rhsVars.containsVar(k)) {
+            initTopExpressionType(ExpressionType.NOTHING);
             sb.writeIndent();
             sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable not used\n");
         } else {
+            initTopExpressionType(ExpressionType.STATEMENT);
             sb.writeIndent();
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ok\n");
+            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ").append(k.name()).newLine();
+//            sb.writeIndent().append("if ");
+//            sb.append(varName).append(" := ").append(consumeSubject()).append("; true").beginBlock(" // lhs KVariable "+ k.name());
         }
     }
 
     @Override
     public void apply(KSequence k) {
-        sb.writeIndent();
-        sb.append("// lhs KSequence size:" + k.items().size() + "\n");
         if (k.items().size() == 1) {
+            sb.writeIndent();
+            sb.append("// lhs KSequence size:" + k.items().size() + "\n");
             apply(k.items().get(0));
             return;
+        } else {
+            String kseqVar = "kseq" + kitemIndex;
+            kitemIndex++;
+            lhsTypeIf(kseqVar, consumeSubject(), "KSequence");
+            sb.append(" && len(").append(kseqVar).append(".ks) == ").append(k.items().size());
+            sb.beginBlock("lhs KSequence size:" + k.items().size());
+            int i = 0;
+            for (K item : k.items()) {
+                nextSubject = kseqVar + ".ks[" + i + "]";
+                apply(item);
+                i++;
+            }
         }
-
-        throw KEMException.internalError("Method not implemented for KSequences of size different from 1");
     }
 
     @Override

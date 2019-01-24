@@ -20,7 +20,7 @@ public class SortsGen {
         this.packageNameManager = packageNameManager;
     }
 
-    public String sorts() {
+    public String generate() {
         Set<Sort> sorts = mutable(data.mainModule.definedSorts());
         sorts.add(Sorts.Bool());
         sorts.add(Sorts.MInt());

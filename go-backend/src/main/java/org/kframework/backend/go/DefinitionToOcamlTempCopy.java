@@ -243,7 +243,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
     public void initialize(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
-        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convertVars data structures to lookups");
+        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
         ModuleTransformer liftToKSequence = ModuleTransformer.fromSentenceTransformer(new LiftToKSequence()::lift, "lift K into KSequence");
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
@@ -287,9 +287,9 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                 throw KEMException.criticalError("Must have only one klabel with the \"thread\" attribute. Found: " + threadKLabels);
             }
             Rule matchThreadSet = Rule(IncompleteCellUtils.make(threadKLabels.iterator().next(), false, KVariable("Threads"), false), BooleanUtils.TRUE, BooleanUtils.TRUE);
-            this.matchThreadSet = convertVars(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, matchThreadSet));
+            this.matchThreadSet = convert(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, matchThreadSet));
             Rule rewriteThreadSet = Rule(IncompleteCellUtils.make(threadKLabels.iterator().next(), false, KRewrite(KVariable("Threads"), KVariable("NewThreads")), false), BooleanUtils.TRUE, BooleanUtils.TRUE);
-            this.rewriteThreadSet = convertVars(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, rewriteThreadSet));
+            this.rewriteThreadSet = convert(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, rewriteThreadSet));
             this.rewriteThreadSet = Rule(new TransformK() { public K apply(KVariable var) { return KVariable(var.name(), var.att().remove(Sort.class)); } }.apply(this.rewriteThreadSet.body()),
                     this.rewriteThreadSet.requires(), this.rewriteThreadSet.ensures());
         }
@@ -297,15 +297,15 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         if (mainModule.definedKLabels().contains(stratCell)) {
             Rule makeStuck = Rule(IncompleteCellUtils.make(stratCell, false, KRewrite(KSequence(), KApply(KLabel("#STUCK"))), true), BooleanUtils.TRUE, BooleanUtils.TRUE);
             Rule makeUnstuck = Rule(IncompleteCellUtils.make(stratCell, false, KRewrite(KApply(KLabel("#STUCK")), KSequence()), true), BooleanUtils.TRUE, BooleanUtils.TRUE);
-            this.makeStuck = convertVars(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeStuck));
-            this.makeUnstuck = convertVars(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeUnstuck));
+            this.makeStuck = convert(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeStuck));
+            this.makeUnstuck = convert(new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeUnstuck));
         } else {
             this.makeStuck = null;
             this.makeUnstuck = null;
         }
     }
 
-    public Rule convertVars(Rule r) {
+    public Rule convert(Rule r) {
         Function1<Sentence, Sentence> convertLookups = new ConvertDataStructureToLookup(this.convertDataStructure)::convert;
         Function1<Sentence, Sentence> liftToKSequence = new LiftToKSequence()::lift;
         Function1<Sentence, Sentence> deconstructInts = new DeconstructIntegerAndFloatLiterals()::convert;
@@ -424,7 +424,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
             sb.append("let ");
         }
         sb.append("try_match (c: k) (config: k) (guard: int) : k Subst.t = match c with \n");
-        convertFunction(Collections.singletonList(convertVars(r)), sb, "try_match", RuleType.PATTERN);
+        convertFunction(Collections.singletonList(convert(r)), sb, "try_match", RuleType.PATTERN);
         sb.append("| _ -> raise(Stuck c)\n");
     }
 
@@ -1610,14 +1610,14 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         sb.append(" try let config = c in match c with \n");
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
-                ruleNum = convertVars(r, sb, RuleType.REGULAR, ruleNum, funcName);
+                ruleNum = convert(r, sb, RuleType.REGULAR, ruleNum, funcName);
             }
         }
         sb.append("| _ -> lookups_").append(funcName).append(" c c ").append(options.checkRaces ? "start_after" : "(-1)").append('\n');
         sb.append("with Sys.Break -> raise (Stuck c)\n");
         sb.append("and lookups_").append(funcName).append(" (c: k) (config: k) (guard: int) : k ")
                 .append(options.checkRaces ? "* (int * RACE.rule_type * string) " : "").append("* step_function = match c with \n");
-        ruleNum = convertVars(groupedByLookup.getOrDefault(true, Collections.emptyList()), sb, funcName, "lookups_" + funcName, RuleType.REGULAR, ruleNum);
+        ruleNum = convert(groupedByLookup.getOrDefault(true, Collections.emptyList()), sb, funcName, "lookups_" + funcName, RuleType.REGULAR, ruleNum);
         sb.append("| _ -> raise (Stuck c)\n");
         return ruleNum;
     }
@@ -1769,9 +1769,9 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         int ruleNum = 0;
         for (Rule r : rules) {
             if (hasLookups(r)) {
-                ruleNum = convertVars(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
+                ruleNum = convert(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
             } else {
-                ruleNum = convertVars(r, sb, type, ruleNum, functionName);
+                ruleNum = convert(r, sb, type, ruleNum, functionName);
             }
         }
     }
@@ -2045,7 +2045,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         }
     }
 
-    private int convertVars(List<Rule> rules, StringBuilder sb, String functionName, String recursionName, RuleType ruleType, int ruleNum) {
+    private int convert(List<Rule> rules, StringBuilder sb, String functionName, String recursionName, RuleType ruleType, int ruleNum) {
         NormalizeVariables t = new NormalizeVariables();
         Map<AttCompare, List<Rule>> grouping = rules.stream().collect(
                 Collectors.groupingBy(r -> new AttCompare(t.normalize(RewriteToTop.toLeft(r.body())), Sort.class.getName())));
@@ -2296,7 +2296,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         return h.lookup;
     }
 
-    private int convertVars(Rule r, StringBuilder sb, RuleType type, int ruleNum, String functionName) {
+    private int convert(Rule r, StringBuilder sb, RuleType type, int ruleNum, String functionName) {
         try {
             convertComment(r, sb);
             sb.append("| ");
@@ -2367,7 +2367,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
     }
 
     private void convertLHS(StringBuilder sb, RuleType type, K left, VarInfo vars) {
-        Visitor visitor = convertVars(sb, false, vars, false, false);
+        Visitor visitor = convert(sb, false, vars, false, false);
         if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
             KApply kapp = (KApply) ((KSequence) left).items().get(0);
             sb.append("(");
@@ -2407,7 +2407,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         }
          if (kCell.isPresent()) {
             sb.append("let kCell = ");
-            convertVars(sb, true, vars, false, false).apply(kCell.get());
+            convert(sb, true, vars, false, false).apply(kCell.get());
             sb.append(" in ");
             vars.termCache.put(KSequence(kCell.get()), "[kCell]");
         }
@@ -2432,7 +2432,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                 sb.append(")");
             }
         } else {
-            convertVars(sb, true, vars, false, false).apply(right);
+            convert(sb, true, vars, false, false).apply(right);
             if (appendStepFunction) {
                 appendStepFunction(sb, type, r, ruleNum, functionName);
             }
@@ -2458,7 +2458,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         }
         result = convertVars(vars);
         sb.append(when ? " when " : " && ");
-        convertVars(sb, true, vars, true, false).apply(requires);
+        convert(sb, true, vars, true, false).apply(requires);
         sb.append(" && (");
         sb.append(result);
         sb.append(")");
@@ -2495,7 +2495,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                     }
                     StringBuilder sb = new StringBuilder();
                     sb.append(" -> (let e = ");
-                    convertVars(sb, true, vars, false, false).apply(k.klist().items().get(1));
+                    convert(sb, true, vars, false, false).apply(k.klist().items().get(1));
                     sb.append(" in ");
                     if (h.first) {
                         if (hasMultipleLookups) {
@@ -2510,7 +2510,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                     String prefix = sb.toString();
                     sb = new StringBuilder();
                     sb.append("| ");
-                    convertVars(sb, false, vars, false, false).apply(k.klist().items().get(0));
+                    convert(sb, false, vars, false, false).apply(k.klist().items().get(0));
                     String pattern = sb.toString();
                     String suffix = "| _ -> " + h.reapply;
                     if (h.first) {
@@ -2558,7 +2558,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                 vars.termCache.put(k.klist().items().get(0), "e" + choiceCounter);
                 StringBuilder sb = new StringBuilder();
                 sb.append(" -> (match ");
-                convertVars(sb, true, vars, false, false).apply(k.klist().items().get(1));
+                convert(sb, true, vars, false, false).apply(k.klist().items().get(1));
                 sb.append(" with \n");
                 sb.append(choiceString);
                 if (h.first) {
@@ -2580,7 +2580,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                     h.reapply = "interned_bottom";
                 }
                 sb.append("| ");
-                convertVars(sb, false, vars, false, false).apply(k.klist().items().get(0));
+                convert(sb, false, vars, false, false).apply(k.klist().items().get(0));
                 sb.append(" as e").append(choiceCounter++);
                 String pattern = sb.toString();
                 results.add(new Lookup(prefix, pattern, suffix));
@@ -2594,7 +2594,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                 vars.termCache.put(k.klist().items().get(0), "e" + choiceCounter);
                 StringBuilder sb = new StringBuilder();
                 sb.append(" -> (match ");
-                convertVars(sb, true, vars, false, false).apply(k.klist().items().get(1));
+                convert(sb, true, vars, false, false).apply(k.klist().items().get(1));
                 sb.append(" with \n");
                 sb.append(choiceString);
                 if (h.first) {
@@ -2619,7 +2619,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
                     h.reapply = getBottom();
                 }
                 sb.append("| ");
-                convertVars(sb, false, vars, false, false).apply(k.klist().items().get(0));
+                convert(sb, false, vars, false, false).apply(k.klist().items().get(0));
                 sb.append(" as e").append(choiceCounter++);
                 String pattern = sb.toString();
                 results.add(new Lookup(prefix, pattern, suffix));
@@ -2708,7 +2708,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         sb.append(varName);
     }
 
-    private Visitor convertVars(StringBuilder sb, boolean rhs, VarInfo vars, boolean useNativeBooleanExp, boolean anywhereRule) {
+    private Visitor convert(StringBuilder sb, boolean rhs, VarInfo vars, boolean useNativeBooleanExp, boolean anywhereRule) {
         return new Visitor(sb, rhs, vars, useNativeBooleanExp, anywhereRule);
     }
 

@@ -50,7 +50,7 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
     public void apply(KApply k) {
         // we don't call start() just yet, because it would automatically generate a call to isTrue(...)
         // we try to replace some calls with native &&, ||, !
-        if (expectedExprType == ExpressionType.BOOLEAN) {
+        if (expectedExprType == ExpressionType.BOOLEAN && data.isFunctionOrAnywhere(k.klabel())) {
             String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
             switch (hook) {
             case "BOOL.and":

@@ -30,14 +30,14 @@ public class PrecomputePredicates extends TransformK {
         this.lhsVars = lhsVars;
     }
 
-    private static KToken trueTokenWithComment(String precomputeComment) {
+    public static KToken trueTokenWithComment(String precomputeComment) {
         return KORE.KToken(
                 "true",
                 Sorts.Bool(),
                 KORE.Att().add(COMMENT_KEY, precomputeComment));
     }
 
-    private static boolean istrueTokenWithComment(K k) {
+    public static boolean istrueTokenWithComment(K k) {
         if (k instanceof KToken) {
             KToken kt = (KToken)k;
             return kt.sort().equals(Sorts.Bool()) && kt.s().equals("true") && kt.att().contains(COMMENT_KEY);
@@ -47,8 +47,9 @@ public class PrecomputePredicates extends TransformK {
 
     @Override
     public K apply(KApply k) {
-        // precompute true scenarios
-        if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
+        if (data.isFunctionOrAnywhere(k.klabel())) {
+
+            // precompute true scenarios
             if (data.mainModule.attributesFor().apply(k.klabel()).contains(Attribute.PREDICATE_KEY, Sort.class)) {
                 Sort s = data.mainModule.attributesFor().apply(k.klabel()).get(Attribute.PREDICATE_KEY, Sort.class);
 
@@ -68,7 +69,7 @@ public class PrecomputePredicates extends TransformK {
                     if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook2) ||
                             GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook2)) {
                         if (k.klist().items().size() == 1 && k.klist().items().get(0) instanceof KVariable) {
-                            KVariable kvar = (KVariable)k.klist().items().get(0);
+                            KVariable kvar = (KVariable) k.klist().items().get(0);
                             if (lhsVars.containsVar(kvar)) {
                                 Optional<Sort> varSort = kvar.att().getOptional(Sort.class);
                                 if (varSort.isPresent() && varSort.get().equals(s)) {
@@ -79,21 +80,21 @@ public class PrecomputePredicates extends TransformK {
                     }
                 }
             }
-        }
 
-        // collapse (precomputed true) && (precomputed true)
-        String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
-        if (hook.equals("BOOL.and") || hook.equals("BOOL.andThen")) {
-            KApply kappTransf = (KApply) super.apply(k);
-            assert kappTransf.klist().items().size() == 2;
-            if (istrueTokenWithComment(kappTransf.klist().items().get(0)) &&
-                    istrueTokenWithComment(kappTransf.klist().items().get(1))) {
-                String comm1 = kappTransf.klist().items().get(0).att().get(COMMENT_KEY);
-                String comm2 = kappTransf.klist().items().get(1).att().get(COMMENT_KEY);
-                return trueTokenWithComment(comm1 + " && " + comm2);
+            // collapse (precomputed true) && (precomputed true)
+            String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
+            if (hook.equals("BOOL.and") || hook.equals("BOOL.andThen")) {
+                KApply kappTransf = (KApply) super.apply(k);
+                assert kappTransf.klist().items().size() == 2;
+                if (istrueTokenWithComment(kappTransf.klist().items().get(0)) &&
+                        istrueTokenWithComment(kappTransf.klist().items().get(1))) {
+                    String comm1 = kappTransf.klist().items().get(0).att().get(COMMENT_KEY);
+                    String comm2 = kappTransf.klist().items().get(1).att().get(COMMENT_KEY);
+                    return trueTokenWithComment(comm1 + " && " + comm2);
+                }
+
+                return kappTransf;
             }
-
-            return kappTransf;
         }
 
         return super.apply(k);

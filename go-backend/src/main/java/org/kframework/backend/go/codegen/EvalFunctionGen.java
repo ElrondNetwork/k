@@ -20,7 +20,7 @@ public class EvalFunctionGen {
      * WARNING: depends on fields functions and anywhereKLabels, only run after definition()
      * TODO: untangle this dependency
      */
-    public String evalDefinition() {
+    public String generate() {
         StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 

@@ -1,5 +1,8 @@
 package org.kframework.backend.go.strings;
 
+import java.util.Stack;
+import java.util.function.Consumer;
+
 /**
  * Wrapper around a StringBuilder that accumulates Go code. Also handles tabsIndent.
  */
@@ -10,6 +13,17 @@ public class GoStringBuilder {
     private StringBuilder sb;
     private int tabsIndent = 0; // main indent
     private int spacesIndent = 0; // only for special cases
+
+    private class AfterBlockEndCallback {
+        final int indent;
+        final Consumer<GoStringBuilder> callback;
+        public AfterBlockEndCallback(int indent, Consumer<GoStringBuilder> callback) {
+            this.indent = indent;
+            this.callback = callback;
+        }
+    }
+
+    private final Stack<AfterBlockEndCallback> blockEndCallbackStack = new Stack<>();
 
     public GoStringBuilder() {
         sb = new StringBuilder();
@@ -27,6 +41,13 @@ public class GoStringBuilder {
 
     public GoStringBuilder newLine() {
         sb.append('\n');
+        return this;
+    }
+
+    public GoStringBuilder appendIndentedLine(String s) {
+        writeIndent();
+        sb.append(s);
+        newLine();
         return this;
     }
 
@@ -54,10 +75,18 @@ public class GoStringBuilder {
         return this;
     }
 
+    public GoStringBuilder addCallbackWhenReturningFromBlock(int blockIndent, Consumer<GoStringBuilder> callback) {
+        blockEndCallbackStack.push(new AfterBlockEndCallback(blockIndent, callback));
+        return this;
+    }
+
     public GoStringBuilder endOneBlockNoNewline() {
         tabsIndent--;
         writeIndent();
         sb.append("}");
+        if (!blockEndCallbackStack.empty() && blockEndCallbackStack.peek().indent == tabsIndent) {
+            blockEndCallbackStack.pop().callback.accept(this);
+        }
         return this;
     }
 
@@ -75,20 +104,33 @@ public class GoStringBuilder {
     }
 
     public void increaseIndent() {
-        tabsIndent++;
+        increaseIndent(1);
     }
 
-    public int currentIndent() {
-        return tabsIndent;
+    public void increaseIndent(int amount) {
+        tabsIndent += amount;
     }
 
     public void decreaseIndent() {
-        tabsIndent--;
+        decreaseIndent(1);
+    }
+
+    public void decreaseIndent(int amount) {
+        tabsIndent -= amount;
+    }
+
+    public void forceIndent(int newIndent) {
+        this.tabsIndent = newIndent;
+    }
+
+    public int getCurrentIndent() {
+        return tabsIndent;
     }
 
     /**
      * Add some spaces to each indent <br/>
      * e.g. in the if-condition, it's nice to align stuff like newlines after '&&' to the 'if'
+     *
      * @param reference the spaces indent should have the width of this string, e.g. "if "
      */
     public void enableMiniIndent(String reference) {

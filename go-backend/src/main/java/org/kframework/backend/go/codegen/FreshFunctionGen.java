@@ -18,7 +18,7 @@ public class FreshFunctionGen {
         this.packageNameManager = packageNameManager;
     }
 
-    public String freshDefinition() {
+    public String generate() {
         StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 

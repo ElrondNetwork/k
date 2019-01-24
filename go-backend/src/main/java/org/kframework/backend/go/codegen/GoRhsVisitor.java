@@ -20,7 +20,7 @@ import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
 import org.kframework.utils.errorsystem.KEMException;
 
-class GoRhsVisitor extends VisitK {
+public class GoRhsVisitor extends VisitK {
     protected final GoStringBuilder sb;
     protected final DefinitionData data;
     private final RuleVars lhsVars;
@@ -70,9 +70,9 @@ class GoRhsVisitor extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        sb.append("/* as-is */ KApply{Label: ");
+        sb.append("KApply{Label: ");
         GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
-        sb.append(", List: []K{");
+        sb.append(", List: []K{ // as-is ").append(k.klabel().name());
         sb.increaseIndent();
         for (K item : k.klist().items()) {
             newlineNext = true;
@@ -152,6 +152,11 @@ class GoRhsVisitor extends VisitK {
     public void apply(KVariable v) {
         start();
         String varName = lhsVars.getVarName(v);
+        if (varName == null) {
+            sb.append("/* varName=null */ internedBottom");
+            end();
+            return;
+        }
 
         if (!lhsVars.containsVar(v) && varName.startsWith("?")) {
             throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
@@ -177,12 +182,24 @@ class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KSequence k) {
         int size = k.items().size();
-        sb.append("/* rhs KSequence size=").append(size).append(" */ ");
         if (size == 1) {
+            sb.append("/* rhs KSequence size=").append(size).append(" */ ");
             apply(k.items().get(0));
+        } else {
+            start();
+            sb.append("KSequence { ks: []K{");
+            sb.increaseIndent();
+            for (K item : k.items()) {
+                newlineNext = true;
+                apply(item);
+                sb.append(",");
+            }
+            sb.decreaseIndent();
+            sb.newLine();
+            sb.writeIndent();
+            sb.append("}}");
+            end();
         }
-
-        throw KEMException.internalError("Method not implemented for KSequences of size different from 1");
     }
 
     @Override

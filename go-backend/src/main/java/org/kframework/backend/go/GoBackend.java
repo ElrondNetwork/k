@@ -9,6 +9,7 @@ import org.kframework.backend.go.codegen.FreshFunctionGen;
 import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
+import org.kframework.backend.go.codegen.StepFunctionGen;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.compile.Backend;
 import org.kframework.definition.Definition;
@@ -63,21 +64,26 @@ public class GoBackend implements Backend {
         // temporary, for convenience and comparison
         files.saveToKompiled("constants.ml", ocamlDef.constants());
 
-        DefinitionData data = def.definitionData();
-        files.saveToKompiled("klabel.go", new KLabelsGen(data, packageNameManager).klabels());
-        files.saveToKompiled("sort.go", new SortsGen(data, packageNameManager).sorts());
-        files.saveToKompiled("fresh.go", new FreshFunctionGen(data, packageNameManager).freshDefinition());
-
-        // temporary, for convenience and comparison
         try {
+            DefinitionData data = def.definitionData();
+            files.saveToKompiled("klabel.go", new KLabelsGen(data, packageNameManager).klabels());
+            files.saveToKompiled("sort.go", new SortsGen(data, packageNameManager).generate());
+            files.saveToKompiled("fresh.go", new FreshFunctionGen(data, packageNameManager).generate());
+            files.saveToKompiled("eval.go", new EvalFunctionGen(data, packageNameManager).generate());
+
+            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageNameManager);
+            files.saveToKompiled("step.go", stepFunctionGen.generateStep());
+            files.saveToKompiled("stepLookups.go", stepFunctionGen.generateLookupsStep());
+
+            // temporary, for convenience and comparison
             files.saveToKompiled("realdef.ml", ocamlDef.definition());
             String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
             files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
-            files.saveToKompiled("definition.go", def.definition());
-            files.saveToKompiled("eval.go", new EvalFunctionGen(data, packageNameManager).evalDefinition());
+            files.saveToKompiled("functions.go", def.definition());
         } catch (Exception e) {
             e.printStackTrace();
+            return;
         }
 
         try {

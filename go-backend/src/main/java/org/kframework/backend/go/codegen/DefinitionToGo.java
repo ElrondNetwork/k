@@ -9,16 +9,12 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
-import org.kframework.attributes.Location;
-import org.kframework.attributes.Source;
 import org.kframework.backend.go.GoOptions;
 import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleType;
-import org.kframework.backend.go.processors.AccumulateRuleVars;
-import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
@@ -54,7 +50,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -94,13 +89,18 @@ public class DefinitionToGo {
     private KLabel topCellInitializer;
 
     public DefinitionData definitionData() {
-        return new DefinitionData(mainModule, functions, anywhereKLabels, functionParams, topCellInitializer);
+        return new DefinitionData(mainModule,
+                functions, anywhereKLabels,
+                functionRules, anywhereRules,
+                functionParams, topCellInitializer);
     }
+
+    RuleWriter ruleWriter;
 
     public void initialize(CompiledDefinition def) {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
-        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convertVars data structures to lookups");
+        ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
         this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
@@ -153,6 +153,7 @@ public class DefinitionToGo {
             functionParams.put(label, functionVars);
         }
 
+        ruleWriter = new RuleWriter(this.definitionData());
     }
 
     SetMultimap<KLabel, Rule> functionRules;
@@ -188,7 +189,7 @@ public class DefinitionToGo {
                     functionName = GoStringUtil.functionName(functionLabel);
                 }
 
-                assert sb.currentIndent() == 0;
+                assert sb.getCurrentIndent() == 0;
 
                 // start typing
                 sb.append("func ");
@@ -249,7 +250,11 @@ public class DefinitionToGo {
 
                 // main!
                 List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
-                convertFunction(rules, sb, functionName, RuleType.FUNCTION, functionVars);
+                int ruleNum = 0;
+                for (Rule r : rules) {
+                    sb.appendIndentedLine("// rule");
+                    ruleNum = ruleWriter.convert(r, sb, RuleType.FUNCTION, ruleNum, functionVars);
+                }
 
                 // TODO: will have to convert to a nice returned error
                 sb.writeIndent().append("panic(\"Stuck! Function: ").append(functionName).append(" Args:\"");
@@ -279,6 +284,7 @@ public class DefinitionToGo {
         return sb.toString();
     }
 
+
     private int getArity(KLabel functionLabel) {
         Set<Integer> arities = stream(mainModule.productionsFor().apply(functionLabel)).map(Production::arity).collect(Collectors.toSet());
         if (arities.size() > 1) {
@@ -286,122 +292,6 @@ public class DefinitionToGo {
         }
         assert arities.size() == 1;
         return arities.iterator().next();
-    }
-
-    private void convertFunction(List<Rule> rules, GoStringBuilder sb, String functionName, RuleType type, FunctionParams functionVars) {
-        int ruleNum = 0;
-        for (Rule r : rules) {
-            if (hasLookups(r)) {
-                //ruleNum = convertVars(Collections.singletonList(r), sb, functionName, functionName, type, ruleNum);
-                sb.append("\t// rule with lookups\n");
-            } else {
-                sb.append("\t// rule without lookups\n");
-                ruleNum = convert(r, sb, type, ruleNum, functionName, functionVars);
-            }
-        }
-    }
-
-    private int convert(Rule r, GoStringBuilder sb, RuleType type, int ruleNum, String functionName, FunctionParams functionVars) {
-        try {
-            GoStringUtil.appendRuleComment(sb, r);
-
-            K left = RewriteToTop.toLeft(r.body());
-            K requires = r.requires();
-            K right = RewriteToTop.toRight(r.body());
-
-            // we need the variables beforehand, so we retrieve them here
-            AccumulateRuleVars accumLhsVars = new AccumulateRuleVars();
-            accumLhsVars.apply(left);
-
-            // some evaluations can be precomputed
-            PrecomputePredicates optimizeTransf = new PrecomputePredicates(
-                    this.definitionData(), accumLhsVars.vars());
-            requires = optimizeTransf.apply(requires);
-            right = optimizeTransf.apply(right);
-
-            // check which variables are actually used in requires or in rhs
-            // note: this has to happen *after* PrecomputePredicates does its job
-            AccumulateRuleVars accumRhsVars = new AccumulateRuleVars();
-            accumRhsVars.apply(requires);
-            accumRhsVars.apply(right);
-
-            // output LHS
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, this.definitionData(), functionVars,
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars());
-            if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
-                KApply kapp = (KApply) left;
-                lhsVisitor.applyTuple(kapp.klist().items());
-            } else {
-                lhsVisitor.apply(left);
-            }
-
-//            boolean when = true;
-//            if (type == RuleType.REGULAR && options.checkRaces) {
-//                sb.append(" when start_after < ").append(ruleNum);
-//                when = false;
-//            }
-
-            // output requires
-            if (!requires.equals(BooleanUtils.TRUE)) {
-                sb.writeIndent().append("/* REQUIRES */").newLine();
-                sb.writeIndent().append("if ");
-                sb.enableMiniIndent("if ");
-                // condition starts here
-                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, this.definitionData(),
-                        accumLhsVars.vars());
-                sideCondVisitor.apply(requires);
-                // condition ends
-                sb.disableMiniIndent();
-                sb.beginBlock();
-            } else if (requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
-                // just a comment, so we know what happened
-                sb.writeIndent().append("/* REQUIRES precomputed ");
-                sb.append(requires.att().get(PrecomputePredicates.COMMENT_KEY));
-                sb.append(" */").newLine();
-            }
-
-            // output RHS
-            sb.writeIndent().append("// rhs here:").newLine();
-            GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, this.definitionData(),
-                    accumLhsVars.vars());
-            sb.writeIndent();
-            sb.append("return ");
-            rhsVisitor.apply(right);
-            sb.append("\n");
-
-            // done
-            sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
-            sb.append("\n");
-            return ruleNum + 1;
-        } catch (NoSuchElementException e) {
-            System.err.println(r);
-            throw e;
-        } catch (KEMException e) {
-            e.exception.addTraceFrame("while compiling rule at " + r.att().getOptional(Source.class).map(Object::toString).orElse("<none>") + ":" + r.att().getOptional(Location.class).map(Object::toString).orElse("<none>"));
-            throw e;
-        }
-    }
-
-    private int numLookups(Rule r) {
-        class Holder {
-            int i;
-        }
-        Holder h = new Holder();
-        new VisitK() {
-            @Override
-            public void apply(KApply k) {
-                if (ConvertDataStructureToLookup.isLookupKLabel(k)) {
-                    h.i++;
-                }
-                super.apply(k);
-            }
-        }.apply(r.requires());
-        return h.i;
-    }
-
-    private boolean hasLookups(Rule r) {
-        return numLookups(r) > 0;
     }
 
     private int sortFunctionRules(Rule a1, Rule a2) {
