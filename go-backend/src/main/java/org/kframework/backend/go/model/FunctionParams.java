@@ -54,6 +54,10 @@ public class FunctionParams {
         return sb.toString();
     }
 
+    public String paramNamesSeparatedByComma() {
+        return String.join(", ", varNames);
+    }
+
     public Iterable<String> getVarNames() {
         return new Iterable<String>() {
             @Override

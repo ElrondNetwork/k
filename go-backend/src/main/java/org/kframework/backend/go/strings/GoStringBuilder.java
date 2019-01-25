@@ -29,6 +29,12 @@ public class GoStringBuilder {
         sb = new StringBuilder();
     }
 
+    public GoStringBuilder(int tabsIndent, int spacesIndent) {
+        sb = new StringBuilder();
+        this.tabsIndent = tabsIndent;
+        this.spacesIndent = spacesIndent;
+    }
+
     public GoStringBuilder append(String s) {
         sb.append(s);
         return this;

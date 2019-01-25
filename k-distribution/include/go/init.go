@@ -38,17 +38,3 @@ func isTrue(c K) bool {
 	}
 	return false
 }
-
-type hookNotImplementedError struct {
-}
-
-func (e *hookNotImplementedError) Error() string {
-	return "Hook not implemented."
-}
-
-type hookInvalidArgsError struct {
-}
-
-func (e *hookInvalidArgsError) Error() string {
-	return "Invalid argument(s) provided to hook."
-}

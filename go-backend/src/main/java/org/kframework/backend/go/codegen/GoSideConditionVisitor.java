@@ -2,7 +2,6 @@ package org.kframework.backend.go.codegen;
 
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
-import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.KApply;
@@ -15,15 +14,15 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
     private ExpressionType expectedExprType = ExpressionType.BOOLEAN;
     private int depthFromFuncIsTrue = -1;
 
-    public GoSideConditionVisitor(GoStringBuilder sb, DefinitionData data, RuleVars lhsVars) {
-        super(sb, data, lhsVars);
+    public GoSideConditionVisitor(DefinitionData data, RuleVars lhsVars, int tabsIndent, int returnValSpacesIndent) {
+        super(data, lhsVars, tabsIndent, returnValSpacesIndent);
     }
 
     @Override
     protected void start() {
         super.start();
         if (expectedExprType == ExpressionType.BOOLEAN) {
-            sb.append("isTrue(");
+            currentSb.append("isTrue(");
             expectedExprType = ExpressionType.K; // entering K territory
             depthFromFuncIsTrue = 0;
         } else {
@@ -37,8 +36,8 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
 
         if (expectedExprType == ExpressionType.K) {
             if (depthFromFuncIsTrue == 0) {
-                //sb.newLine().writeIndent().append(")");
-                sb.append(")");
+                //currentSb.newLine().writeIndent().append(")");
+                currentSb.append(")");
                 expectedExprType = ExpressionType.BOOLEAN; // back from K territory
             } else {
                 depthFromFuncIsTrue--;
@@ -57,29 +56,29 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
             case "BOOL.andThen":
                 assert k.klist().items().size() == 2;
 
-                sb.append("(");
+                currentSb.append("(");
                 apply(k.klist().items().get(0));
-                //sb.append(") && (");
-                sb.append(") &&").newLine().writeIndent().append("(");
+                //currentSb.append(") && (");
+                currentSb.append(") &&").newLine().writeIndent().append("(");
                 apply(k.klist().items().get(1));
-                sb.append(")");
+                currentSb.append(")");
                 return;
             case "BOOL.or":
             case "BOOL.orElse":
                 assert k.klist().items().size() == 2;
 
-                sb.append("(");
+                currentSb.append("(");
                 apply(k.klist().items().get(0));
-                sb.append(") || (");
+                currentSb.append(") || (");
                 apply(k.klist().items().get(1));
-                sb.append(")");
+                currentSb.append(")");
                 return;
             case "BOOL.not":
                 assert k.klist().items().size() == 1;
 
-                sb.append("!(");
+                currentSb.append("!(");
                 apply(k.klist().items().get(0));
-                sb.append(")");
+                currentSb.append(")");
                 return;
             default:
                 break;
@@ -95,7 +94,7 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
     public void apply(KToken k) {
         if (expectedExprType == ExpressionType.BOOLEAN && k.sort().equals(Sorts.Bool())) {
             appendKTokenComment(k);
-            sb.append(k.s()); // true or false, directly
+            currentSb.append(k.s()); // true or false, directly
             return;
         }
 

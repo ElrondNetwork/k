@@ -102,6 +102,8 @@ public class GoBackend implements Backend {
             packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/init.go"), files.resolveKompiled("init.go"));
             packageNameManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/error.go"), files.resolveKompiled("error.go"));
+            packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
 
             // builtin hook files

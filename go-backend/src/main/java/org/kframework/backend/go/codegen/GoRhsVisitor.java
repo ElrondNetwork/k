@@ -20,17 +20,24 @@ import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
 import org.kframework.utils.errorsystem.KEMException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GoRhsVisitor extends VisitK {
-    protected final GoStringBuilder sb;
+    protected GoStringBuilder currentSb;
+    protected final List<String> evalCalls = new ArrayList<>();
+
     protected final DefinitionData data;
     private final RuleVars lhsVars;
+    private final int topLevelIndent;
 
     private boolean newlineNext = false;
+    private int evalVarIndex = 0;
 
     protected void start() {
         if (newlineNext) {
-            sb.newLine();
-            sb.writeIndent();
+            currentSb.newLine();
+            currentSb.writeIndent();
             newlineNext = false;
         }
     }
@@ -38,10 +45,21 @@ public class GoRhsVisitor extends VisitK {
     protected void end() {
     }
 
-    public GoRhsVisitor(GoStringBuilder sb, DefinitionData data, RuleVars lhsVars) {
-        this.sb = sb;
+    public GoRhsVisitor(DefinitionData data, RuleVars lhsVars, int tabsIndent, int returnValSpacesIndent) {
+        this.topLevelIndent = tabsIndent;
+        this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.lhsVars = lhsVars;
+    }
+
+    public void writeEvalCalls(GoStringBuilder sb) {
+        for (String evalCall : evalCalls) {
+            sb.append(evalCall);
+        }
+    }
+
+    public void writeReturnValue(GoStringBuilder sb) {
+        sb.append(currentSb.toString());
     }
 
     @Override
@@ -54,13 +72,13 @@ public class GoRhsVisitor extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            sb.append("KToken{Sort: ");
-            GoStringUtil.appendSortVariableName(sb.sb(), sort);
-            sb.append(", Value:");
+            currentSb.append("KToken{Sort: ");
+            GoStringUtil.appendSortVariableName(currentSb.sb(), sort);
+            currentSb.append(", Value:");
             apply(value);
-            sb.append("}");
+            currentSb.append("}");
         } else if (k.klabel().name().equals("#Bottom")) {
-            sb.append("Bottom{}");
+            currentSb.append("Bottom{}");
         } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
             applyKApplyExecute(k);
         } else {
@@ -70,37 +88,57 @@ public class GoRhsVisitor extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        sb.append("KApply{Label: ");
-        GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
-        sb.append(", List: []K{ // as-is ").append(k.klabel().name());
-        sb.increaseIndent();
+        currentSb.append("KApply{Label: ");
+        GoStringUtil.appendKlabelVariableName(currentSb.sb(), k.klabel());
+        currentSb.append(", List: []K{ // as-is ").append(k.klabel().name());
+        currentSb.increaseIndent();
         for (K item : k.klist().items()) {
             newlineNext = true;
             apply(item);
-            sb.append(",");
+            currentSb.append(",");
         }
-        sb.decreaseIndent();
-        sb.newLine();
-        sb.writeIndent();
-        sb.append("}}");
+        currentSb.decreaseIndent();
+        currentSb.newLine();
+        currentSb.writeIndent();
+        currentSb.append("}}");
     }
 
     protected void applyKApplyExecute(KApply k) {
-        sb.append("/* execute: */ "); // comment
-        GoStringUtil.appendFunctionName(sb.sb(), k.klabel()); // func name
+        String evalVarName = "eval" + evalVarIndex;
+        String errVarName = "err" + evalVarIndex;
+        evalVarIndex++;
+
+        // return the eval variable
+        currentSb.append(evalVarName);
+
+        // also add an eval call to the eval calls
+        GoStringBuilder evalSb = new GoStringBuilder(topLevelIndent, 0);
+        GoStringBuilder backupSb = currentSb;
+        currentSb = evalSb; // we trick all nodes below to output to the eval call instead of the return by changing the string builder
+
+        evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
+        GoStringUtil.appendFunctionName(evalSb.sb(), k.klabel()); // func name
         if (k.items().size() == 0) { // call parameters
-            sb.append("(config)");
+            evalSb.append("(config)").newLine();
         } else {
-            sb.append("(");
-            sb.increaseIndent();
+            evalSb.append("(");
+            evalSb.increaseIndent();
             for(K item : k.items()) {
                 newlineNext = true;
                 apply(item);
-                sb.append(",");
+                evalSb.append(",");
             }
-            sb.newLine().writeIndent().append("config)");
-            sb.decreaseIndent();
+            evalSb.newLine().writeIndent().append("config)");
+            evalSb.decreaseIndent();
+            evalSb.newLine();
         }
+        evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
+        evalSb.writeIndent().append("return noResult, ").append(errVarName).newLine();
+        evalSb.endOneBlock();
+
+        evalCalls.add(evalSb.toString());
+        assert currentSb == evalSb;
+        currentSb = backupSb; // restore
     }
 
     @Override
@@ -117,15 +155,15 @@ public class GoRhsVisitor extends VisitK {
     public void apply(KToken k) {
         start();
         appendKTokenComment(k);
-        appendKTokenRepresentation(sb, k, data);
+        appendKTokenRepresentation(currentSb, k, data);
         end();
     }
 
     protected void appendKTokenComment(KToken k) {
         if (k.sort().equals(Sorts.Bool()) && k.att().contains(PrecomputePredicates.COMMENT_KEY)) {
-            sb.append("/* rhs precomputed ").append(k.att().get(PrecomputePredicates.COMMENT_KEY)).append(" */ ");
+            currentSb.append("/* rhs precomputed ").append(k.att().get(PrecomputePredicates.COMMENT_KEY)).append(" */ ");
         } else{
-            sb.append("/* rhs KToken */ ");
+            currentSb.append("/* rhs KToken */ ");
         }
     }
 
@@ -153,7 +191,7 @@ public class GoRhsVisitor extends VisitK {
         start();
         String varName = lhsVars.getVarName(v);
         if (varName == null) {
-            sb.append("/* varName=null */ internedBottom");
+            currentSb.append("/* varName=null */ internedBottom");
             end();
             return;
         }
@@ -161,19 +199,19 @@ public class GoRhsVisitor extends VisitK {
         if (!lhsVars.containsVar(v) && varName.startsWith("?")) {
             throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
         } else if (!lhsVars.containsVar(v)) {
-            sb.append("panic(\"Stuck!\")");
+            currentSb.append("panic(\"Stuck!\")");
         } else {
             KLabel listVar = lhsVars.listVars.get(varName);
             if (listVar != null) {
-                sb.append("List{Sort: ");
-                GoStringUtil.appendSortVariableName(sb.sb(), data.mainModule.sortFor().apply(listVar));
-                sb.append(", Label:");
-                GoStringUtil.appendKlabelVariableName(sb.sb(), listVar);
-                //sb.append(", ");
-                //sb.append(varOccurrance);
-                sb.append(" /* ??? */}");
+                currentSb.append("List{Sort: ");
+                GoStringUtil.appendSortVariableName(currentSb.sb(), data.mainModule.sortFor().apply(listVar));
+                currentSb.append(", Label:");
+                GoStringUtil.appendKlabelVariableName(currentSb.sb(), listVar);
+                //currentSb.append(", ");
+                //currentSb.append(varOccurrance);
+                currentSb.append(" /* ??? */}");
             } else {
-                sb.append(varName);
+                currentSb.append(varName);
             }
         }
         end();
@@ -184,36 +222,36 @@ public class GoRhsVisitor extends VisitK {
         int size = k.items().size();
         switch (k.items().size()) {
         case 1:
-            sb.append("/* rhs KSequence size=1 */ ");
+            currentSb.append("/* rhs KSequence size=1 */ ");
             apply(k.items().get(0));
             return;
         case 2:
             start();
-            sb.append("assembleFromHeadTail(");
-            sb.increaseIndent();
+            currentSb.append("assembleFromHeadTail(");
+            currentSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;
                 apply(item);
-                sb.append(",");
+                currentSb.append(",");
             }
-            sb.decreaseIndent();
-            sb.newLine().writeIndent().append(")");
+            currentSb.decreaseIndent();
+            currentSb.newLine().writeIndent().append(")");
             return;
         default:
             start();
-            sb.append("KSequence { ks: append([]K{ ");
-            sb.increaseIndent();
+            currentSb.append("KSequence { ks: append([]K{ ");
+            currentSb.increaseIndent();
             // heads
             for (int i = 0; i < k.items().size() - 1; i++) {
                 newlineNext = true;
                 apply(k.items().get(i));
-                sb.append(",");
+                currentSb.append(",");
             }
             // tail
-            sb.decreaseIndent();
-            sb.newLine().writeIndent().append("}, ");
+            currentSb.decreaseIndent();
+            currentSb.newLine().writeIndent().append("}, ");
             apply(k.items().get(k.items().size() - 1));
-            sb.append(".ks...)}");
+            currentSb.append(".ks...)}");
             end();
         }
     }
@@ -221,9 +259,9 @@ public class GoRhsVisitor extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         start();
-        sb.append("InjectedKLabel{Sort: ");
-        GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
-        sb.append("}");
+        currentSb.append("InjectedKLabel{Sort: ");
+        GoStringUtil.appendKlabelVariableName(currentSb.sb(), k.klabel());
+        currentSb.append("}");
         end();
     }
 

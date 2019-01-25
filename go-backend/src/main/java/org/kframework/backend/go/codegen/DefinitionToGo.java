@@ -194,7 +194,7 @@ public class DefinitionToGo {
                 // start typing
                 sb.append("func ");
                 sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config K) K");
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config K) (K, error)");
                 sb.beginBlock();
 
 
@@ -222,12 +222,12 @@ public class DefinitionToGo {
                         sb.append("\t// eval ???\n");
                     }
 
-                    sb.writeIndent().append("return hookRes").newLine();
+                    sb.writeIndent().append("return hookRes, nil").newLine();
 
                     sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
                     sb.writeIndent().append("fmt.Println(\"Warning! Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
-                    sb.writeIndent().append("panic(\"Unexpected error occured while running hook function.\")").newLine();
+                    sb.writeIndent().append("return noResult, hookErr").newLine();
                     sb.endOneBlock().newLine();
                 } else if (!hook.equals(".")) {
                     kem.registerCompilerWarning("missing entry for hook " + hook);
@@ -256,14 +256,18 @@ public class DefinitionToGo {
                     ruleNum = ruleWriter.convert(r, sb, RuleType.FUNCTION, ruleNum, functionVars);
                 }
 
-                // TODO: will have to convert to a nice returned error
-                sb.writeIndent().append("panic(\"Stuck! Function: ").append(functionName).append(" Args:\"");
-                for (String fv : functionVars.getVarNames()) {
-                    sb.append(" + \"\\n\\t").append(fv).append(":\" + ").append(fv).append(".PrettyTreePrint(0)");
+                sb.writeIndent().append("return noResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
+                if (functionVars.arity() == 0) {
+                    sb.append("nil");
+                } else {
+                    sb.append("[]K{");
+                    sb.append(functionVars.paramNamesSeparatedByComma());
+                    sb.append("}");
                 }
-                sb.append(")").newLine();
+                sb.append("}").newLine();
+
                 sb.endAllBlocks(0);
-                sb.append("\n");
+                sb.newLine();
 
                 // not yet sure if we're keeping these
                 if (constants.contains(functionLabel)) {
@@ -276,14 +280,13 @@ public class DefinitionToGo {
                     sb.append("//memoization not yet implemented. Function name: ");
                     sb.append(functionLabel.toString());
                     sb.append("\n\n");
-                    //encodeMemoizationOfFunction(sb, conn, functionLabel, functionName, arity);
+                    //encodeMemoizationOfFunction(currentSb, conn, functionLabel, functionName, arity);
                 }
             }
         }
 
         return sb.toString();
     }
-
 
     private int getArity(KLabel functionLabel) {
         Set<Integer> arities = stream(mainModule.productionsFor().apply(functionLabel)).map(Production::arity).collect(Collectors.toSet());

@@ -63,7 +63,7 @@ public class StepFunctionGen {
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(RuleWriter::hasLookups));
 
-        sb.append("func ").append(funcName).append("(c K) K").beginBlock("k * step_function");
+        sb.append("func ").append(funcName).append("(c K) (K, error)").beginBlock();
         sb.writeIndent().append("config := c").newLine();
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
@@ -80,20 +80,14 @@ public class StepFunctionGen {
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(RuleWriter::hasLookups));
 
-        sb.append("func ").append(lookupsFuncName).append("(c K, config K, guard int) K").beginBlock("k * step_function");
+        sb.append("func ").append(lookupsFuncName).append("(c K, config K, guard int) (K, error)").beginBlock("k * step_function");
 
-        //sb.append("| _ -> lookups_").append(funcName).append(" c c ").append(options.checkRaces ? "start_after" : "(-1)").append('\n');
-        //sb.append("with Sys.Break -> raise (Stuck c)\n");
-        //sb.append("and lookups_").append(funcName).append(" (c: k) (config: k) (guard: int) : k ")
-        //        .append(options.checkRaces ? "* (int * RACE.rule_type * string) " : "").append("* step_function = match c with \n");
         List<Rule> lookupRules = groupedByLookup.getOrDefault(true, Collections.emptyList());
         for (Rule r : lookupRules) {
             ruleNum = ruleWriter.convert(r, sb, RuleType.REGULAR,ruleNum, new FunctionParams(1));
         }
 
-        // TODO: will have to convert to a nice returned error
-        sb.writeIndent().append("panic(\"Stuck! Function: ").append(lookupsFuncName).append("\"");
-        sb.append(")").newLine();
+        sb.appendIndentedLine("return c, &noStepError{}");
         sb.endAllBlocks(0);
         sb.append("\n");
     }

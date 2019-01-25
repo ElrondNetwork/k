@@ -44,7 +44,7 @@ public class GoLhsVisitor extends VisitK {
 
     public ExpressionType getTopExpressionType() {
         if (topExpressionType == null) {
-            throw new RuntimeException("Generated expresstion type not initialized.");
+            throw new RuntimeException("Generated expression type not initialized.");
         }
         return topExpressionType;
     }
@@ -210,8 +210,6 @@ public class GoLhsVisitor extends VisitK {
             initTopExpressionType(ExpressionType.STATEMENT);
             sb.writeIndent();
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ").append(k.name()).newLine();
-//            sb.writeIndent().append("if ");
-//            sb.append(varName).append(" := ").append(consumeSubject()).append("; true").beginBlock(" // lhs KVariable "+ k.name());
         }
     }
 

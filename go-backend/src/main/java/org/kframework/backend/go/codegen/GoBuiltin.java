@@ -33,11 +33,11 @@ public class GoBuiltin {
     }
 
     public static final ImmutableMap<String, Function<Sort, String>> PREDICATE_RULES;
-    private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn Bool(true)\n\t}";
+    private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn Bool(true), nil\n\t}";
 
     static {
         ImmutableMap.Builder<String, Function<Sort, String>> builder = ImmutableMap.builder();
-        builder.put("K.K", s -> "return Bool(true)");
+        builder.put("K.K", s -> "return Bool(true), nil");
         builder.put("K.KItem", s -> "// almost certainly incomplete, original: [_] -> [Bool true] | _ -> [Bool false] ???????");
         builder.put("INT.Int", s -> "if _, t := c.(Int); t" + RETURN_BOOL_TRUE_BLOCK);
         builder.put("FLOAT.Float", s -> "if _, t := c.(Float); t" + RETURN_BOOL_TRUE_BLOCK);

@@ -28,13 +28,44 @@ func kastParseAndPrint() {
 	fmt.Println("input:")
 	fmt.Println(kinput.PrettyTreePrint(0))
 
+	// top cell initialization
 	m := make(map[K]K)
 	m[KToken{Sort: sortKConfigVar, Value: "$PGM"}] = kinput
 	kmap := Map{Sort: sortMap, Label: lbl_Map_, data: m}
 	evalK := KApply{Label: topCellInitializer, List: []K{kmap}}
-	kresult := eval(evalK, Bottom{})
-	fmt.Println("\n\noutput:")
-	fmt.Println(kresult.PrettyTreePrint(0))
+	kinit, err := eval(evalK, Bottom{})
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println("\n\ntop level init:")
+	fmt.Println(kinit.PrettyTreePrint(0))
+
+	// execute
+	final, stepsMade := takeStepsNoThread(kinit, 100)
+	fmt.Println("\n\nresult:")
+	fmt.Println(final.PrettyTreePrint(0))
+
+	fmt.Printf("\n\nsteps made: %d\n", stepsMade)
+
+}
+
+func takeStepsNoThread(k K, maxSteps int) (K, int) {
+	n := 0
+	current := k
+	var err error
+	for n < maxSteps {
+		current, err = step(current)
+		if err != nil {
+			if _, t := err.(*noStepError); t {
+				return current, n
+			} else {
+				panic(err.Error())
+			}
+		}
+		n++
+	}
+	return current, n
 }
 
 func main() {

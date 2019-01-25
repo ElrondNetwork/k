@@ -94,14 +94,12 @@ public class RuleWriter {
             // output requires
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES");
-                sb.writeIndent().append("if ");
-                sb.enableMiniIndent("if ");
-                // condition starts here
-                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(sb, data,
-                        accumLhsVars.vars());
+                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(data,
+                        accumLhsVars.vars(), sb.getCurrentIndent(), "if ".length());
                 sideCondVisitor.apply(requires);
-                // condition ends
-                sb.disableMiniIndent();
+                sideCondVisitor.writeEvalCalls(sb);
+                sb.writeIndent().append("if ");
+                sideCondVisitor.writeReturnValue(sb);
                 sb.beginBlock();
             } else if (requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
                 // just a comment, so we know what happened
@@ -110,12 +108,14 @@ public class RuleWriter {
 
             // output RHS
             sb.appendIndentedLine("// RHS");
-            GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, data,
-                    accumLhsVars.vars());
+            GoRhsVisitor rhsVisitor = new GoRhsVisitor(data,
+                    accumLhsVars.vars(), sb.getCurrentIndent(), 0);
+            rhsVisitor.apply(right);
+            rhsVisitor.writeEvalCalls(sb);
             sb.writeIndent();
             sb.append("return ");
-            rhsVisitor.apply(right);
-            sb.append("\n");
+            rhsVisitor.writeReturnValue(sb);
+            sb.append(", nil").newLine();
 
             // done
             sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
@@ -146,10 +146,12 @@ public class RuleWriter {
                 matchIndex++;
                 String reapply = "return stepLookups(c, config, " + ruleNum + ") // reapply";
 
-                sb.writeIndent().append(matchVar).append(" := ");
-
-                GoRhsVisitor rhsVisitor = new GoRhsVisitor(sb, data, rhsVars);
+                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, rhsVars, sb.getCurrentIndent(), 0);
                 rhsVisitor.apply(k.klist().items().get(1));
+                rhsVisitor.writeEvalCalls(sb);
+                sb.writeIndent().append(matchVar).append(" := ");
+                rhsVisitor.writeReturnValue(sb);
+
                 sb.newLine();
                 sb.writeIndent().append("if _, isBottom := ").append(matchVar).append(".(Bottom); isBottom").beginBlock();
                 sb.writeIndent().append(reapply).newLine();

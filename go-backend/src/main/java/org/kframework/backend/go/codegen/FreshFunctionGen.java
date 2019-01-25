@@ -22,7 +22,7 @@ public class FreshFunctionGen {
         StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 
-        sb.append("func freshFunction (s Sort, config K, counter int) K {\n");
+        sb.append("func freshFunction (s Sort, config K, counter int) (K, error) {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : iterable(data.mainModule.freshFunctionFor().keys())) {
             sb.append("\t\tcase ");
