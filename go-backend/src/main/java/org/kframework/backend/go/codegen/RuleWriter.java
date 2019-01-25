@@ -171,7 +171,7 @@ public class RuleWriter {
                         sbRef.endOneBlockNoNewline();
                     });
                 }
-
+                break;
             default:
                 throw KEMException.internalError("Unexpected lookup type");
             }
