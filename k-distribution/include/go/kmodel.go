@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	koreparser "$INCLUDE_KORE_PARSER$"
 	"strings"
 )
 
@@ -96,31 +95,6 @@ type Bool bool
 type Bottom struct {
 }
 
-func convertParserModelToKModel(pk koreparser.K) K {
-	switch v := pk.(type) {
-	case koreparser.KApply:
-		var convertedList []K
-		for _, le := range v.List {
-			convertedList = append(convertedList, convertParserModelToKModel(le))
-		}
-		return KApply{Label: parseKLabel(v.Label), List: convertedList}
-	case koreparser.InjectedKLabel:
-		return InjectedKLabel{Label: parseKLabel(v.Label)}
-	case koreparser.KToken:
-		return KToken{Value: v.Value, Sort: parseSort(v.Sort)}
-	case koreparser.KVariable:
-		return KVariable{Name: v.Name}
-	case koreparser.KSequence:
-		var convertedKs []K
-		for _, ksElem := range v {
-			convertedKs = append(convertedKs, convertParserModelToKModel(ksElem))
-		}
-		return KSequence{ks: convertedKs}
-	default:
-		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
-	}
-}
-
 func addIndent(sb *strings.Builder, indent int) {
 	for i := 0; i < indent; i++ {
 		sb.WriteString("    ")
@@ -184,15 +158,15 @@ func (k Array) PrettyTreePrint(indent int) string {
 }
 
 func (k Int) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Int (:%d)", k))
+	return simplePrint(indent, fmt.Sprintf("Int (%d)", k))
 }
 
 func (k MInt) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("MInt (:%d)", k))
+	return simplePrint(indent, fmt.Sprintf("MInt (%d)", k))
 }
 
 func (k Float) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Float (:%f)", k))
+	return simplePrint(indent, fmt.Sprintf("Float (%f)", k))
 }
 
 func (k String) PrettyTreePrint(indent int) string {

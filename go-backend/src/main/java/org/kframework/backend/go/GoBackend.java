@@ -98,6 +98,8 @@ public class GoBackend implements Backend {
             packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/kmodel.go"), files.resolveKompiled("kmodel.go"));
             packageNameManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/kmodelconvert.go"), files.resolveKompiled("kmodelconvert.go"));
+            packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/init.go"), files.resolveKompiled("init.go"));
             packageNameManager.copyFileAndReplaceGoPackages(
                     files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
