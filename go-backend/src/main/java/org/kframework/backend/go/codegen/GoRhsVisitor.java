@@ -182,12 +182,14 @@ public class GoRhsVisitor extends VisitK {
     @Override
     public void apply(KSequence k) {
         int size = k.items().size();
-        if (size == 1) {
-            sb.append("/* rhs KSequence size=").append(size).append(" */ ");
+        switch (k.items().size()) {
+        case 1:
+            sb.append("/* rhs KSequence size=1 */ ");
             apply(k.items().get(0));
-        } else {
+            return;
+        case 2:
             start();
-            sb.append("KSequence { ks: []K{");
+            sb.append("assembleFromHeadTail(");
             sb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;
@@ -195,9 +197,23 @@ public class GoRhsVisitor extends VisitK {
                 sb.append(",");
             }
             sb.decreaseIndent();
-            sb.newLine();
-            sb.writeIndent();
-            sb.append("}}");
+            sb.newLine().writeIndent().append(")");
+            return;
+        default:
+            start();
+            sb.append("KSequence { ks: append([]K{ ");
+            sb.increaseIndent();
+            // heads
+            for (int i = 0; i < k.items().size() - 1; i++) {
+                newlineNext = true;
+                apply(k.items().get(i));
+                sb.append(",");
+            }
+            // tail
+            sb.decreaseIndent();
+            sb.newLine().writeIndent().append("}, ");
+            apply(k.items().get(k.items().size() - 1));
+            sb.append(".ks...)}");
             end();
         }
     }

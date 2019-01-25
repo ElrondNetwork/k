@@ -43,30 +43,30 @@ type KVariable struct {
 
 // Map ... a type of KItem, TODO: document
 type Map struct {
-    Sort Sort
-    Label KLabel
-    data map[K]K
+	Sort  Sort
+	Label KLabel
+	data  map[K]K
 }
 
 // Set ... a type of KItem, TODO: document
 type Set struct {
-    Sort Sort
-    Label KLabel
-    data map[K]bool
+	Sort  Sort
+	Label KLabel
+	data  map[K]bool
 }
 
 // List ... a type of KItem, TODO: document
 type List struct {
-    Sort Sort
-    Label KLabel
-    data []K
+	Sort  Sort
+	Label KLabel
+	data  []K
 }
 
 // Array ... a type of KItem, TODO: document
 type Array struct {
-    Sort Sort
-    Label KLabel
-    data []K
+	Sort  Sort
+	Label KLabel
+	data  []K
 }
 
 // Int ... a type of KItem, TODO: document
@@ -209,4 +209,8 @@ func (k KSequence) PrettyTreePrint(indent int) string {
 	}
 
 	return sb.String()
+}
+
+func (k KSequence) isEmpty() bool {
+	return len(k.ks) == 0
 }

@@ -217,23 +217,43 @@ public class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KSequence k) {
-        if (k.items().size() == 1) {
-            sb.writeIndent();
-            sb.append("// lhs KSequence size:" + k.items().size() + "\n");
+        switch (k.items().size()) {
+        case 1:
+            // no KSequence, go straight to the only item
+            sb.appendIndentedLine("// lhs KSequence size:" + k.items().size());
             apply(k.items().get(0));
             return;
-        } else {
+        case 2:
+            // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
+            String kseqHead = "kseq" + kitemIndex + "Head";
+            String kseqTail = "kseq" + kitemIndex + "Tail";
+            kitemIndex++;
+            sb.writeIndent().append("if ok, ");
+            sb.append(kseqHead).append(", ");
+            sb.append(kseqTail).append(" := trySplitToHeadTail(").append(consumeSubject()).append("); ok");
+            sb.beginBlock("lhs KSequence size:" + k.items().size());
+            nextSubject = kseqHead;
+            apply(k.items().get(0));
+            nextSubject = kseqTail;
+            apply(k.items().get(1));
+            return;
+        default:
+            // must match KSequence
             String kseqVar = "kseq" + kitemIndex;
             kitemIndex++;
             lhsTypeIf(kseqVar, consumeSubject(), "KSequence");
-            sb.append(" && len(").append(kseqVar).append(".ks) == ").append(k.items().size());
+            int nrHeads = k.items().size() - 1;
+            sb.append(" && len(").append(kseqVar).append(".ks) >= ").append(nrHeads);
             sb.beginBlock("lhs KSequence size:" + k.items().size());
-            int i = 0;
-            for (K item : k.items()) {
+            // heads
+            for (int i = 0; i < nrHeads; i++) {
                 nextSubject = kseqVar + ".ks[" + i + "]";
-                apply(item);
-                i++;
+                apply(k.items().get(i));
             }
+            // tail
+            nextSubject = "KSequence{ks:" + kseqVar + ".ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
+            apply(k.items().get(nrHeads)); // last element
+            return;
         }
     }
 
