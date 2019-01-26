@@ -179,7 +179,7 @@ public class GoRhsVisitor extends VisitK {
             }
         }
 
-        sb.append(" KToken{Sort: ");
+        sb.append("KToken{Sort: ");
         GoStringUtil.appendSortVariableName(sb.sb(), k.sort());
         sb.append(", Value: ");
         sb.append(GoStringUtil.enquoteString(k.s()));

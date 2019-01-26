@@ -147,8 +147,9 @@ public class GoLhsVisitor extends VisitK {
     public void apply(KToken k) {
         initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
-        sb.append("if ").append(consumeSubject()).append(" == ");
+        sb.append("if ").append(consumeSubject()).append(" == (");
         GoRhsVisitor.appendKTokenRepresentation(sb, k, data);
+        sb.append(")");
         sb.beginBlock("lhs KToken");
     }
 
