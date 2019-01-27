@@ -3,18 +3,20 @@ package org.kframework.backend.go.codegen;
 import com.google.common.collect.Sets;
 import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
-import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.KLabel;
 
 public class EvalFunctionGen {
 
     private final DefinitionData data;
     private final GoPackageNameManager packageNameManager;
+    private final GoNameProvider nameProvider;
 
-    public EvalFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager) {
+    public EvalFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
         this.data = data;
         this.packageNameManager = packageNameManager;
+        this.nameProvider = nameProvider;
     }
 
     public String generate() {
@@ -22,7 +24,7 @@ public class EvalFunctionGen {
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
 
         sb.append("const topCellInitializer KLabel = ");
-        GoStringUtil.appendKlabelVariableName(sb.sb(), data.topCellInitializer);
+        sb.append(nameProvider.klabelVariableName(data.topCellInitializer));
         sb.append("\n\n");
 
         sb.append("func eval(c K, config K) (K, error)").beginBlock();
@@ -33,21 +35,21 @@ public class EvalFunctionGen {
         sb.writeIndent().append("switch kapp.Label").beginBlock();
         for (KLabel label : Sets.union(data.functions, data.anywhereKLabels)) {
             sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
+            sb.append(nameProvider.klabelVariableName(label));
             sb.append(":").newLine().increaseIndent();
 
             // arity check
             int arity = data.functionParams.get(label).arity();
             sb.writeIndent().append("if len(kapp.List) != ").append(arity).beginBlock();
             sb.writeIndent().append("return noResult, &evalArityViolatedError{funcName:\"");
-            GoStringUtil.appendFunctionName(sb.sb(), label);
+            sb.append(nameProvider.evalFunctionName(label));
             sb.append("\", expectedArity: ").append(arity);
             sb.append(", actualArity: len(kapp.List)}").newLine();
             sb.endOneBlock();
 
             // function call
             sb.writeIndent().append("return ");
-            GoStringUtil.appendFunctionName(sb.sb(), label);
+            sb.append(nameProvider.evalFunctionName(label));
             sb.append("(");
             for (int i = 0; i < arity; i++) {
                 sb.append("kapp.List[").append(i).append("], ");

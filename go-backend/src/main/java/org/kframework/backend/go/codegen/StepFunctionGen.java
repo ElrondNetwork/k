@@ -5,6 +5,7 @@ import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleType;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.definition.Rule;
 import org.kframework.kil.Attribute;
@@ -26,10 +27,10 @@ public class StepFunctionGen {
 
     private int ruleNum = 0;
 
-    public StepFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager) {
+    public StepFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
         this.data = data;
         this.packageNameManager = packageNameManager;
-        this.ruleWriter = new RuleWriter(data);
+        this.ruleWriter = new RuleWriter(data, nameProvider);
         List<Rule> unsortedRules = stream(data.mainModule.rules()).collect(Collectors.toList());
 //        if (options.reverse) {
 //            Collections.reverse(unsortedRules);

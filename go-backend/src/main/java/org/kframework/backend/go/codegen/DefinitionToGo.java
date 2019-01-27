@@ -15,8 +15,8 @@ import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleType;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
-import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
@@ -62,6 +62,7 @@ public class DefinitionToGo {
     private transient final KExceptionManager kem;
     private transient final FileUtil files;
     private final GoPackageNameManager packageNameManager;
+    private final GoNameProvider nameProvider;
     private transient final GlobalOptions globalOptions;
     private transient final KompileOptions kompileOptions;
     private transient ExpandMacros expandMacros;
@@ -74,12 +75,14 @@ public class DefinitionToGo {
             KExceptionManager kem,
             FileUtil files,
             GoPackageNameManager packageNameManager,
+            GoNameProvider nameProvider,
             GlobalOptions globalOptions,
             KompileOptions kompileOptions,
             GoOptions options) {
         this.kem = kem;
         this.files = files;
         this.packageNameManager = packageNameManager;
+        this.nameProvider = nameProvider;
         this.globalOptions = globalOptions;
         this.kompileOptions = kompileOptions;
         this.options = options;
@@ -153,7 +156,7 @@ public class DefinitionToGo {
             functionParams.put(label, functionVars);
         }
 
-        ruleWriter = new RuleWriter(this.definitionData());
+        ruleWriter = new RuleWriter(this.definitionData(), nameProvider);
     }
 
     SetMultimap<KLabel, Rule> functionRules;
@@ -184,9 +187,9 @@ public class DefinitionToGo {
 
                 String functionName;
                 if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    functionName = GoStringUtil.memoFunctionName(functionLabel);
+                    functionName = nameProvider.memoFunctionName(functionLabel);
                 } else {
-                    functionName = GoStringUtil.functionName(functionLabel);
+                    functionName = nameProvider.evalFunctionName(functionLabel);
                 }
 
                 assert sb.getCurrentIndent() == 0;
@@ -204,11 +207,10 @@ public class DefinitionToGo {
                         options.hookNamespaces.contains(funcHook.getNamespace())) {
                     sb.writeIndent().append("//hook: ").append(hook).newLine();
 
-                    sb.writeIndent().append("lbl := ");
-                    GoStringUtil.appendKlabelVariableName(sb.sb(), functionLabel);
+                    sb.writeIndent().append("lbl := ").append(nameProvider.klabelVariableName(functionLabel));
                     sb.append(" // ").append(functionLabel.name()).newLine(); // just for readability
-                    sb.writeIndent().append("sort := ");
-                    GoStringUtil.appendSortVariableName(sb.sb(), mainModule.sortFor().apply(functionLabel));
+                    Sort sort = mainModule.sortFor().apply(functionLabel);
+                    sb.writeIndent().append("sort := ").append(nameProvider.sortVariableName(sort));
                     sb.newLine();
 
                     sb.writeIndent().append("if hookRes, hookErr := ");
@@ -242,7 +244,8 @@ public class DefinitionToGo {
                         if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
                             sb.append("\t// predicate rule: ").append(sortHook).append("\n");
                             sb.append("\t");
-                            sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sort));
+                            String sortName = nameProvider.sortVariableName(sort);
+                            sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
                             sb.append("\n");
                         }
                     });
@@ -271,10 +274,8 @@ public class DefinitionToGo {
 
                 // not yet sure if we're keeping these
                 if (constants.contains(functionLabel)) {
-                    sb.append("//var ");
-                    GoStringUtil.appendConstFunctionName(sb.sb(), functionLabel);
-                    sb.append(" K = ");
-                    GoStringUtil.appendFunctionName(sb.sb(), functionLabel);
+                    sb.append("//var ").append(nameProvider.constFunctionName(functionLabel));
+                    sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
                     sb.append("(internedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
                     sb.append("//memoization not yet implemented. Function name: ");

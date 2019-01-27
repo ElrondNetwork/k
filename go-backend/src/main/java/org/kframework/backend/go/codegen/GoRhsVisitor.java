@@ -3,6 +3,7 @@ package org.kframework.backend.go.codegen;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.processors.PrecomputePredicates;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.Sorts;
@@ -28,6 +29,7 @@ public class GoRhsVisitor extends VisitK {
     protected final List<String> evalCalls = new ArrayList<>();
 
     protected final DefinitionData data;
+    protected final GoNameProvider nameProvider;
     private final RuleVars lhsVars;
     private final int topLevelIndent;
 
@@ -45,10 +47,14 @@ public class GoRhsVisitor extends VisitK {
     protected void end() {
     }
 
-    public GoRhsVisitor(DefinitionData data, RuleVars lhsVars, int tabsIndent, int returnValSpacesIndent) {
+    public GoRhsVisitor(DefinitionData data,
+                        GoNameProvider nameProvider,
+                        RuleVars lhsVars,
+                        int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
+        this.nameProvider = nameProvider;
         this.lhsVars = lhsVars;
     }
 
@@ -72,8 +78,7 @@ public class GoRhsVisitor extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            currentSb.append("KToken{Sort: ");
-            GoStringUtil.appendSortVariableName(currentSb.sb(), sort);
+            currentSb.append("KToken{Sort: ").append(nameProvider.sortVariableName(sort));
             currentSb.append(", Value:");
             apply(value);
             currentSb.append("}");
@@ -88,8 +93,7 @@ public class GoRhsVisitor extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("KApply{Label: ");
-        GoStringUtil.appendKlabelVariableName(currentSb.sb(), k.klabel());
+        currentSb.append("KApply{Label: ").append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append(", List: []K{ // as-is ").append(k.klabel().name());
         currentSb.increaseIndent();
         for (K item : k.klist().items()) {
@@ -117,7 +121,7 @@ public class GoRhsVisitor extends VisitK {
         currentSb = evalSb; // we trick all nodes below to output to the eval call instead of the return by changing the string builder
 
         evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
-        GoStringUtil.appendFunctionName(evalSb.sb(), k.klabel()); // func name
+        evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
         if (k.items().size() == 0) { // call parameters
             evalSb.append("(config)").newLine();
         } else {
@@ -155,7 +159,7 @@ public class GoRhsVisitor extends VisitK {
     public void apply(KToken k) {
         start();
         appendKTokenComment(k);
-        appendKTokenRepresentation(currentSb, k, data);
+        appendKTokenRepresentation(currentSb, k, data, nameProvider);
         end();
     }
 
@@ -170,7 +174,7 @@ public class GoRhsVisitor extends VisitK {
     /**
      * This one is also used by the GoLhsVisitor.
      * */
-    public static void appendKTokenRepresentation(GoStringBuilder sb, KToken k, DefinitionData data) {
+    public static void appendKTokenRepresentation(GoStringBuilder sb, KToken k, DefinitionData data, GoNameProvider nameProvider) {
         if (data.mainModule.sortAttributesFor().contains(k.sort())) {
             String hook = data.mainModule.sortAttributesFor().apply(k.sort()).<String>getOptional("hook").orElse("");
             if (GoBuiltin.GO_SORT_TOKEN_HOOKS.containsKey(hook)) {
@@ -179,8 +183,7 @@ public class GoRhsVisitor extends VisitK {
             }
         }
 
-        sb.append("KToken{Sort: ");
-        GoStringUtil.appendSortVariableName(sb.sb(), k.sort());
+        sb.append("KToken{Sort: ").append(nameProvider.sortVariableName(k.sort()));
         sb.append(", Value: ");
         sb.append(GoStringUtil.enquoteString(k.s()));
         sb.append("}");
@@ -203,10 +206,9 @@ public class GoRhsVisitor extends VisitK {
         } else {
             KLabel listVar = lhsVars.listVars.get(varName);
             if (listVar != null) {
-                currentSb.append("List{Sort: ");
-                GoStringUtil.appendSortVariableName(currentSb.sb(), data.mainModule.sortFor().apply(listVar));
-                currentSb.append(", Label:");
-                GoStringUtil.appendKlabelVariableName(currentSb.sb(), listVar);
+                Sort sort = data.mainModule.sortFor().apply(listVar);
+                currentSb.append("List{Sort: ").append(nameProvider.sortVariableName(sort));
+                currentSb.append(", Label:").append(nameProvider.klabelVariableName(listVar));
                 //currentSb.append(", ");
                 //currentSb.append(varOccurrance);
                 currentSb.append(" /* ??? */}");
@@ -259,8 +261,8 @@ public class GoRhsVisitor extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         start();
-        currentSb.append("InjectedKLabel{Sort: ");
-        GoStringUtil.appendKlabelVariableName(currentSb.sb(), k.klabel());
+        currentSb.append("InjectedKLabel{Label: ");
+        currentSb.append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append("}");
         end();
     }

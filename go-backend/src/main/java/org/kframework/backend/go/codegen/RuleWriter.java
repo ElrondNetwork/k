@@ -11,6 +11,7 @@ import org.kframework.backend.go.processors.AccumulateRuleVars;
 import org.kframework.backend.go.processors.LookupExtractor;
 import org.kframework.backend.go.processors.LookupVarExtractor;
 import org.kframework.backend.go.processors.PrecomputePredicates;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
@@ -28,9 +29,11 @@ import java.util.NoSuchElementException;
 public class RuleWriter {
 
     private final DefinitionData data;
+    private final GoNameProvider nameProvider;
 
-    public RuleWriter(DefinitionData data) {
+    public RuleWriter(DefinitionData data, GoNameProvider nameProvider) {
         this.data = data;
+        this.nameProvider = nameProvider;
     }
 
     public void convertFunction(List<Rule> rules, GoStringBuilder sb, RuleType type, FunctionParams functionVars) {
@@ -51,7 +54,7 @@ public class RuleWriter {
             K right = RewriteToTop.toRight(r.body());
 
             // we need the variables beforehand, so we retrieve them here
-            AccumulateRuleVars accumLhsVars = new AccumulateRuleVars();
+            AccumulateRuleVars accumLhsVars = new AccumulateRuleVars(nameProvider);
             accumLhsVars.apply(left);
 
             // lookups!
@@ -67,7 +70,7 @@ public class RuleWriter {
 
             // check which variables are actually used in requires or in rhs
             // note: this has to happen *after* PrecomputePredicates does its job
-            AccumulateRuleVars accumRhsVars = new AccumulateRuleVars();
+            AccumulateRuleVars accumRhsVars = new AccumulateRuleVars(nameProvider);
             accumRhsVars.apply(requires);
             accumRhsVars.apply(right);
 
@@ -76,7 +79,7 @@ public class RuleWriter {
 
             // output LHS
             sb.writeIndent().append("// LHS").newLine();
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, functionVars,
+            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, nameProvider, functionVars,
                     accumLhsVars.vars(),
                     accumRhsVars.vars());
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
@@ -94,7 +97,7 @@ public class RuleWriter {
             // output requires
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES");
-                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(data,
+                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(data, nameProvider,
                         accumLhsVars.vars(), sb.getCurrentIndent(), "if ".length());
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
@@ -108,7 +111,7 @@ public class RuleWriter {
 
             // output RHS
             sb.appendIndentedLine("// RHS");
-            GoRhsVisitor rhsVisitor = new GoRhsVisitor(data,
+            GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
                     accumLhsVars.vars(), sb.getCurrentIndent(), 0);
             rhsVisitor.apply(right);
             rhsVisitor.writeEvalCalls(sb);
@@ -146,7 +149,7 @@ public class RuleWriter {
                 matchIndex++;
                 String reapply = "return stepLookups(c, config, " + ruleNum + ") // reapply";
 
-                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, rhsVars, sb.getCurrentIndent(), 0);
+                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider, rhsVars, sb.getCurrentIndent(), 0);
                 rhsVisitor.apply(k.klist().items().get(1));
                 rhsVisitor.writeEvalCalls(sb);
                 sb.writeIndent().append(matchVar).append(" := ");
@@ -159,7 +162,7 @@ public class RuleWriter {
 
                 int ourElseIndent = sb.getCurrentIndent();
 
-                GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, new FunctionParams(0),
+                GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, nameProvider, new FunctionParams(0),
                         lhsVars,
                         rhsVars);
                 lhsVisitor.setNextSubject(matchVar);

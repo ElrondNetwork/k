@@ -23,6 +23,9 @@ public class GoOptions implements Serializable {
     @Parameter(names="--go-quick-test", description="After generating sources and build, also run interpreter with a test program.")
     public String quickTest;
 
+    @Parameter(names="--verbose-vars", description="Generate more verbose variable names. They are closer to the originals, but not Go idiomatic.")
+    public boolean verboseVars;
+
     // TODO: clean up
     //@Parameter(names="--no-link-prelude", description="Do not link interpreter binaries against constants.cmx and prelude.cmx. Do not use this if you don't know what you're doing.")
     public boolean noLinkPrelude;

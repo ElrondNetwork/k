@@ -32,7 +32,7 @@ func (arrayHooksType) fill(c1 K, c2 K, c3 K, c4 K, lbl KLabel, sort Sort, config
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) in_keys(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) inKeys(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 

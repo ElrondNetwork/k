@@ -2,6 +2,7 @@ package org.kframework.backend.go.codegen;
 
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.KApply;
@@ -14,8 +15,11 @@ public class GoSideConditionVisitor extends GoRhsVisitor {
     private ExpressionType expectedExprType = ExpressionType.BOOLEAN;
     private int depthFromFuncIsTrue = -1;
 
-    public GoSideConditionVisitor(DefinitionData data, RuleVars lhsVars, int tabsIndent, int returnValSpacesIndent) {
-        super(data, lhsVars, tabsIndent, returnValSpacesIndent);
+    public GoSideConditionVisitor(DefinitionData data,
+                                   GoNameProvider nameProvider,
+                                   RuleVars lhsVars,
+                                   int tabsIndent, int returnValSpacesIndent) {
+        super(data, nameProvider, lhsVars, tabsIndent, returnValSpacesIndent);
     }
 
     @Override

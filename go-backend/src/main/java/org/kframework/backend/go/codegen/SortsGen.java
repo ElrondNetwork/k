@@ -2,6 +2,7 @@ package org.kframework.backend.go.codegen;
 
 import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.Sorts;
 import org.kframework.kore.Sort;
@@ -14,10 +15,12 @@ public class SortsGen {
 
     private final DefinitionData data;
     private final GoPackageNameManager packageNameManager;
+    private final GoNameProvider nameProvider;
 
-    public SortsGen(DefinitionData data, GoPackageNameManager packageNameManager) {
+    public SortsGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
         this.data = data;
         this.packageNameManager = packageNameManager;
+        this.nameProvider = nameProvider;
     }
 
     public String generate() {
@@ -37,8 +40,7 @@ public class SortsGen {
         // const declaration
         sb.append("const (\n");
         for (Sort s : sorts) {
-            sb.append("\t");
-            GoStringUtil.appendSortVariableName(sb, s);
+            sb.append("\t").append(nameProvider.sortVariableName(s));
             sb.append(" Sort = iota\n");
         }
         sb.append(")\n\n");
@@ -47,8 +49,7 @@ public class SortsGen {
         sb.append("func (s Sort) name () string {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : sorts) {
-            sb.append("\t\tcase ");
-            GoStringUtil.appendSortVariableName(sb, sort);
+            sb.append("\t\tcase ").append(nameProvider.sortVariableName(sort));
             sb.append(":\n");
             sb.append("\t\t\treturn ");
             sb.append(GoStringUtil.enquoteString(sort.name()));
@@ -66,8 +67,7 @@ public class SortsGen {
             sb.append("\t\tcase ");
             sb.append(GoStringUtil.enquoteString(sort.name()));
             sb.append(":\n");
-            sb.append("\t\t\treturn ");
-            GoStringUtil.appendSortVariableName(sb, sort);
+            sb.append("\t\t\treturn ").append(nameProvider.sortVariableName(sort));
             sb.append("\n");
         }
         sb.append("\t\tdefault:\n");

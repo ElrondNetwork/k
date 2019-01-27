@@ -11,6 +11,9 @@ import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.strings.GoNameProvider;
+import org.kframework.backend.go.strings.GoNameProviderDebug;
+import org.kframework.backend.go.strings.GoNameProviderProper;
 import org.kframework.compile.Backend;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
@@ -55,9 +58,15 @@ public class GoBackend implements Backend {
         String mainModule = kompileOptions.mainModule(files);
         //packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter");
         packageNameManager = new GoPackageNameManager(files, "main");
+        GoNameProvider nameProvider;
+        if (options.verboseVars) {
+            nameProvider = new GoNameProviderDebug();
+        } else {
+            nameProvider = new GoNameProviderProper();
+        }
 
         DefinitionToOcamlTempCopy ocamlDef = new DefinitionToOcamlTempCopy(kem, files, globalOptions, kompileOptions, options);
-        DefinitionToGo def = new DefinitionToGo(kem, files, packageNameManager, globalOptions, kompileOptions, options);
+        DefinitionToGo def = new DefinitionToGo(kem, files, packageNameManager, nameProvider, globalOptions, kompileOptions, options);
         ocamlDef.initialize(compiledDefinition);
         def.initialize(compiledDefinition);
 
@@ -66,12 +75,12 @@ public class GoBackend implements Backend {
 
         try {
             DefinitionData data = def.definitionData();
-            files.saveToKompiled("klabel.go", new KLabelsGen(data, packageNameManager).klabels());
-            files.saveToKompiled("sort.go", new SortsGen(data, packageNameManager).generate());
-            files.saveToKompiled("fresh.go", new FreshFunctionGen(data, packageNameManager).generate());
-            files.saveToKompiled("eval.go", new EvalFunctionGen(data, packageNameManager).generate());
+            files.saveToKompiled("klabel.go", new KLabelsGen(data, packageNameManager, nameProvider).klabels());
+            files.saveToKompiled("sort.go", new SortsGen(data, packageNameManager, nameProvider).generate());
+            files.saveToKompiled("fresh.go", new FreshFunctionGen(data, packageNameManager, nameProvider).generate());
+            files.saveToKompiled("eval.go", new EvalFunctionGen(data, packageNameManager, nameProvider).generate());
 
-            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageNameManager);
+            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageNameManager, nameProvider);
             files.saveToKompiled("step.go", stepFunctionGen.generateStep());
             files.saveToKompiled("stepLookups.go", stepFunctionGen.generateLookupsStep());
 

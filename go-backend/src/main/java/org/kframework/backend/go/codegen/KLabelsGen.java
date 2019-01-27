@@ -2,6 +2,7 @@ package org.kframework.backend.go.codegen;
 
 import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.compile.ConvertDataStructureToLookup;
@@ -19,11 +20,13 @@ public class KLabelsGen {
 
     private final DefinitionData data;
     private final GoPackageNameManager packageNameManager;
+    private final GoNameProvider nameProvider;
     private final Map<KLabel, KLabel> collectionFor;
 
-    public KLabelsGen(DefinitionData data, GoPackageNameManager packageNameManager) {
+    public KLabelsGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
         this.data = data;
         this.packageNameManager = packageNameManager;
+        this.nameProvider = nameProvider;
         collectionFor = ConvertDataStructureToLookup.collectionFor(data.mainModule);
     }
 
@@ -37,26 +40,29 @@ public class KLabelsGen {
         //addOpaqueKLabels(klabels);
 
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
         sb.append("type KLabel int\n\n");
 
         // const declaration
         sb.append("const (\n");
         sb.increaseIndent();
         for (KLabel klabel : klabels) {
-            sb.writeIndent();
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
+            sb.writeIndent().append(nameProvider.klabelVariableName(klabel));
             sb.append(" KLabel = iota\n");
         }
         sb.decreaseIndent();
-        sb.append(")\n");
+        sb.append(")").newLine().newLine();
+
+        sb.append("const klabelForMap KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Map_"))).newLine();
+        sb.append("const klabelForSet KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Set_"))).newLine();
+        sb.append("const klabelForList KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_List_"))).newLine();
+        sb.newLine();
 
         // klabel name method
         sb.append("func (kl KLabel) name () string").beginBlock();
-        sb.append("\tswitch kl").beginBlock();
+        sb.writeIndent().append("switch kl").beginBlock();
         for (KLabel klabel : klabels) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
+            sb.writeIndent().append("case ").append(nameProvider.klabelVariableName(klabel));
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
             sb.append(GoStringUtil.enquoteString(klabel.name()));
@@ -74,8 +80,7 @@ public class KLabelsGen {
             sb.writeIndent().append("case ");
             sb.append(GoStringUtil.enquoteString(klabel.name()));
             sb.append(":\n");
-            sb.writeIndent().append("\treturn ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), klabel);
+            sb.writeIndent().append("\treturn ").append(nameProvider.klabelVariableName(klabel));
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
@@ -88,10 +93,10 @@ public class KLabelsGen {
         sb.append("\tswitch kl").beginBlock();
         for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
             sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getKey());
+            sb.append(nameProvider.klabelVariableName(entry.getKey()));
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), entry.getValue());
+            sb.append(nameProvider.klabelVariableName(entry.getValue()));
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
@@ -104,11 +109,11 @@ public class KLabelsGen {
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
             sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
+            sb.append(nameProvider.klabelVariableName(label));
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
             KLabel unitLabel = KORE.KLabel(data.mainModule.attributesFor().apply(label).get(Attribute.UNIT_KEY));
-            GoStringUtil.appendKlabelVariableName(sb.sb(), unitLabel);
+            sb.append(nameProvider.klabelVariableName(unitLabel));
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
@@ -120,12 +125,11 @@ public class KLabelsGen {
         sb.append("func (kl KLabel) elFor() KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
-            sb.writeIndent().append("case ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), label);
+            sb.writeIndent().append("case ").append(nameProvider.klabelVariableName(label));
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
             KLabel elLabel = KORE.KLabel(data.mainModule.attributesFor().apply(label).get("element"));
-            GoStringUtil.appendKlabelVariableName(sb.sb(), elLabel);
+            sb.append(nameProvider.klabelVariableName(elLabel));
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");

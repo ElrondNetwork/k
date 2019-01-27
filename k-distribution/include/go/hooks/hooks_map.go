@@ -135,7 +135,7 @@ func (mapHooksType) keys(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
 	for key := range m.data {
 		keySet[key] = true
 	}
-	return Set{Sort: sortSet, Label: lbl_Set_, data: keySet}, nil
+	return Set{Sort: sortSet, Label: klabelForSet, data: keySet}, nil
 }
 
 func (mapHooksType) keysList(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
@@ -147,7 +147,7 @@ func (mapHooksType) keysList(kmap K, lbl KLabel, sort Sort, config K) (K, error)
 	for key := range m.data {
 		keyList = append(keyList, key)
 	}
-	return List{Sort: sortList, Label: lbl_List_, data: keyList}, nil
+	return List{Sort: sortList, Label: klabelForList, data: keyList}, nil
 }
 
 func (mapHooksType) inKeys(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
@@ -168,7 +168,7 @@ func (mapHooksType) values(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
 	for _, value := range m.data {
 		valueList = append(valueList, value)
 	}
-	return List{Sort: sortList, Label: lbl_List_, data: valueList}, nil
+	return List{Sort: sortList, Label: klabelForList, data: valueList}, nil
 }
 
 func (mapHooksType) choice(kmap K, lbl KLabel, sort Sort, config K) (K, error) {

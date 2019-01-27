@@ -117,7 +117,7 @@ func (setHooksType) set2list(kset K, lbl KLabel, sort Sort, config K) (K, error)
 	for e := range s.data {
 		list = append(list, e)
 	}
-	return List{Sort: sortList, Label: lbl_List_, data: list}, nil
+	return List{Sort: sortList, Label: klabelForList, data: list}, nil
 }
 
 func (setHooksType) list2set(klist K, lbl KLabel, sort Sort, config K) (K, error) {
@@ -129,5 +129,5 @@ func (setHooksType) list2set(klist K, lbl KLabel, sort Sort, config K) (K, error
 	for _, e := range l.data {
 		data[e] = true
 	}
-	return Set{Sort: sortSet, Label: lbl_Set_, data: data}, nil
+	return Set{Sort: sortSet, Label: klabelForSet, data: data}, nil
 }

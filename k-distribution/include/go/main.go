@@ -13,7 +13,7 @@ func callKast(programPath string) []byte {
 	cmd.Dir = "../"
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Kast error: " + err.Error())
 	}
 	return out
 }
@@ -31,7 +31,7 @@ func kastParseAndPrint() {
 	// top cell initialization
 	m := make(map[K]K)
 	m[KToken{Sort: sortKConfigVar, Value: "$PGM"}] = kinput
-	kmap := Map{Sort: sortMap, Label: lbl_Map_, data: m}
+	kmap := Map{Sort: sortMap, Label: klabelForMap, data: m}
 	evalK := KApply{Label: topCellInitializer, List: []K{kmap}}
 	kinit, err := eval(evalK, Bottom{})
 	if err != nil {

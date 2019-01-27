@@ -3,8 +3,8 @@ package org.kframework.backend.go.codegen;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
-import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -26,6 +26,7 @@ import java.util.Set;
 public class GoLhsVisitor extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
+    private final GoNameProvider nameProvider;
     private final FunctionParams functionVars;
     private final RuleVars lhsVars;
     private final RuleVars rhsVars;
@@ -55,9 +56,14 @@ public class GoLhsVisitor extends VisitK {
      */
     private final Set<KVariable> alreadySeenVariables = new HashSet<>();
 
-    public GoLhsVisitor(GoStringBuilder sb, DefinitionData data, FunctionParams functionVars, RuleVars lhsVars, RuleVars rhsVars) {
+    public GoLhsVisitor(GoStringBuilder sb,
+                        DefinitionData data,
+                        GoNameProvider nameProvider,
+                        FunctionParams functionVars,
+                        RuleVars lhsVars, RuleVars rhsVars) {
         this.sb = sb;
         this.data = data;
+        this.nameProvider = nameProvider;
         this.functionVars = functionVars;
         this.lhsVars = lhsVars;
         this.rhsVars = rhsVars;
@@ -103,8 +109,7 @@ public class GoLhsVisitor extends VisitK {
             String ktVar = "kt" + kitemIndex;
             kitemIndex++;
             lhsTypeIf(ktVar, consumeSubject(), "KToken");
-            sb.append(" && ").append(ktVar).append(".Sort == ");
-            GoStringUtil.appendSortVariableName(sb.sb(), sort);
+            sb.append(" && ").append(ktVar).append(".Sort == ").append(nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
             nextSubject = ktVar + ".Value";
             apply(value);
@@ -114,8 +119,7 @@ public class GoLhsVisitor extends VisitK {
             String kappVar = "kapp" + kitemIndex;
             kitemIndex++;
             lhsTypeIf(kappVar, consumeSubject(), "KApply");
-            sb.append(" && ").append(kappVar).append(".Label == ");
-            GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
+            sb.append(" && ").append(kappVar).append(".Label == ").append(nameProvider.klabelVariableName(k.klabel()));
             sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
             sb.beginBlock("lhs KApply " + k.klabel().name());
             int i = 0;
@@ -148,7 +152,7 @@ public class GoLhsVisitor extends VisitK {
         initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == (");
-        GoRhsVisitor.appendKTokenRepresentation(sb, k, data);
+        GoRhsVisitor.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
         sb.beginBlock("lhs KToken");
     }
@@ -187,7 +191,7 @@ public class GoLhsVisitor extends VisitK {
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_2.get(hook);
                 sb.append(String.format(pattern,
-                        varName, consumeSubject(), GoStringUtil.sortVariableName(s)));
+                        varName, consumeSubject(), nameProvider.sortVariableName(s)));
                 sb.beginBlock("lhs KVariable with hook:" + hook);
                 return;
             }
@@ -259,8 +263,7 @@ public class GoLhsVisitor extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         lhsTypeIf("ikl", consumeSubject(), "InjectedKLabel");
-        sb.append(" && ikl.Sort == ");
-        GoStringUtil.appendKlabelVariableName(sb.sb(), k.klabel());
+        sb.append(" && ikl.Label == ").append(nameProvider.klabelVariableName(k.klabel()));
         sb.beginBlock();
     }
 
