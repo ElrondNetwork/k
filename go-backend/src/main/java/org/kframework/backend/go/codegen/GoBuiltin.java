@@ -39,7 +39,7 @@ public class GoBuiltin {
     static {
         ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
         builder.put("K.K", s -> "return Bool(true), nil");
-        builder.put("K.KItem", s -> "// almost certainly incomplete, original: [_] -> [Bool true] | _ -> [Bool false] ???????");
+        builder.put("K.KItem", s -> "return Bool(true), nil");
         builder.put("INT.Int", s -> "if _, t := c.(Int); t" + RETURN_BOOL_TRUE_BLOCK);
         builder.put("FLOAT.Float", s -> "if _, t := c.(Float); t" + RETURN_BOOL_TRUE_BLOCK);
         builder.put("STRING.String", s -> "if _, t := c.(String); t" + RETURN_BOOL_TRUE_BLOCK);

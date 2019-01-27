@@ -4,6 +4,8 @@ import com.google.common.collect.ComparisonChain;
 import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
+import org.kframework.backend.go.model.RuleCounter;
+import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -25,7 +27,7 @@ public class StepFunctionGen {
 
     private final List<Rule> sortedRules;
 
-    private int ruleNum = 0;
+    private final RuleCounter ruleCounter = new RuleCounter();
 
     public StepFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
         this.data = data;
@@ -68,7 +70,8 @@ public class StepFunctionGen {
         sb.writeIndent().append("config := c").newLine();
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
-                ruleNum = ruleWriter.convert(r, sb, RuleType.REGULAR, ruleNum, new FunctionParams(1));
+                RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.REGULAR, ruleCounter, new FunctionParams(1));
+                assert ruleInfo.isTopLevelIf();
             }
         }
 
@@ -85,7 +88,8 @@ public class StepFunctionGen {
 
         List<Rule> lookupRules = groupedByLookup.getOrDefault(true, Collections.emptyList());
         for (Rule r : lookupRules) {
-            ruleNum = ruleWriter.convert(r, sb, RuleType.REGULAR,ruleNum, new FunctionParams(1));
+            RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.REGULAR, ruleCounter, new FunctionParams(1));
+            assert ruleInfo.isTopLevelIf();
         }
 
         sb.appendIndentedLine("return c, &noStepError{}");

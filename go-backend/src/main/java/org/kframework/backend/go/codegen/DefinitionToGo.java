@@ -14,9 +14,12 @@ import org.kframework.backend.go.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
+import org.kframework.backend.go.model.RuleCounter;
+import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
@@ -200,6 +203,8 @@ public class DefinitionToGo {
                 sb.append("(").append(functionVars.parameterDeclaration()).append("config K) (K, error)");
                 sb.beginBlock();
 
+                // if we print a return under no if, all code that follows is unreachable
+                boolean unreachableCode = false;
 
                 // hook implementation
                 FunctionHookName funcHook = new FunctionHookName(hook);
@@ -238,36 +243,64 @@ public class DefinitionToGo {
                 // predicate
                 if (mainModule.attributesFor().apply(functionLabel).contains(Attribute.PREDICATE_KEY, Sort.class)) {
                     Sort predicateSort = (mainModule.attributesFor().apply(functionLabel).get(Attribute.PREDICATE_KEY, Sort.class));
-                    stream(mainModule.definedSorts()).filter(s -> mainModule.subsorts().greaterThanEq(predicateSort, s)).distinct()
-                            .filter(sort -> mainModule.sortAttributesFor().contains(sort)).forEach(sort -> {
+
+                    List<Sort> sorts = stream(mainModule.definedSorts())
+                            .filter(s -> mainModule.subsorts().greaterThanEq(predicateSort, s))
+                            .distinct()
+                            .filter(sort -> mainModule.sortAttributesFor().contains(sort))
+                            .collect(Collectors.toList());
+
+                    for(Sort sort : sorts) {
                         String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
                         if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
-                            sb.append("\t// predicate rule: ").append(sortHook).append("\n");
-                            sb.append("\t");
                             String sortName = nameProvider.sortVariableName(sort);
-                            sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
-                            sb.append("\n");
+                            if (unreachableCode) {
+                                sb.writeIndent().append("// unreachable predicate rule: ").append(sortHook).newLine();
+                                sb.writeIndent().append("/* ");
+                                sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
+                                sb.append(" */").newLine();
+                            } else {
+                                sb.writeIndent().append("// predicate rule: ").append(sortHook).newLine();
+                                sb.writeIndent();
+                                sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
+                                sb.newLine();
+
+                                if (sortHook.equals("K.K") || sortHook.equals("K.KItem")) {
+                                    unreachableCode = true;
+                                }
+                            }
                         }
-                    });
+                    };
                 }
 
                 // main!
                 List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
-                int ruleNum = 0;
+                RuleCounter ruleCounter = new RuleCounter();
                 for (Rule r : rules) {
-                    sb.appendIndentedLine("// rule");
-                    ruleNum = ruleWriter.convert(r, sb, RuleType.FUNCTION, ruleNum, functionVars);
+                    if (unreachableCode) {
+                        sb.appendIndentedLine("// unreachable rule");
+                        GoStringUtil.appendRuleComment(sb, r);
+                    } else {
+                        sb.appendIndentedLine("// rule");
+                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionVars);
+                        if (!ruleInfo.isTopLevelIf()) {
+                            unreachableCode = true;
+                        }
+                    }
                 }
 
-                sb.writeIndent().append("return noResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
-                if (functionVars.arity() == 0) {
-                    sb.append("nil");
-                } else {
-                    sb.append("[]K{");
-                    sb.append(functionVars.paramNamesSeparatedByComma());
-                    sb.append("}");
+                if (!unreachableCode) {
+                    // stuck!
+                    sb.writeIndent().append("return noResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
+                    if (functionVars.arity() == 0) {
+                        sb.append("nil");
+                    } else {
+                        sb.append("[]K{");
+                        sb.append(functionVars.paramNamesSeparatedByComma());
+                        sb.append("}");
+                    }
+                    sb.append("}").newLine();
                 }
-                sb.append("}").newLine();
 
                 sb.endAllBlocks(0);
                 sb.newLine();

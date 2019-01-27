@@ -5,6 +5,8 @@ import org.kframework.attributes.Source;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
+import org.kframework.backend.go.model.RuleCounter;
+import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.processors.AccumulateRuleVars;
@@ -36,17 +38,10 @@ public class RuleWriter {
         this.nameProvider = nameProvider;
     }
 
-    public void convertFunction(List<Rule> rules, GoStringBuilder sb, RuleType type, FunctionParams functionVars) {
-        int ruleNum = 0;
-        for (Rule r : rules) {
-            sb.appendIndentedLine("// rule");
-            ruleNum = convert(r, sb, type, ruleNum, functionVars);
-        }
-    }
-
-    public int convert(Rule r, GoStringBuilder sb, RuleType type, int ruleNum,
-                       FunctionParams functionVars) {
+    public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, RuleCounter ruleCounter,
+                              FunctionParams functionVars) {
         try {
+            int ruleNum = ruleCounter.consumeRuleIndex();
             GoStringUtil.appendRuleComment(sb, r);
 
             K left = RewriteToTop.toLeft(r.body());
@@ -123,7 +118,10 @@ public class RuleWriter {
             // done
             sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
             sb.newLine();
-            return ruleNum + 1;
+
+            // return some info regarding the written rule
+            boolean topLevelIf = lhsVisitor.getTopExpressionType() == GoLhsVisitor.ExpressionType.IF;
+            return new RuleInfo(topLevelIf);
         } catch (NoSuchElementException e) {
             System.err.println(r);
             throw e;
