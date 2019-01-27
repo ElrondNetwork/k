@@ -1,9 +1,8 @@
-
-package main
+package %PACKAGE_INTERPRETER%
 
 import (
 	"fmt"
-	koreparser "$INCLUDE_KORE_PARSER$"
+	koreparser "%INCLUDE_PARSER%"
 	"strconv"
 )
 

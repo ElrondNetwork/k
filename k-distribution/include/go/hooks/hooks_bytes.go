@@ -1,4 +1,4 @@
-package main
+package %PACKAGE_INTERPRETER%
 
 type bytesHooksType int
 
