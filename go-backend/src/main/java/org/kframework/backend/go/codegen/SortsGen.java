@@ -35,6 +35,7 @@ public class SortsGen {
 
         StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("// Sort ... a K sort identifier\n");
         sb.append("type Sort int\n\n");
 
         // const declaration

@@ -41,6 +41,7 @@ public class KLabelsGen {
 
         GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("// KLabel ... a k label identifier").newLine();
         sb.append("type KLabel int\n\n");
 
         // const declaration
