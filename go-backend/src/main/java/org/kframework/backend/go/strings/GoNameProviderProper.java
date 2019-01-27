@@ -67,6 +67,9 @@ public class GoNameProviderProper implements GoNameProvider {
             if (i == 0) {
                 charAt = Character.toUpperCase(charAt);
             }
+            if (i > 0 && name.charAt(i-1) == 'I' && charAt == 'd') {
+                charAt = 'D'; // Id => ID
+            }
             if (charAt < 128 && ENCODING[charAt] != null) {
                 sb.append(ENCODING[charAt]);
             } else {
