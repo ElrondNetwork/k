@@ -30,7 +30,7 @@ func assembleFromHeadTail(head K, tail KSequence) K {
 	return KSequence{ks: append([]K{head}, tail.ks...)}
 }
 
-var freshCounter int = 0
+var freshCounter int
 
 func isTrue(c K) bool {
 	if b, typeOk := c.(Bool); typeOk {

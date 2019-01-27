@@ -59,9 +59,8 @@ func takeStepsNoThread(k K, maxSteps int) (K, int) {
 		if err != nil {
 			if _, t := err.(*noStepError); t {
 				return current, n
-			} else {
-				panic(err.Error())
 			}
+			panic(err.Error())
 		}
 		n++
 	}
