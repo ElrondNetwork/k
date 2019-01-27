@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// K ... Defines a K entity, this is either a KItem, or a KSequence of KItems
+// K ... Defines a parsed K entity, this is either a KItem, or a KSequence of KItems
 type K interface {
 	PrettyTreePrint(indent int) string
 }
@@ -13,28 +13,24 @@ type K interface {
 // KSequence ... a sequence of K items
 type KSequence []K
 
-// KItem ...
-type KItem interface {
-}
-
-// KApply ... a type of KItem, TODO: document
+// KApply ... raw KApply object, as parsed from KAST
 type KApply struct {
 	Label string
 	List  []K
 }
 
-// InjectedKLabel ... a type of KItem, TODO: document
+// InjectedKLabel ... raw InjectedKLabel, as parsed from KAST
 type InjectedKLabel struct {
 	Label string
 }
 
-// KToken ... a type of KItem, TODO: document
+// KToken ... raw KToken, as parsed from KAST
 type KToken struct {
 	Value string
 	Sort  string
 }
 
-// KVariable ... a type of KItem, TODO: document
+// KVariable ... raw KVariable, as parsed from KAST
 type KVariable struct {
 	Name string
 }
@@ -52,6 +48,7 @@ func simplePrint(indent int, str string) string {
 	return sb.String()
 }
 
+// PrettyTreePrint ... A tree representation of a parsed K object
 func (k KApply) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
@@ -73,18 +70,22 @@ func (k KApply) PrettyTreePrint(indent int) string {
 	return sb.String()
 }
 
+// PrettyTreePrint ... A tree representation of a parsed K object
 func (k InjectedKLabel) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {label:%s}", k.Label))
 }
 
+// PrettyTreePrint ... A tree representation of a parsed K object
 func (k KToken) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KToken {value:%s, sort:%s}", k.Value, k.Sort))
 }
 
+// PrettyTreePrint ... A tree representation of a parsed K object
 func (k KVariable) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KVariable {name:%s}", k.Name))
 }
 
+// PrettyTreePrint ... A tree representation of a parsed K object
 func (k KSequence) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
