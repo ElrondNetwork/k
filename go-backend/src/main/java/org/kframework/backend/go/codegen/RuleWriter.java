@@ -136,7 +136,7 @@ public class RuleWriter {
             return;
         }
         sb.appendIndentedLine("// LOOKUPS");
-        sb.writeIndent().append("if guard > ").append(ruleNum).beginBlock();
+        sb.writeIndent().append("if guard < ").append(ruleNum).beginBlock();
 
         int matchIndex = 0;
         for (Lookup lookup : lookups) {
