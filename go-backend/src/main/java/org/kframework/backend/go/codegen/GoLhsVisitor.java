@@ -45,7 +45,7 @@ public class GoLhsVisitor extends VisitK {
 
     public ExpressionType getTopExpressionType() {
         if (topExpressionType == null) {
-            throw new RuntimeException("Generated expression type not initialized.");
+            topExpressionType = ExpressionType.NOTHING;
         }
         return topExpressionType;
     }

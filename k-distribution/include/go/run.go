@@ -41,7 +41,7 @@ func Execute(kdir string, execFile string) {
 	fmt.Println(kinit.PrettyTreePrint(0))
 
 	// execute
-	final, stepsMade := takeStepsNoThread(kinit, 100)
+	final, stepsMade := takeStepsNoThread(kinit, 10000)
 	fmt.Println("\n\nresult:")
 	fmt.Println(final.PrettyTreePrint(0))
 
@@ -54,6 +54,7 @@ func takeStepsNoThread(k K, maxSteps int) (K, int) {
 	current := k
 	var err error
 	for n < maxSteps {
+		fmt.Printf("\nstep #%d begin\n", n)
 		current, err = step(current)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
@@ -61,6 +62,10 @@ func takeStepsNoThread(k K, maxSteps int) (K, int) {
 			}
 			panic(err.Error())
 		}
+
+		fmt.Printf("\nstep #%d end\n", n)
+		fmt.Println(current.PrettyTreePrint(0))
+
 		n++
 	}
 	return current, n

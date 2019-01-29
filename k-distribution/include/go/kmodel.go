@@ -1,4 +1,4 @@
-package %PACKAGE_INTERPRETER%
+package main
 
 import (
 	"fmt"
@@ -108,7 +108,7 @@ func simplePrint(indent int, str string) string {
 	return sb.String()
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k KApply) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
@@ -130,82 +130,106 @@ func (k KApply) PrettyTreePrint(indent int) string {
 	return sb.String()
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k InjectedKLabel) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {label:%s}", k.Label.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k KToken) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KToken {value:%s, sort:%s}", k.Value, k.Sort.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k KVariable) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KVariable {name:%s}", k.Name))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Map) PrettyTreePrint(indent int) string {
+	var sb strings.Builder
+	addIndent(&sb, indent)
+	sb.WriteString("Map {Sort:")
+	sb.WriteString(k.Sort.name())
+	sb.WriteString(", Label:")
+	sb.WriteString(k.Label.name())
+	sb.WriteString(", data:")
+	if len(k.data) == 0 {
+		sb.WriteString(" <empty> }")
+	} else {
+		for k, v := range k.data {
+			sb.WriteString("\n")
+			addIndent(&sb, indent + 1)
+			sb.WriteString("key: ")
+			sb.WriteString(k.PrettyTreePrint(0))
+			sb.WriteString("  value: ")
+            sb.WriteString(v.PrettyTreePrint(0))
+		}
+		sb.WriteRune('\n')
+		addIndent(&sb, indent)
+		sb.WriteRune('}')
+	}
+
+	return sb.String()
 	return simplePrint(indent, fmt.Sprintf("Map {sort:%s, label:%s}", k.Sort.name(), k.Label.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k List) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("List {sort:%s, label:%s}", k.Sort.name(), k.Label.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Set) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Set {sort:%s, label:%s}", k.Sort.name(), k.Label.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Array) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Array {sort:%s, label:%s}", k.Sort.name(), k.Label.name()))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Int) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Int (%d)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k MInt) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("MInt (%d)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Float) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Float (%f)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k String) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("String (%s)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k StringBuffer) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, "StringBuffer [not yet implemented]")
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Bytes) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Bytes (%b)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Bool) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Bool (%t)", k))
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k Bottom) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, "Bottom")
 }
 
-// PrettyTreePrint ... A tree representation of a K object
+// PrettyTreePrint ... A tree representation of a KApply object
 func (k KSequence) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)

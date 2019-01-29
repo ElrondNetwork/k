@@ -1,5 +1,7 @@
 package %PACKAGE_INTERPRETER%
 
+import "fmt"
+
 var internedBottom K = Bottom{}
 
 var noResult K = Bottom{}
@@ -37,4 +39,8 @@ func isTrue(c K) bool {
 		return bool(b)
 	}
 	return false
+}
+
+func printRule(r string) {
+    fmt.Println(r)
 }
