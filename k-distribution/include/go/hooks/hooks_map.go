@@ -4,8 +4,33 @@ type mapHooksType int
 
 const mapHooks mapHooksType = 0
 
+func isValidKey(key K) bool {
+	if _, t := key.(KApply); t {
+		return false
+	}
+	if _, t := key.(KSequence); t {
+		return false
+	}
+	if _, t := key.(Map); t {
+		return false
+	}
+	if _, t := key.(Set); t {
+		return false
+	}
+	if _, t := key.(List); t {
+		return false
+	}
+	if _, t := key.(Array); t {
+		return false
+	}
+	return true
+}
+
 // returns a map with 1 key to value mapping
 func (mapHooksType) element(key K, val K, lbl KLabel, sort Sort, config K) (K, error) {
+	if !isValidKey(key) {
+		panic("Invaid key")
+	}
 	m := make(map[K]K)
 	m[key] = val
 	return Map{Sort: sort, Label: lbl.collectionFor(), data: m}, nil
@@ -17,24 +42,15 @@ func (mapHooksType) unit(lbl KLabel, sort Sort, config K) (K, error) {
 	return Map{Sort: sort, Label: lbl.collectionFor(), data: m}, nil
 }
 
-func (mapHooksType) lookup(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
-	if m, isMap := kmap.(Map); isMap {
-		elem, found := m.data[key]
-		if found {
-			return elem, nil
-		}
-		return internedBottom, nil
-	}
-
-	if _, isBottom := kmap.(Map); isBottom {
-		return internedBottom, nil
-	}
-
-	return noResult, &hookInvalidArgsError{}
+func (mh mapHooksType) lookup(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
+	return mh.lookupOrDefault(kmap, key, internedBottom, lbl, sort, config)
 }
 
 func (mapHooksType) lookupOrDefault(kmap K, key K, defaultRes K, lbl KLabel, sort Sort, config K) (K, error) {
 	if m, isMap := kmap.(Map); isMap {
+		if !isValidKey(key) {
+			return defaultRes, nil
+		}
 		elem, found := m.data[key]
 		if found {
 			return elem, nil
@@ -53,6 +69,9 @@ func (mapHooksType) update(kmap K, newKey K, newValue K, lbl KLabel, sort Sort, 
 	m, isMap := kmap.(Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
+	}
+	if !isValidKey(newKey) {
+		panic("Invaid key")
 	}
 	// implementing it as an "immutable" map
 	// that is, creating a copy for each update (for now)

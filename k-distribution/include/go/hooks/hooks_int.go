@@ -21,15 +21,6 @@ func (intHooksType) add(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) 
 	return noResult, &hookNotImplementedError{}
 }
 
-func (intHooksType) le(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	i1, ok1 := c1.(Int)
-	i2, ok2 := c2.(Int)
-	if ok1 && ok2 {
-		return Int(i1 + i2), nil
-	}
-	return noResult, &hookNotImplementedError{}
-}
-
 func (intHooksType) eq(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
 	i1, ok1 := c1.(Int)
 	i2, ok2 := c2.(Int)
@@ -97,6 +88,15 @@ func (intHooksType) shr(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) 
 	i2, ok2 := c2.(Int)
 	if ok1 && ok2 {
 		return Int(i1 >> uint32(i2)), nil
+	}
+	return noResult, &hookNotImplementedError{}
+}
+
+func (intHooksType) le(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+	i1, ok1 := c1.(Int)
+	i2, ok2 := c2.(Int)
+	if ok1 && ok2 {
+		return Bool(i1 <= i2), nil
 	}
 	return noResult, &hookNotImplementedError{}
 }
