@@ -56,8 +56,7 @@ public class GoBackend implements Backend {
         System.out.println("GoBackend.accept started.");
 
         String mainModule = kompileOptions.mainModule(files);
-        packageNameManager = new GoPackageNameManager(files,
-                mainModule.toLowerCase() + "interpreter");
+        packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter", options);
         GoNameProvider nameProvider;
         if (options.verboseVars) {
             nameProvider = new GoNameProviderDebug();
@@ -116,8 +115,13 @@ public class GoBackend implements Backend {
                     files.resolveKBase("include/go/run.go"),"run.go");
 
             // main
-            packageNameManager.copyFileAndReplaceGoPackages(
-                    files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+            if (options.interpreterMain) {
+                packageNameManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/main_noInterpreterPackage.go"), files.resolveKompiled("main.go"));
+            } else {
+                packageNameManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+            }
 
             // builtin hook files
             for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {

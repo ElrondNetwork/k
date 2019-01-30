@@ -11,6 +11,7 @@ import java.nio.file.Path;
 public class GoPackageNameManager {
 
     private final FileUtil files;
+    private final String interpreterDirPath;
     private final String interpreterPackageName;
     private final String interpreterInclude;
 
@@ -19,9 +20,9 @@ public class GoPackageNameManager {
 
     public GoPackageNameManager(
             FileUtil files,
-            String interpreterPackageName) {
+            String interpreterPackageName,
+            GoOptions options) {
         this.files = files;
-        this.interpreterPackageName = interpreterPackageName;
         this.koreParserPackageName = "koreparser";
 
         String goSrc = System.getenv("GOSRC");
@@ -38,9 +39,17 @@ public class GoPackageNameManager {
             Path koreParserRelPath = goSrcPath.relativize(koreParserAbsPath);
             koreParserInclude = koreParserRelPath.toString();
 
-            Path interpreterAbsPath = files.resolveKompiled("./" + interpreterPackageName).getCanonicalFile().toPath();
-            Path interpreterRelPath = goSrcPath.relativize(interpreterAbsPath);
-            interpreterInclude = interpreterRelPath.toString();
+            if (options.interpreterMain) {
+                this.interpreterPackageName = "main";
+                this.interpreterDirPath = "./";
+                this.interpreterInclude = "";
+            } else {
+                this.interpreterPackageName = interpreterPackageName;
+                this.interpreterDirPath = interpreterPackageName + "/";
+                Path interpreterAbsPath = files.resolveKompiled("./" + interpreterPackageName).getCanonicalFile().toPath();
+                Path interpreterRelPath = goSrcPath.relativize(interpreterAbsPath);
+                this.interpreterInclude = interpreterRelPath.toString();
+            }
         } catch (IOException e) {
             throw KEMException.criticalError("Failed to initialize GoPackageNameManager, error computing relative paths: " + e.getMessage(), e);
         }
@@ -57,14 +66,14 @@ public class GoPackageNameManager {
 
     public void saveToInterpreterDir(String fileName, String contents) throws IOException {
         files.saveToKompiled(
-                interpreterPackageName + "/" + fileName,
+                interpreterDirPath + fileName,
                 contents);
     }
 
     public void copyFileToInterpreterDir(File srcFile, String fileName) throws IOException {
         copyFileAndReplaceGoPackages(
                 srcFile,
-                files.resolveKompiled(interpreterPackageName + "/" + fileName));
+                files.resolveKompiled(interpreterDirPath + fileName));
     }
 
     private static final String PACKAGE_INTERPRETER = "%PACKAGE_INTERPRETER%";
