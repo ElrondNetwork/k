@@ -183,6 +183,8 @@ public class DefinitionToGo {
         impurities.addAll(ancestors(impurities, dependencies));
         Set<KLabel> constants = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
 
+        RuleCounter ruleCounter = new RuleCounter();
+
         for (KLabel functionLabel : Sets.union(functions, anywhereKLabels)) {
             String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
             if (functions.contains(functionLabel)) {
@@ -275,13 +277,11 @@ public class DefinitionToGo {
 
                 // main!
                 List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
-                RuleCounter ruleCounter = new RuleCounter();
                 for (Rule r : rules) {
                     if (unreachableCode) {
-                        sb.appendIndentedLine("// unreachable rule");
+                        sb.appendIndentedLine("// unreachable");
                         GoStringUtil.appendRuleComment(sb, r);
                     } else {
-                        sb.appendIndentedLine("// rule");
                         RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionVars);
                         if (!ruleInfo.isTopLevelIf()) {
                             unreachableCode = true;

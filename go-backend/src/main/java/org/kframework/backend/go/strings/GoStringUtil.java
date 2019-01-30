@@ -49,7 +49,7 @@ public class GoStringUtil {
     }
 
     public static void appendRuleComment(GoStringBuilder sb, Rule r) {
-        sb.append("\t// {| rule ");
+        sb.append("{| rule ");
         sb.append(ToKast.apply(r.body()).replace("|}", "| )"));
         sb.append(" requires ");
         sb.append(ToKast.apply(r.requires()).replace("|)", "| )"));
@@ -57,7 +57,13 @@ public class GoStringUtil {
         sb.append(ToKast.apply(r.ensures()).replace("|)", "| )"));
         sb.append(" ");
         sb.append(r.att().toString().replace("|)", "| )"));
-        sb.append(" |}\n");
+        sb.append(" |}");
+    }
+
+    public static String enquotedRuleComment(Rule r) {
+        GoStringBuilder sb = new GoStringBuilder();
+        appendRuleComment(sb, r);
+        return enquoteString(sb.toString());
     }
 
     @Deprecated

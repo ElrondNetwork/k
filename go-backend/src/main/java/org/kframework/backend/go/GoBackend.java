@@ -112,6 +112,8 @@ public class GoBackend implements Backend {
             packageNameManager.copyFileToInterpreterDir(
                     files.resolveKBase("include/go/error.go"),"error.go");
             packageNameManager.copyFileToInterpreterDir(
+                    files.resolveKBase("include/go/trace.go"),"trace.go");
+            packageNameManager.copyFileToInterpreterDir(
                     files.resolveKBase("include/go/run.go"),"run.go");
 
             // main

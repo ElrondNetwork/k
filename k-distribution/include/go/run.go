@@ -40,6 +40,10 @@ func Execute(kdir string, execFile string) {
 	fmt.Println("\n\ntop level init:")
 	fmt.Println(kinit.PrettyTreePrint(0))
 
+    // prepare trace
+    initializeTrace()
+    defer closeTrace()
+
 	// execute
 	final, stepsMade := takeStepsNoThread(kinit, 10000)
 	fmt.Println("\n\nresult:")
@@ -50,21 +54,23 @@ func Execute(kdir string, execFile string) {
 }
 
 func takeStepsNoThread(k K, maxSteps int) (K, int) {
-	n := 0
+	n := 1
 	current := k
+	traceInitialState(k)
+
 	var err error
 	for n < maxSteps {
-		fmt.Printf("\nstep #%d begin\n", n)
+	    traceStepStart(n, current)
 		current, err = step(current)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
+			    traceNoStep(n, current)
 				return current, n
 			}
 			panic(err.Error())
 		}
 
-		fmt.Printf("\nstep #%d end\n", n)
-		fmt.Println(current.PrettyTreePrint(0))
+        traceStepEnd(n, current)
 
 		n++
 	}

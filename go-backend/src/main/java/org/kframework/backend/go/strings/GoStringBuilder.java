@@ -50,9 +50,11 @@ public class GoStringBuilder {
         return this;
     }
 
-    public GoStringBuilder appendIndentedLine(String s) {
+    public GoStringBuilder appendIndentedLine(String... strings) {
         writeIndent();
-        sb.append(s);
+        for (String s : strings) {
+            sb.append(s);
+        }
         newLine();
         return this;
     }

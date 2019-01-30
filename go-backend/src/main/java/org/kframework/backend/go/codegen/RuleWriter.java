@@ -42,7 +42,10 @@ public class RuleWriter {
                               FunctionParams functionVars) {
         try {
             int ruleNum = ruleCounter.consumeRuleIndex();
+            sb.appendIndentedLine("// rule #" + ruleNum);
+            sb.append("\t// ");
             GoStringUtil.appendRuleComment(sb, r);
+            sb.newLine();
 
             K left = RewriteToTop.toLeft(r.body());
             K requires = r.requires();
@@ -106,6 +109,7 @@ public class RuleWriter {
 
             // output RHS
             sb.appendIndentedLine("// RHS");
+            traceLine(sb, type, ruleNum, r);
             GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
                     accumLhsVars.vars(), sb.getCurrentIndent(), 0);
             rhsVisitor.apply(right);
@@ -181,6 +185,32 @@ public class RuleWriter {
 
         }
 
+    }
+
+    private static String traceRuleTypeString(RuleType ruleType) {
+        switch (ruleType) {
+        case FUNCTION:
+            return "FUNC";
+        case ANYWHERE:
+            return "ANYW";
+        case REGULAR:
+            return "STEP";
+        case PATTERN:
+            return "PATT";
+        default:
+            return "????";
+        }
+    }
+
+    private static void traceLine(GoStringBuilder sb, RuleType ruleType, int ruleNum, Rule r) {
+        sb.appendIndentedLine(
+                "traceRuleApply(\"",
+                traceRuleTypeString(ruleType),
+                "\", ",
+                Integer.toString(ruleNum),
+                ", ",
+                GoStringUtil.enquotedRuleComment(r),
+                ")");
     }
 
     static int numLookups(Rule r) {
