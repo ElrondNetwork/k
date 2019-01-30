@@ -67,11 +67,21 @@ func (intHooksType) sub(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) 
 }
 
 func (intHooksType) tdiv(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	return noResult, &hookNotImplementedError{}
+		i1, ok1 := c1.(Int)
+    	i2, ok2 := c2.(Int)
+    	if ok1 && ok2 {
+    		return Int(i1 / i2), nil
+    	}
+    	return noResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) ediv(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	return noResult, &hookNotImplementedError{}
+			i1, ok1 := c1.(Int)
+        	i2, ok2 := c2.(Int)
+        	if ok1 && ok2 {
+        		return Int(i1 % i2), nil
+        	}
+        	return noResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) shl(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
