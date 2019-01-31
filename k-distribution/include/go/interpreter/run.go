@@ -18,8 +18,13 @@ func callKast(kdir string, programPath string) []byte {
 	return out
 }
 
+// ExecuteOptions ... options for executing programs
+type ExecuteOptions struct {
+	TraceToFile bool
+}
+
 // Execute ... interprets the program in the file given at input
-func Execute(kdir string, execFile string) {
+func Execute(kdir string, execFile string, options ExecuteOptions) {
 	kast := callKast(kdir, execFile)
 	fmt.Printf("Kast: %s\n\n", kast)
 
@@ -41,9 +46,11 @@ func Execute(kdir string, execFile string) {
 	fmt.Println("\n\ntop level init:")
 	fmt.Println(kinit.PrettyTreePrint(0))
 
-    // prepare trace
-    initializeTrace()
-    defer closeTrace()
+	// prepare trace
+	if options.TraceToFile {
+		initializeTrace()
+		defer closeTrace()
+	}
 
 	// execute
 	final, stepsMade := takeStepsNoThread(kinit, 10000)
@@ -61,17 +68,17 @@ func takeStepsNoThread(k m.K, maxSteps int) (m.K, int) {
 
 	var err error
 	for n < maxSteps {
-	    traceStepStart(n, current)
+		traceStepStart(n, current)
 		current, err = step(current)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
-			    traceNoStep(n, current)
+				traceNoStep(n, current)
 				return current, n
 			}
 			panic(err.Error())
 		}
 
-        traceStepEnd(n, current)
+		traceStepEnd(n, current)
 
 		n++
 	}

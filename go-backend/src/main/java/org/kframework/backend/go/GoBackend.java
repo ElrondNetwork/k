@@ -144,16 +144,9 @@ public class GoBackend implements Backend {
             }
 
             // main
-            if (options.interpreterMain) {
-                packageManager.copyFileAndReplaceGoPackages(
-                        files.resolveKBase("include/go/main_noInterpreterPackage.go"),
-                        files.resolveKompiled("main.go"));
-            } else {
-                packageManager.copyFileAndReplaceGoPackages(
-                        files.resolveKBase("include/go/main.go"),
-                        files.resolveKompiled("main.go"));
-            }
-
+            packageManager.copyFileAndReplaceGoPackages(
+                    files.resolveKBase("include/go/main.go"),
+                    files.resolveKompiled("main.go"));
 
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);

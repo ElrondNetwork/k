@@ -38,12 +38,8 @@ public class GoPackageManager {
             this.modelPackage = packageFromRelativePath(modelPackageName, "./" + modelPackageName);
             this.modelPackage.setAlias("m");
 
-            if (options.interpreterMain) {
-                this.interpreterPackage = new GoPackage("main", "", "./");
-            } else {
-                String interpreterPackageName = languageName + "interpreter";
-                this.interpreterPackage = packageFromRelativePath(interpreterPackageName, "./" + interpreterPackageName);
-            }
+            String interpreterPackageName = languageName + "interpreter";
+            this.interpreterPackage = packageFromRelativePath(interpreterPackageName, "./" + interpreterPackageName);
         } catch (IOException e) {
             throw KEMException.criticalError("Failed to initialize GoPackageManager, error: " + e.getMessage(), e);
         }
