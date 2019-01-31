@@ -10,7 +10,7 @@ import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoNameProviderDebug;
@@ -40,7 +40,7 @@ public class GoBackend implements Backend {
     private final GlobalOptions globalOptions;
     private final KompileOptions kompileOptions;
     private final GoOptions options;
-    private GoPackageNameManager packageManager;
+    private GoPackageManager packageManager;
 
     @Inject
     public GoBackend(KExceptionManager kem, FileUtil files, GlobalOptions globalOptions, KompileOptions kompileOptions, GoOptions options) {
@@ -57,7 +57,7 @@ public class GoBackend implements Backend {
         System.out.println("GoBackend.accept started.");
 
         String mainModule = kompileOptions.mainModule(files);
-        packageManager = new GoPackageNameManager(files, mainModule.toLowerCase(), options);
+        packageManager = new GoPackageManager(files, mainModule.toLowerCase(), options);
         GoNameProvider nameProvider;
         if (options.verboseVars) {
             nameProvider = new GoNameProviderDebug();

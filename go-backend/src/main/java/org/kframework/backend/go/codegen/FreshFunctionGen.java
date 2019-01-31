@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.kore.KLabel;
@@ -11,21 +11,21 @@ import static org.kframework.Collections.*;
 public class FreshFunctionGen {
 
     private final DefinitionData data;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
 
-    public FreshFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
+    public FreshFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
         this.data = data;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.nameProvider = nameProvider;
     }
 
     public String generate() {
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         sb.append("import (\n");
-        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         sb.append("func freshFunction (s m.Sort, config m.K, counter int) (m.K, error) {\n");

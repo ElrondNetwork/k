@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class GoPackageNameManager {
+public class GoPackageManager {
 
     private final FileUtil files;
     private final Path goSrcPath;
@@ -17,7 +17,7 @@ public class GoPackageNameManager {
     public final GoPackage interpreterPackage;
     public final GoPackage modelPackage;
 
-    public GoPackageNameManager(
+    public GoPackageManager(
             FileUtil files,
             String languageName,
             GoOptions options) {
@@ -45,7 +45,7 @@ public class GoPackageNameManager {
                 this.interpreterPackage = packageFromRelativePath(interpreterPackageName, "./" + interpreterPackageName);
             }
         } catch (IOException e) {
-            throw KEMException.criticalError("Failed to initialize GoPackageNameManager, error: " + e.getMessage(), e);
+            throw KEMException.criticalError("Failed to initialize GoPackageManager, error: " + e.getMessage(), e);
         }
     }
 

@@ -12,7 +12,7 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.kframework.backend.go.GoOptions;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
 import org.kframework.backend.go.gopackage.GoPackage;
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
@@ -68,7 +68,7 @@ public class DefinitionToGo {
 
     private transient final KExceptionManager kem;
     private transient final FileUtil files;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
     private transient final GlobalOptions globalOptions;
     private transient final KompileOptions kompileOptions;
@@ -82,19 +82,19 @@ public class DefinitionToGo {
     public DefinitionToGo(
             KExceptionManager kem,
             FileUtil files,
-            GoPackageNameManager packageNameManager,
+            GoPackageManager packageManager,
             GoNameProvider nameProvider,
             GlobalOptions globalOptions,
             KompileOptions kompileOptions,
             GoOptions options) {
         this.kem = kem;
         this.files = files;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.nameProvider = nameProvider;
         this.globalOptions = globalOptions;
         this.kompileOptions = kompileOptions;
         this.options = options;
-        this.extHookManager = new GoExternalHookManager(options.hookPackagePaths, packageNameManager);
+        this.extHookManager = new GoExternalHookManager(options.hookPackagePaths, packageManager);
     }
 
     private Module mainModule;
@@ -179,12 +179,12 @@ public class DefinitionToGo {
         DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         // generating imports
         Set<GoPackage> importsSorted = new TreeSet<>((p1, p2) -> p1.getName().compareTo(p2.getName()));
         importsSorted.add(new GoPackage("fmt", null, null));
-        importsSorted.add(packageNameManager.modelPackage);
+        importsSorted.add(packageManager.modelPackage);
         for (KLabel functionLabel : functions) {
             Option<String> hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).getOption(Attribute.HOOK_KEY);
             if (hook.nonEmpty()) {

@@ -1,7 +1,7 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ComparisonChain;
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
@@ -22,16 +22,16 @@ import static org.kframework.Collections.*;
 public class StepFunctionGen {
 
     private final DefinitionData data;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final RuleWriter ruleWriter;
 
     private final List<Rule> sortedRules;
 
     private final RuleCounter ruleCounter = new RuleCounter();
 
-    public StepFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
+    public StepFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
         this.data = data;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.ruleWriter = new RuleWriter(data, nameProvider);
         List<Rule> unsortedRules = stream(data.mainModule.rules()).collect(Collectors.toList());
 //        if (options.reverse) {
@@ -45,10 +45,10 @@ public class StepFunctionGen {
 
     public String generateStep() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append(" \n\n");
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
         sb.append("import (\n");
-        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         writeStepFunction(sb, sortedRules, "step");
@@ -58,10 +58,10 @@ public class StepFunctionGen {
 
     public String generateLookupsStep() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append(" \n\n");
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
         sb.append("import (\n");
-        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         writeLookupsStepFunction(sb, sortedRules, "step");

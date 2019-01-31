@@ -1,7 +1,7 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.Sets;
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -10,21 +10,21 @@ import org.kframework.kore.KLabel;
 public class EvalFunctionGen {
 
     private final DefinitionData data;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
 
-    public EvalFunctionGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
+    public EvalFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
         this.data = data;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.nameProvider = nameProvider;
     }
 
     public String generate() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         sb.append("import (\n");
-        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         sb.append("const topCellInitializer m.KLabel = m.");

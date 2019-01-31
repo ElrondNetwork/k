@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -19,13 +19,13 @@ import static org.kframework.Collections.*;
 public class KLabelsGen {
 
     private final DefinitionData data;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
     private final Map<KLabel, KLabel> collectionFor;
 
-    public KLabelsGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
+    public KLabelsGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
         this.data = data;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.nameProvider = nameProvider;
         collectionFor = ConvertDataStructureToLookup.collectionFor(data.mainModule);
     }
@@ -40,7 +40,7 @@ public class KLabelsGen {
         //addOpaqueKLabels(klabels);
 
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.modelPackage.getName()).append("\n\n");
+        sb.append("package ").append(packageManager.modelPackage.getName()).append("\n\n");
         sb.append("// KLabel ... a k label identifier").newLine();
         sb.append("type KLabel int\n\n");
 

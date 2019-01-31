@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.gopackage.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringUtil;
@@ -14,12 +14,12 @@ import static org.kframework.Collections.*;
 public class SortsGen {
 
     private final DefinitionData data;
-    private final GoPackageNameManager packageNameManager;
+    private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
 
-    public SortsGen(DefinitionData data, GoPackageNameManager packageNameManager, GoNameProvider nameProvider) {
+    public SortsGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
         this.data = data;
-        this.packageNameManager = packageNameManager;
+        this.packageManager = packageManager;
         this.nameProvider = nameProvider;
     }
 
@@ -34,7 +34,7 @@ public class SortsGen {
         sorts.add(Sorts.Bytes());
 
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.modelPackage.getName()).append(" \n\n");
+        sb.append("package ").append(packageManager.modelPackage.getName()).append(" \n\n");
         sb.append("// Sort ... a K sort identifier\n");
         sb.append("type Sort int\n\n");
 
