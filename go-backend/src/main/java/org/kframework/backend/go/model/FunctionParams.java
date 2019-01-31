@@ -37,7 +37,7 @@ public class FunctionParams {
         StringBuilder sb = new StringBuilder();
         for (String v : varNames) {
             sb.append(v);
-            sb.append(" K, ");
+            sb.append(" m.K, ");
         }
         return sb.toString();
     }

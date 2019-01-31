@@ -1,18 +1,22 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type kequalHooksType int
 
 const kequalHooks kequalHooksType = 0
 
-func (kequalHooksType) eq(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (kequalHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (kequalHooksType) ne(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (kequalHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (kequalHooksType) ite(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (kequalHooksType) ite(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 

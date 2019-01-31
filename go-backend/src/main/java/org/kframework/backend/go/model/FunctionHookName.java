@@ -35,4 +35,13 @@ public class FunctionHookName {
     public String getGoHookObjName() {
         return goHookObjName;
     }
+
+    public String getExternalGoPackageName() {
+        return namespace.toLowerCase();
+    }
+
+    @Override
+    public String toString() {
+        return namespace + "." + goFuncName;
+    }
 }

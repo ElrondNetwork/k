@@ -12,7 +12,7 @@ public class GoNameProviderProper implements GoNameProvider {
     @Override
     public String klabelVariableName(KLabel klabel) {
         StringBuilder sb = new StringBuilder();
-        sb.append("lbl");
+        sb.append("Lbl");
         appendAlphanumericEncodedString(sb, klabel.name());
         return sb.toString();
     }
@@ -21,7 +21,7 @@ public class GoNameProviderProper implements GoNameProvider {
     @Override
     public String sortVariableName(Sort sort) {
         StringBuilder sb = new StringBuilder();
-        sb.append("sort");
+        sb.append("Sort");
         appendAlphanumericEncodedString(sb, sort.name());
         return sb.toString();
     }

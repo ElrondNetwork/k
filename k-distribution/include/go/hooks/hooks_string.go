@@ -1,130 +1,134 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type stringHooksType int
 
 const stringHooks stringHooksType = 0
 
-func (stringHooksType) concat(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) lt(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) le(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) gt(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) ge(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) eq(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) ne(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) chr(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) chr(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) find(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) rfind(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) length(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) length(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) substr(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) ord(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) ord(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) int2string(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) int2string(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2int(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) string2int(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2base(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) string2base(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) base2string(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) base2string(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2token(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) string2token(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) token2string(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) token2string(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) float2string(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) float2string(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) uuid(lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) uuid(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) floatFormat(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) floatFormat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2float(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) string2float(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) replace(c1 K, c2 K, c3 K, c4 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) replace(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) replaceAll(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) replaceAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) replaceFirst(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) replaceFirst(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) countAllOccurrences(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) countAllOccurrences(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) category(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) category(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) directionality(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) directionality(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) findChar(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) findChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) rfindChar(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (stringHooksType) rfindChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 

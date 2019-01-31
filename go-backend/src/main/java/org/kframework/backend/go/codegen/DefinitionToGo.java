@@ -10,7 +10,9 @@ import com.google.common.collect.Sets;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.kframework.backend.go.GoOptions;
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoExternalHookManager;
+import org.kframework.backend.go.gopackage.GoPackage;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
@@ -47,6 +49,7 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import scala.Function1;
+import scala.Option;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +57,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.*;
@@ -72,7 +76,8 @@ public class DefinitionToGo {
     private transient ConvertDataStructureToLookup convertDataStructure;
     private boolean threadCellExists;
     private transient Rule exitCodePattern;
-    public GoOptions options;
+    public final GoOptions options;
+    public final GoExternalHookManager extHookManager;
 
     public DefinitionToGo(
             KExceptionManager kem,
@@ -89,6 +94,7 @@ public class DefinitionToGo {
         this.globalOptions = globalOptions;
         this.kompileOptions = kompileOptions;
         this.options = options;
+        this.extHookManager = new GoExternalHookManager(options.hookPackagePaths, packageNameManager);
     }
 
     private Module mainModule;
@@ -173,9 +179,32 @@ public class DefinitionToGo {
         DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
 
-        sb.append("import \"fmt\"\n\n");
+        // generating imports
+        Set<GoPackage> importsSorted = new TreeSet<>((p1, p2) -> p1.getName().compareTo(p2.getName()));
+        importsSorted.add(new GoPackage("fmt", null, null));
+        importsSorted.add(packageNameManager.modelPackage);
+        for (KLabel functionLabel : functions) {
+            Option<String> hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).getOption(Attribute.HOOK_KEY);
+            if (hook.nonEmpty()) {
+                FunctionHookName funcHook = new FunctionHookName(hook.get());
+                GoPackage externalHookPkg = extHookManager.getPackage(funcHook.getExternalGoPackageName());
+                if (externalHookPkg != null) {
+                    importsSorted.add(externalHookPkg);
+                }
+            }
+
+        }
+        sb.append("import (").newLine();
+        for (GoPackage pkg : importsSorted) {
+            if (pkg.getGoPath() == null) {
+                sb.append("\t\"").append(pkg.getName()).append("\"").newLine(); // "fmt"
+            } else {
+                sb.append("\t").append(pkg.getAlias()).append(" \"").append(pkg.getGoPath()).append("\"").newLine();
+            }
+        }
+        sb.append(")\n\n");
 
         // constants := arity == 0 && !impure
         List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies); // result no longer required
@@ -202,7 +231,7 @@ public class DefinitionToGo {
                 // start typing
                 sb.append("func ");
                 sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config K) (K, error)");
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K) (m.K, error)");
                 sb.beginBlock();
 
                 // if we print a return under no if, all code that follows is unreachable
@@ -210,19 +239,25 @@ public class DefinitionToGo {
 
                 // hook implementation
                 FunctionHookName funcHook = new FunctionHookName(hook);
-                if (GoBuiltin.HOOK_NAMESPACES.contains(funcHook.getNamespace()) ||
-                        options.hookNamespaces.contains(funcHook.getNamespace())) {
+                String hookCall = null;
+                if (GoBuiltin.HOOK_NAMESPACES.contains(funcHook.getNamespace())) {
+                    hookCall = funcHook.getGoHookObjName() + "." + funcHook.getGoFuncName();
+                } else if (extHookManager.containsPackage(funcHook.getExternalGoPackageName())) {
+                    hookCall = funcHook.getExternalGoPackageName() + "." + funcHook.getGoFuncName();
+                } else if (!hook.equals(".")) {
+                    kem.registerCompilerWarning("missing entry for hook " + hook);
+                }
+                if (hookCall != null) {
                     sb.writeIndent().append("//hook: ").append(hook).newLine();
 
-                    sb.writeIndent().append("lbl := ").append(nameProvider.klabelVariableName(functionLabel));
+                    sb.writeIndent().append("lbl := m.").append(nameProvider.klabelVariableName(functionLabel));
                     sb.append(" // ").append(functionLabel.name()).newLine(); // just for readability
                     Sort sort = mainModule.sortFor().apply(functionLabel);
-                    sb.writeIndent().append("sort := ").append(nameProvider.sortVariableName(sort));
+                    sb.writeIndent().append("sort := m.").append(nameProvider.sortVariableName(sort));
                     sb.newLine();
 
                     sb.writeIndent().append("if hookRes, hookErr := ");
-                    sb.append(funcHook.getGoHookObjName()).append(".").append(funcHook.getGoFuncName());
-                    sb.append("(");
+                    sb.append(hookCall).append("(");
                     sb.append(functionVars.callParameters());
                     sb.append("lbl, sort, config); hookErr == nil");
                     sb.beginBlock();
@@ -238,8 +273,6 @@ public class DefinitionToGo {
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
                     sb.writeIndent().append("return noResult, hookErr").newLine();
                     sb.endOneBlock().newLine();
-                } else if (!hook.equals(".")) {
-                    kem.registerCompilerWarning("missing entry for hook " + hook);
                 }
 
                 // predicate
@@ -255,7 +288,7 @@ public class DefinitionToGo {
                     for(Sort sort : sorts) {
                         String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
                         if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
-                            String sortName = nameProvider.sortVariableName(sort);
+                            String sortName = "m." + nameProvider.sortVariableName(sort);
                             if (unreachableCode) {
                                 sb.writeIndent().append("// unreachable predicate rule: ").append(sortHook).newLine();
                                 sb.writeIndent().append("/* ");
@@ -295,7 +328,7 @@ public class DefinitionToGo {
                     if (functionVars.arity() == 0) {
                         sb.append("nil");
                     } else {
-                        sb.append("[]K{");
+                        sb.append("[]m.K{");
                         sb.append(functionVars.paramNamesSeparatedByComma());
                         sb.append("}");
                     }

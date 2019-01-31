@@ -1,41 +1,45 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type arrayHooksType int
 
 const arrayHooks arrayHooksType = 0
 
-func (arrayHooksType) make(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) makeEmpty(len K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) makeEmpty(len m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) lookup(lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) lookup(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) remove(arr K, v K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) remove(arr m.K, v m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) update(arr K, index K, newVal K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) update(arr m.K, index m.K, newVal m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) updateAll(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) fill(c1 K, c2 K, c3 K, c4 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) fill(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) inKeys(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) inKeys(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) ctor(lbl KLabel, sort Sort, config K) (K, error) {
+func (arrayHooksType) ctor(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }

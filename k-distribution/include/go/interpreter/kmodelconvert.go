@@ -3,54 +3,55 @@ package %PACKAGE_INTERPRETER%
 import (
 	"fmt"
 	koreparser "%INCLUDE_PARSER%"
+	m "%INCLUDE_MODEL%"
 	"strconv"
 )
 
-func convertParserModelToKModel(pk koreparser.K) K {
+func convertParserModelToKModel(pk koreparser.K) m.K {
 	switch v := pk.(type) {
 	case koreparser.KApply:
-		var convertedList []K
+		var convertedList []m.K
 		for _, le := range v.List {
 			convertedList = append(convertedList, convertParserModelToKModel(le))
 		}
-		return KApply{Label: parseKLabel(v.Label), List: convertedList}
+		return m.KApply{Label: m.ParseKLabel(v.Label), List: convertedList}
 	case koreparser.InjectedKLabel:
-		return InjectedKLabel{Label: parseKLabel(v.Label)}
+		return m.InjectedKLabel{Label: m.ParseKLabel(v.Label)}
 	case koreparser.KToken:
-		return convertKToken(parseSort(v.Sort), v.Value)
+		return convertKToken(m.ParseSort(v.Sort), v.Value)
 	case koreparser.KVariable:
-		return KVariable{Name: v.Name}
+		return m.KVariable{Name: v.Name}
 	case koreparser.KSequence:
-		var convertedKs []K
+		var convertedKs []m.K
 		for _, ksElem := range v {
 			convertedKs = append(convertedKs, convertParserModelToKModel(ksElem))
 		}
-		return KSequence{ks: convertedKs}
+		return m.KSequence{Ks: convertedKs}
 	default:
 		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
 	}
 }
 
-func convertKToken(sort Sort, value string) K {
+func convertKToken(sort m.Sort, value string) m.K {
 	switch sort {
-	case sortInt:
+	case m.SortInt:
 		i, err := strconv.Atoi(value)
 		if err != nil {
 			panic("Could not parse Int token: " + value)
 		}
-		return Int(i)
-	case sortFloat:
+		return m.Int(i)
+	case m.SortFloat:
 		panic("Float token parse not implemented.")
-	case sortString:
+	case m.SortString:
 		unescapedStr := value // TODO: unescape value, see Ocaml impl unescape_k_string
-		return String(unescapedStr)
-	case sortBool:
+		return m.String(unescapedStr)
+	case m.SortBool:
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			panic("Could not parse Int token: " + value)
 		}
-		return Bool(b)
+		return m.Bool(b)
 	default:
-		return KToken{Value: value, Sort: sort}
+		return m.KToken{Value: value, Sort: sort}
 	}
 }

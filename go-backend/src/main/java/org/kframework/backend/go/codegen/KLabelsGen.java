@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -40,7 +40,7 @@ public class KLabelsGen {
         //addOpaqueKLabels(klabels);
 
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("package ").append(packageNameManager.modelPackage.getName()).append("\n\n");
         sb.append("// KLabel ... a k label identifier").newLine();
         sb.append("type KLabel int\n\n");
 
@@ -48,19 +48,24 @@ public class KLabelsGen {
         sb.append("const (\n");
         sb.increaseIndent();
         for (KLabel klabel : klabels) {
+            sb.writeIndent().append("// ").append(nameProvider.klabelVariableName(klabel)).append(" ... ").append(klabel.name()).newLine();
             sb.writeIndent().append(nameProvider.klabelVariableName(klabel));
             sb.append(" KLabel = iota\n");
         }
         sb.decreaseIndent();
         sb.append(")").newLine().newLine();
 
-        sb.append("const klabelForMap KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Map_"))).newLine();
-        sb.append("const klabelForSet KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Set_"))).newLine();
-        sb.append("const klabelForList KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_List_"))).newLine();
+        sb.append("//KLabelForMap ... The KLabel that identifies maps").newLine();
+        sb.append("const KLabelForMap KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Map_"))).newLine();
+        sb.append("//KLabelForSet ... The KLabel that identifies sets").newLine();
+        sb.append("const KLabelForSet KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Set_"))).newLine();
+        sb.append("//KLabelForList ... The KLabel that identifies lists").newLine();
+        sb.append("const KLabelForList KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_List_"))).newLine();
         sb.newLine();
 
         // klabel name method
-        sb.append("func (kl KLabel) name () string").beginBlock();
+        sb.append("// Name ... KLabel name").newLine();
+        sb.append("func (kl KLabel) Name () string").beginBlock();
         sb.writeIndent().append("switch kl").beginBlock();
         for (KLabel klabel : klabels) {
             sb.writeIndent().append("case ").append(nameProvider.klabelVariableName(klabel));
@@ -75,7 +80,8 @@ public class KLabelsGen {
         sb.endOneBlock().newLine();
 
         // parse klabel function
-        sb.append("func parseKLabel (name string) KLabel").beginBlock();
+        sb.append("// ParseKLabel ... Yields the KLabel with the given name").newLine();
+        sb.append("func ParseKLabel (name string) KLabel").beginBlock();
         sb.append("\tswitch name").beginBlock();
         for (KLabel klabel : klabels) {
             sb.writeIndent().append("case ");
@@ -90,7 +96,8 @@ public class KLabelsGen {
         sb.endOneBlock().newLine();
 
         // collection for
-        sb.append("func (kl KLabel) collectionFor() KLabel").beginBlock();
+        sb.append("// CollectionFor ... TODO: document").newLine();
+        sb.append("func (kl KLabel) CollectionFor() KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
             sb.writeIndent().append("case ");
@@ -101,12 +108,13 @@ public class KLabelsGen {
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method collectionFor for KLabel \" + kl.name())\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method collectionFor for KLabel \" + kl.Name())\n");
         sb.endOneBlock();
         sb.endOneBlock().newLine();
 
         // unit for
-        sb.append("func (kl KLabel) unitFor() KLabel").beginBlock();
+        sb.append("// UnitFor ... TODO: document").newLine();
+        sb.append("func (kl KLabel) UnitFor() KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
             sb.writeIndent().append("case ");
@@ -118,12 +126,13 @@ public class KLabelsGen {
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method unitFor for KLabel \" + kl.name())\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method unitFor for KLabel \" + kl.Name())\n");
         sb.endOneBlock();
         sb.endOneBlock().newLine();
 
         // el for
-        sb.append("func (kl KLabel) elFor() KLabel").beginBlock();
+        sb.append("// ElFor ... TODO: document").newLine();
+        sb.append("func (kl KLabel) ElFor() KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
             sb.writeIndent().append("case ").append(nameProvider.klabelVariableName(label));
@@ -134,7 +143,7 @@ public class KLabelsGen {
             sb.append("\n");
         }
         sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method elFor for KLabel \" + kl.name())\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method elFor for KLabel \" + kl.Name())\n");
         sb.endOneBlock();
         sb.endOneBlock().newLine();
 

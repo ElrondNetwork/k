@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringUtil;
@@ -34,20 +34,22 @@ public class SortsGen {
         sorts.add(Sorts.Bytes());
 
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("package ").append(packageNameManager.modelPackage.getName()).append(" \n\n");
         sb.append("// Sort ... a K sort identifier\n");
         sb.append("type Sort int\n\n");
 
         // const declaration
         sb.append("const (\n");
         for (Sort s : sorts) {
+            sb.append("\t// ").append(nameProvider.sortVariableName(s)).append(" ... ").append(s.name()).append("\n");
             sb.append("\t").append(nameProvider.sortVariableName(s));
             sb.append(" Sort = iota\n");
         }
         sb.append(")\n\n");
 
         // sort name method
-        sb.append("func (s Sort) name () string {\n");
+        sb.append("// Name ... Sort name\n");
+        sb.append("func (s Sort) Name () string {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : sorts) {
             sb.append("\t\tcase ").append(nameProvider.sortVariableName(sort));
@@ -62,7 +64,8 @@ public class SortsGen {
         sb.append("}\n\n");
 
         // parse sort function
-        sb.append("func parseSort (name string) Sort {\n");
+        sb.append("// ParseSort ... Yields the sort with the given name\n");
+        sb.append("func ParseSort (name string) Sort {\n");
         sb.append("\tswitch name {\n");
         for (Sort sort : sorts) {
             sb.append("\t\tcase ");

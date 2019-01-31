@@ -94,7 +94,7 @@ public class GoLhsVisitor extends VisitK {
         initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
-        sb.append(subject).append(".(").append(type).append("); t");
+        sb.append(subject).append(".(m.").append(type).append("); t");
     }
 
     @Override
@@ -109,7 +109,7 @@ public class GoLhsVisitor extends VisitK {
             String ktVar = "kt" + kitemIndex;
             kitemIndex++;
             lhsTypeIf(ktVar, consumeSubject(), "KToken");
-            sb.append(" && ").append(ktVar).append(".Sort == ").append(nameProvider.sortVariableName(sort));
+            sb.append(" && ").append(ktVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
             nextSubject = ktVar + ".Value";
             apply(value);
@@ -119,7 +119,7 @@ public class GoLhsVisitor extends VisitK {
             String kappVar = "kapp" + kitemIndex;
             kitemIndex++;
             lhsTypeIf(kappVar, consumeSubject(), "KApply");
-            sb.append(" && ").append(kappVar).append(".Label == ").append(nameProvider.klabelVariableName(k.klabel()));
+            sb.append(" && ").append(kappVar).append(".Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
             sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
             sb.beginBlock("lhs KApply " + k.klabel().name());
             int i = 0;
@@ -246,15 +246,15 @@ public class GoLhsVisitor extends VisitK {
             kitemIndex++;
             lhsTypeIf(kseqVar, consumeSubject(), "KSequence");
             int nrHeads = k.items().size() - 1;
-            sb.append(" && len(").append(kseqVar).append(".ks) >= ").append(nrHeads);
+            sb.append(" && len(").append(kseqVar).append(".Ks) >= ").append(nrHeads);
             sb.beginBlock("lhs KSequence size:" + k.items().size());
             // heads
             for (int i = 0; i < nrHeads; i++) {
-                nextSubject = kseqVar + ".ks[" + i + "]";
+                nextSubject = kseqVar + ".Ks[" + i + "]";
                 apply(k.items().get(i));
             }
             // tail
-            nextSubject = "KSequence{ks:" + kseqVar + ".ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
+            nextSubject = "m.KSequence{Ks:" + kseqVar + ".Ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
             apply(k.items().get(nrHeads)); // last element
             return;
         }
@@ -263,7 +263,7 @@ public class GoLhsVisitor extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         lhsTypeIf("ikl", consumeSubject(), "InjectedKLabel");
-        sb.append(" && ikl.Label == ").append(nameProvider.klabelVariableName(k.klabel()));
+        sb.append(" && ikl.Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
         sb.beginBlock();
     }
 

@@ -2,6 +2,7 @@ package %PACKAGE_INTERPRETER%
 
 import (
 	"fmt"
+	m "%INCLUDE_MODEL%"
 )
 
 type noStepError struct {
@@ -13,7 +14,7 @@ func (e *noStepError) Error() string {
 
 type stuckError struct {
 	funcName string
-	args     []K
+	args     []m.K
 }
 
 func (e *stuckError) Error() string {

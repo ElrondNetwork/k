@@ -34,23 +34,23 @@ public class GoBuiltin {
     }
 
     public static final ImmutableMap<String, Function<String, String>> PREDICATE_RULES;
-    private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn Bool(true), nil\n\t}";
+    private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn m.Bool(true), nil\n\t}";
 
     static {
         ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
-        builder.put("K.K", s -> "return Bool(true), nil");
-        builder.put("K.KItem", s -> "return Bool(true), nil");
-        builder.put("INT.Int", s -> "if _, t := c.(Int); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("FLOAT.Float", s -> "if _, t := c.(Float); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("STRING.String", s -> "if _, t := c.(String); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BYTES.Bytes", s -> "if _, t := c.(Bytes); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BUFFER.StringBuffer", s -> "if _, t := c.(StringBuffer); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BOOL.Bool", s -> "if _, t := c.(Bool); t " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MINT.MInt", s -> "if _, t := c.(MInt); t " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MAP.Map", s -> "if mp, t := c.(Map); t && mp.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("SET.Set", s -> "if set, t := c.(Set); t && set.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("LIST.List", s -> "if list, t := c.(List); t && list.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("ARRAY.Array", s -> "if arr, t := c.(Array); t && arr.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("K.K", s -> "return m.Bool(true), nil");
+        builder.put("K.KItem", s -> "return m.Bool(true), nil");
+        builder.put("INT.Int", s -> "if _, t := c.(m.Int); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("FLOAT.Float", s -> "if _, t := c.(m.Float); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("STRING.String", s -> "if _, t := c.(m.String); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BYTES.Bytes", s -> "if _, t := c.(m.Bytes); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BUFFER.StringBuffer", s -> "if _, t := c.(m.StringBuffer); t" + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("BOOL.Bool", s -> "if _, t := c.(m.Bool); t " + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("MINT.MInt", s -> "if _, t := c.(m.MInt); t " + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("MAP.Map", s -> "if mp, t := c.(m.Map); t && mp.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("SET.Set", s -> "if set, t := c.(m.Set); t && set.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("LIST.List", s -> "if list, t := c.(m.List); t && list.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
+        builder.put("ARRAY.Array", s -> "if arr, t := c.(m.Array); t && arr.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
         PREDICATE_RULES = builder.build();
     }
 
@@ -76,21 +76,21 @@ public class GoBuiltin {
     public static final ImmutableMap<String, Function<String, String>> GO_SORT_TOKEN_HOOKS;
     static {
         ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
-        builder.put("BOOL.Bool", s -> "Bool(" + s + ")");
-        builder.put("MINT.MInt", s -> "MInt(" + s + ")");
+        builder.put("BOOL.Bool", s -> "m.Bool(" + s + ")");
+        builder.put("MINT.MInt", s -> "m.MInt(" + s + ")");
 //        builder.put("MINT.MInt", s -> {
 //            MIntBuiltin m = MIntBuiltin.of(s);
 //            return "(MInt (" + m.precision() + ", Z.of_string \"" + m.value() + "))";
 //        });
-        builder.put("INT.Int", s -> "Int(" + s + ")");
-        builder.put("FLOAT.Float", s -> "Float(" + s + ")");
+        builder.put("INT.Int", s -> "m.Int(" + s + ")");
+        builder.put("FLOAT.Float", s -> "m.Float(" + s + ")");
 //        builder.put("FLOAT.Float", s -> {
 //            FloatBuiltin f = FloatBuiltin.of(s);
 //            return "(round_to_range(Float ((Gmp.FR.from_string_prec_base " + f.precision() + " Gmp.GMP_RNDN 10 \"" + f.value() + "\"), " + f.exponent() + ", " + f.precision() + ")))";
 //        });
-        builder.put("STRING.String", s -> "String (" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + ")");
-        builder.put("BYTES.Bytes", s -> "Bytes([]byte(" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + "))");
-        builder.put("BUFFER.StringBuffer", s -> "StringBuffer{}");
+        builder.put("STRING.String", s -> "m.String (" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + ")");
+        builder.put("BYTES.Bytes", s -> "m.Bytes([]byte(" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + "))");
+        builder.put("BUFFER.StringBuffer", s -> "m.StringBuffer{}");
         GO_SORT_TOKEN_HOOKS = builder.build();
     }
 
@@ -106,19 +106,19 @@ public class GoBuiltin {
 
     static {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("BOOL.Bool", "if %1$s, t := %2$s.(Bool); t");
-        builder.put("MINT.MInt", "if %1$s, t := %2$s.(MInt); t.");
-        builder.put("INT.Int",   "if %1$s, t := %2$s.(Int); t");
-        builder.put("FLOAT.Float",  "if %1$s, t := %2$s.(Float); t");
-        builder.put("STRING.String", "if %1$s, t := %2$s.(String); t");
-        builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(Bytes); t.(Bytes); t");
-        builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(StringBuffer); t");
+        builder.put("BOOL.Bool", "if %1$s, t := %2$s.(m.Bool); t");
+        builder.put("MINT.MInt", "if %1$s, t := %2$s.(m.MInt); t.");
+        builder.put("INT.Int",   "if %1$s, t := %2$s.(m.Int); t");
+        builder.put("FLOAT.Float",  "if %1$s, t := %2$s.(m.Float); t");
+        builder.put("STRING.String", "if %1$s, t := %2$s.(m.String); t");
+        builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(m.Bytes); t.(m.Bytes); t");
+        builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(m.StringBuffer); t");
         SORT_VAR_HOOKS_1 = builder.build();
         builder = ImmutableMap.builder();
-        builder.put("LIST.List", "if %1$s, t := %2$s.(List); t && %1$s.Sort == %3$s");
-        builder.put("ARRAY.Array",  "if %1$s, t := %2$s.(Array); t && %1$s.Sort == %3$s");
-        builder.put("MAP.Map", "if %1$s, t := %2$s.(Map); t && %1$s.Sort == %3$s");
-        builder.put("SET.Set",  "if %1$s, t := %2$s.(Set); t && %1$s.Sort == %3$s");
+        builder.put("LIST.List", "if %1$s, t := %2$s.(m.List); t && %1$s.Sort == m.%3$s");
+        builder.put("ARRAY.Array",  "if %1$s, t := %2$s.(m.Array); t && %1$s.Sort == m.%3$s");
+        builder.put("MAP.Map", "if %1$s, t := %2$s.(m.Map); t && %1$s.Sort == m.%3$s");
+        builder.put("SET.Set",  "if %1$s, t := %2$s.(m.Set); t && %1$s.Sort == m.%3$s");
         SORT_VAR_HOOKS_2 = builder.build();
     }
 }

@@ -1,158 +1,162 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type floatHooksType int
 
 const floatHooks floatHooksType = 0
 
-func (floatHooksType) isNaN(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) isNaN(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) maxValue(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) maxValue(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) minValue(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) minValue(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) round(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) round(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) abs(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) abs(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) ceil(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) ceil(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) floor(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) floor(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) acos(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) acos(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) asin(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) asin(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) atan(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) atan(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) cos(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) cos(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) sin(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) sin(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) tan(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) tan(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) exp(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) exp(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) log(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) log(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) neg(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) neg(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) add(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) sub(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) mul(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) div(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) div(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) pow(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) eq(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) lt(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) le(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) gt(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) ge(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) precision(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) precision(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) exponentBits(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) exponentBits(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) float2int(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) float2int(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) int2float(c1 K, c2 K, c3 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) int2float(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) min(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) max(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) rem(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) rem(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) root(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) root(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) sign(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) sign(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) significand(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) significand(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) atan2(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) atan2(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (floatHooksType) exponent(c K,lbl KLabel, sort Sort, config K) (K, error) {
+func (floatHooksType) exponent(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 

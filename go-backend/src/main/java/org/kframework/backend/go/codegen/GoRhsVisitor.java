@@ -78,12 +78,12 @@ public class GoRhsVisitor extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            currentSb.append("KToken{Sort: ").append(nameProvider.sortVariableName(sort));
+            currentSb.append("m.KToken{Sort: m.").append(nameProvider.sortVariableName(sort));
             currentSb.append(", Value:");
             apply(value);
             currentSb.append("}");
         } else if (k.klabel().name().equals("#Bottom")) {
-            currentSb.append("Bottom{}");
+            currentSb.append("m.Bottom{}");
         } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
             applyKApplyExecute(k);
         } else {
@@ -93,8 +93,8 @@ public class GoRhsVisitor extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("KApply{Label: ").append(nameProvider.klabelVariableName(k.klabel()));
-        currentSb.append(", List: []K{ // as-is ").append(k.klabel().name());
+        currentSb.append("m.KApply{Label: m.").append(nameProvider.klabelVariableName(k.klabel()));
+        currentSb.append(", List: []m.K{ // as-is ").append(k.klabel().name());
         currentSb.increaseIndent();
         for (K item : k.klist().items()) {
             newlineNext = true;
@@ -183,7 +183,7 @@ public class GoRhsVisitor extends VisitK {
             }
         }
 
-        sb.append("KToken{Sort: ").append(nameProvider.sortVariableName(k.sort()));
+        sb.append("m.KToken{Sort: m.").append(nameProvider.sortVariableName(k.sort()));
         sb.append(", Value: ");
         sb.append(GoStringUtil.enquoteString(k.s()));
         sb.append("}");
@@ -207,8 +207,8 @@ public class GoRhsVisitor extends VisitK {
             KLabel listVar = lhsVars.listVars.get(varName);
             if (listVar != null) {
                 Sort sort = data.mainModule.sortFor().apply(listVar);
-                currentSb.append("List{Sort: ").append(nameProvider.sortVariableName(sort));
-                currentSb.append(", Label:").append(nameProvider.klabelVariableName(listVar));
+                currentSb.append("m.List{Sort: m.").append(nameProvider.sortVariableName(sort));
+                currentSb.append(", Label: m.").append(nameProvider.klabelVariableName(listVar));
                 //currentSb.append(", ");
                 //currentSb.append(varOccurrance);
                 currentSb.append(" /* ??? */}");
@@ -241,7 +241,7 @@ public class GoRhsVisitor extends VisitK {
             return;
         default:
             start();
-            currentSb.append("KSequence { ks: append([]K{ ");
+            currentSb.append("m.KSequence { Ks: append([]m.K{ ");
             currentSb.increaseIndent();
             // heads
             for (int i = 0; i < k.items().size() - 1; i++) {
@@ -253,7 +253,7 @@ public class GoRhsVisitor extends VisitK {
             currentSb.decreaseIndent();
             currentSb.newLine().writeIndent().append("}, ");
             apply(k.items().get(k.items().size() - 1));
-            currentSb.append(".ks...)}");
+            currentSb.append(".Ks...)}");
             end();
         }
     }
@@ -261,7 +261,7 @@ public class GoRhsVisitor extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         start();
-        currentSb.append("InjectedKLabel{Label: ");
+        currentSb.append("m.InjectedKLabel{Label: m.");
         currentSb.append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append("}");
         end();

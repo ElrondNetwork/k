@@ -17,13 +17,13 @@ public class GoOptions implements Serializable {
     @Parameter(names="--go-src-only", description="Do not build definition; only generate .go files.")
     public boolean srcOnly;
 
-    @Parameter(names="--go-hook-packages", listConverter=StringListConverter.class, description="<string> is a whitespace-separated list of namespaces to include in the hooks defined in the definition")
-    public List<String> hookNamespaces = Collections.emptyList();
+    @Parameter(names="--go-hook-packages", listConverter=StringListConverter.class, description="<string> is a whitespace-separated list of paths to external Go packages required by the definition.")
+    public List<String> hookPackagePaths = Collections.emptyList();
 
     @Parameter(names="--go-quick-test", description="After generating sources and build, also run interpreter with a test program.")
     public String quickTest;
 
-    @Parameter(names="--go-verbose-vars", description="Generate more verbose variable names. They are closer to the originals, but not Go idiomatic.")
+    @Parameter(names="--go-verbose-vars", description="Generate more verbose variable names. They can be easier to read when debugging, but are not Go idiomatic.")
     public boolean verboseVars;
 
     @Parameter(names="--go-interpreter-main", description="Do not generate separate package for interpreter. This makes debugging a little easier.")

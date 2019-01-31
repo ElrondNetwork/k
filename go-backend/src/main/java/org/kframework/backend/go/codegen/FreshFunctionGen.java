@@ -1,6 +1,6 @@
 package org.kframework.backend.go.codegen;
 
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.kore.KLabel;
@@ -22,20 +22,24 @@ public class FreshFunctionGen {
 
     public String generate() {
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
 
-        sb.append("func freshFunction (s Sort, config K, counter int) (K, error) {\n");
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append(")\n\n");
+
+        sb.append("func freshFunction (s m.Sort, config m.K, counter int) (m.K, error) {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : iterable(data.mainModule.freshFunctionFor().keys())) {
-            sb.append("\t\tcase ").append(nameProvider.sortVariableName(sort));
+            sb.append("\t\tcase m.").append(nameProvider.sortVariableName(sort));
             sb.append(":\n");
             sb.append("\t\t\treturn ");
             KLabel freshFunction = data.mainModule.freshFunctionFor().apply(sort);
             sb.append(nameProvider.evalFunctionName(freshFunction));
-            sb.append("(Int(counter), config)\n");
+            sb.append("(m.Int(counter), config)\n");
         }
         sb.append("\t\tdefault:\n");
-        sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.name())\n");
+        sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.Name())\n");
         sb.append("\t}\n");
         sb.append("}\n\n");
 

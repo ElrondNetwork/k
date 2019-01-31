@@ -1,46 +1,50 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type kreflectionHooksType int
 
 const kreflectionHooks kreflectionHooksType = 0
 
-func (kreflectionHooksType) sort(c K, lbl KLabel, sort Sort, config K) (K, error) {
+func (kreflectionHooksType) sort(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	switch k := c.(type) {
-	case KToken:
-		return String(k.Sort.name()), nil
-	case Int:
-		return String("Int"), nil
-	case String:
-		return String("String"), nil
-	case Bytes:
-		return String("Bytes"), nil
-	case Bool:
-		return String("Bool"), nil
-	case Map:
-		return String(k.Sort.name()), nil
-	case List:
-		return String(k.Sort.name()), nil
-	case Set:
-		return String(k.Sort.name()), nil
+	case m.KToken:
+		return m.String(k.Sort.Name()), nil
+	case m.Int:
+		return m.String("Int"), nil
+	case m.String:
+		return m.String("String"), nil
+	case m.Bytes:
+		return m.String("Bytes"), nil
+	case m.Bool:
+		return m.String("Bool"), nil
+	case m.Map:
+		return m.String(k.Sort.Name()), nil
+	case m.List:
+		return m.String(k.Sort.Name()), nil
+	case m.Set:
+		return m.String(k.Sort.Name()), nil
 	default:
 		return noResult, &hookNotImplementedError{}
 	}
 }
 
-func (kreflectionHooksType) getKLabel(c K, lbl KLabel, sort Sort, config K) (K, error) {
-	if k, t := c.(KApply); t {
-		return InjectedKLabel{Label: k.Label}, nil
+func (kreflectionHooksType) getKLabel(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	if k, t := c.(m.KApply); t {
+		return m.InjectedKLabel{Label: k.Label}, nil
 	}
 	return internedBottom, nil
 }
 
-func (kreflectionHooksType) configuration(lbl KLabel, sort Sort, config K) (K, error) {
+func (kreflectionHooksType) configuration(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return config, nil
 }
 
-func (kreflectionHooksType) fresh(c K, lbl KLabel, sort Sort, config K) (K, error) {
-	if k, t := c.(String); t {
-		sort := parseSort(string(k))
+func (kreflectionHooksType) fresh(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	if k, t := c.(m.String); t {
+		sort := m.ParseSort(string(k))
 		result, err := freshFunction(sort, config, freshCounter)
 		if err != nil {
 		    return noResult, err
@@ -51,14 +55,14 @@ func (kreflectionHooksType) fresh(c K, lbl KLabel, sort Sort, config K) (K, erro
 	return noResult, &hookNotImplementedError{}
 }
 
-func (kreflectionHooksType) isConcrete(c1 K, c2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	return Bool(true), nil
+func (kreflectionHooksType) isConcrete(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	return m.Bool(true), nil
 }
 
-func (kreflectionHooksType) getenv(c K, lbl KLabel, sort Sort, config K) (K, error) {
+func (kreflectionHooksType) getenv(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
-func (kreflectionHooksType) argv(lbl KLabel, sort Sort, config K) (K, error) {
+func (kreflectionHooksType) argv(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }

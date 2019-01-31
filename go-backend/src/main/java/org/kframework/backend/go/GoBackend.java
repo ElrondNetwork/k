@@ -10,6 +10,7 @@ import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoNameProviderDebug;
@@ -39,7 +40,7 @@ public class GoBackend implements Backend {
     private final GlobalOptions globalOptions;
     private final KompileOptions kompileOptions;
     private final GoOptions options;
-    private GoPackageNameManager packageNameManager;
+    private GoPackageNameManager packageManager;
 
     @Inject
     public GoBackend(KExceptionManager kem, FileUtil files, GlobalOptions globalOptions, KompileOptions kompileOptions, GoOptions options) {
@@ -56,7 +57,7 @@ public class GoBackend implements Backend {
         System.out.println("GoBackend.accept started.");
 
         String mainModule = kompileOptions.mainModule(files);
-        packageNameManager = new GoPackageNameManager(files,mainModule.toLowerCase() + "interpreter", options);
+        packageManager = new GoPackageNameManager(files, mainModule.toLowerCase(), options);
         GoNameProvider nameProvider;
         if (options.verboseVars) {
             nameProvider = new GoNameProviderDebug();
@@ -65,30 +66,39 @@ public class GoBackend implements Backend {
         }
 
         DefinitionToOcamlTempCopy ocamlDef = new DefinitionToOcamlTempCopy(kem, files, globalOptions, kompileOptions, options);
-        DefinitionToGo def = new DefinitionToGo(kem, files, packageNameManager, nameProvider, globalOptions, kompileOptions, options);
+        DefinitionToGo def = new DefinitionToGo(kem, files, packageManager, nameProvider, globalOptions, kompileOptions, options);
         ocamlDef.initialize(compiledDefinition);
         def.initialize(compiledDefinition);
 
-        // temporary, for convenience and comparison
-        files.saveToKompiled("constants.ml", ocamlDef.constants());
-
         try {
             DefinitionData data = def.definitionData();
-            packageNameManager.saveToInterpreterDir("klabel.go", new KLabelsGen(data, packageNameManager, nameProvider).klabels());
-            packageNameManager.saveToInterpreterDir("sort.go", new SortsGen(data, packageNameManager, nameProvider).generate());
-            packageNameManager.saveToInterpreterDir("fresh.go", new FreshFunctionGen(data, packageNameManager, nameProvider).generate());
-            packageNameManager.saveToInterpreterDir("eval.go", new EvalFunctionGen(data, packageNameManager, nameProvider).generate());
 
-            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageNameManager, nameProvider);
-            packageNameManager.saveToInterpreterDir("step.go", stepFunctionGen.generateStep());
-            packageNameManager.saveToInterpreterDir("stepLookups.go", stepFunctionGen.generateLookupsStep());
+            // generate: model
+            packageManager.saveToPackage(packageManager.modelPackage, "klabel.go",
+                    new KLabelsGen(data, packageManager, nameProvider).klabels());
+            packageManager.saveToPackage(packageManager.modelPackage, "sort.go",
+                    new SortsGen(data, packageManager, nameProvider).generate());
+
+            // generate: interpreter
+            packageManager.saveToPackage(packageManager.interpreterPackage, "fresh.go",
+                    new FreshFunctionGen(data, packageManager, nameProvider).generate());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "eval.go",
+                    new EvalFunctionGen(data, packageManager, nameProvider).generate());
+            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageManager, nameProvider);
+            packageManager.saveToPackage(packageManager.interpreterPackage, "step.go",
+                    stepFunctionGen.generateStep());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "stepLookups.go",
+                    stepFunctionGen.generateLookupsStep());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
+                    def.definition());
 
             // temporary, for convenience and comparison
+            files.saveToKompiled("constants.ml", ocamlDef.constants());
             files.saveToKompiled("realdef.ml", ocamlDef.definition());
             String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
             files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
-            packageNameManager.saveToInterpreterDir("functions.go", def.definition());
+
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -102,36 +112,48 @@ public class GoBackend implements Backend {
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/koreparser.y"), files.resolveKompiled("koreparser/koreparser.y"));
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/gen.go"), files.resolveKompiled("koreparser/gen.go"));
 
-            // interpreter
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/kmodel.go"),"kmodel.go");
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/kmodelconvert.go"),"kmodelconvert.go");
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/init.go"), "init.go");
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/error.go"),"error.go");
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/trace.go"),"trace.go");
-            packageNameManager.copyFileToInterpreterDir(
-                    files.resolveKBase("include/go/run.go"),"run.go");
+            // copy: model
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/model/kmodel.go"),
+                    packageManager.modelPackage, "kmodel.go");
+
+
+            // copy: interpreter
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/kmodelconvert.go"),
+                    packageManager.interpreterPackage, "kmodelconvert.go");
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/init.go"),
+                    packageManager.interpreterPackage,"init.go");
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/error.go"),
+                    packageManager.interpreterPackage,"error.go");
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/trace.go"),
+                    packageManager.interpreterPackage,"trace.go");
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/run.go"),
+                    packageManager.interpreterPackage,"run.go");
+
+            // copy: builtin hook files
+            for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {
+                String fileName = "hooks_" + hookNamespace.toLowerCase() + ".go";
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/hooks/" + fileName),
+                        packageManager.interpreterPackage, fileName);
+            }
 
             // main
             if (options.interpreterMain) {
-                packageNameManager.copyFileAndReplaceGoPackages(
-                        files.resolveKBase("include/go/main_noInterpreterPackage.go"), files.resolveKompiled("main.go"));
+                packageManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/main_noInterpreterPackage.go"),
+                        files.resolveKompiled("main.go"));
             } else {
-                packageNameManager.copyFileAndReplaceGoPackages(
-                        files.resolveKBase("include/go/main.go"), files.resolveKompiled("main.go"));
+                packageManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/main.go"),
+                        files.resolveKompiled("main.go"));
             }
 
-            // builtin hook files
-            for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {
-                String fileName = "hooks_" + hookNamespace.toLowerCase() + ".go";
-                packageNameManager.copyFileToInterpreterDir(
-                        files.resolveKBase("include/go/hooks/" + fileName),
-                        fileName);
-            }
 
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);

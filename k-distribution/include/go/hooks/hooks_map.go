@@ -1,72 +1,76 @@
 package %PACKAGE_INTERPRETER%
 
+import (
+	m "%INCLUDE_MODEL%"
+)
+
 type mapHooksType int
 
 const mapHooks mapHooksType = 0
 
-func isValidKey(key K) bool {
-	if _, t := key.(KApply); t {
+func isValidKey(key m.K) bool {
+	if _, t := key.(m.KApply); t {
 		return false
 	}
-	if _, t := key.(KSequence); t {
+	if _, t := key.(m.KSequence); t {
 		return false
 	}
-	if _, t := key.(Map); t {
+	if _, t := key.(m.Map); t {
 		return false
 	}
-	if _, t := key.(Set); t {
+	if _, t := key.(m.Set); t {
 		return false
 	}
-	if _, t := key.(List); t {
+	if _, t := key.(m.List); t {
 		return false
 	}
-	if _, t := key.(Array); t {
+	if _, t := key.(m.Array); t {
 		return false
 	}
 	return true
 }
 
 // returns a map with 1 key to value mapping
-func (mapHooksType) element(key K, val K, lbl KLabel, sort Sort, config K) (K, error) {
+func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	if !isValidKey(key) {
 		panic("Invaid key")
 	}
-	m := make(map[K]K)
-	m[key] = val
-	return Map{Sort: sort, Label: lbl.collectionFor(), data: m}, nil
+	mp := make(map[m.K]m.K)
+	mp[key] = val
+	return m.Map{Sort: sort, Label: lbl.CollectionFor(), Data: mp}, nil
 }
 
 // returns an empty map
-func (mapHooksType) unit(lbl KLabel, sort Sort, config K) (K, error) {
-	var m map[K]K
-	return Map{Sort: sort, Label: lbl.collectionFor(), data: m}, nil
+func (mapHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	var mp map[m.K]m.K
+	return m.Map{Sort: sort, Label: lbl.CollectionFor(), Data: mp}, nil
 }
 
-func (mh mapHooksType) lookup(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
+func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return mh.lookupOrDefault(kmap, key, internedBottom, lbl, sort, config)
 }
 
-func (mapHooksType) lookupOrDefault(kmap K, key K, defaultRes K, lbl KLabel, sort Sort, config K) (K, error) {
-	if m, isMap := kmap.(Map); isMap {
+func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	if mp, isMap := kmap.(m.Map); isMap {
 		if !isValidKey(key) {
 			return defaultRes, nil
 		}
-		elem, found := m.data[key]
+		elem, found := mp.Data[key]
 		if found {
 			return elem, nil
 		}
 		return defaultRes, nil
 	}
 
-	if _, isBottom := kmap.(Map); isBottom {
+	if _, isBottom := kmap.(m.Map); isBottom {
 		return internedBottom, nil
 	}
 
 	return noResult, &hookInvalidArgsError{}
 }
 
-func (mapHooksType) update(kmap K, newKey K, newValue K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) update(kmap m.K, newKey m.K, newValue m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
@@ -76,44 +80,44 @@ func (mapHooksType) update(kmap K, newKey K, newValue K, lbl KLabel, sort Sort, 
 	// implementing it as an "immutable" map
 	// that is, creating a copy for each update (for now)
 	// not the most efficient, not sure if necessary, but it is the safest
-	newData := make(map[K]K)
-	for oldKey, oldValue := range m.data {
+	newData := make(map[m.K]m.K)
+	for oldKey, oldValue := range mp.Data {
 		newData[oldKey] = oldValue
 	}
 	newData[newKey] = newValue
-	return Map{Sort: m.Sort, Label: m.Label, data: newData}, nil
+	return m.Map{Sort: mp.Sort, Label: mp.Label, Data: newData}, nil
 }
 
-func (mapHooksType) remove(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
 	// no updating of input map
-	newData := make(map[K]K)
-	for oldKey, oldValue := range m.data {
+	newData := make(map[m.K]m.K)
+	for oldKey, oldValue := range mp.Data {
 		if oldKey != key {
 			newData[oldKey] = oldValue
 		}
 	}
-	return Map{Sort: m.Sort, Label: m.Label, data: newData}, nil
+	return m.Map{Sort: mp.Sort, Label: mp.Label, Data: newData}, nil
 }
 
-func (mapHooksType) concat(kmap1 K, kmap2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	m1, isMap1 := kmap1.(Map)
-	m2, isMap2 := kmap2.(Map)
+func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	m1, isMap1 := kmap1.(m.Map)
+	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
 		return noResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
 		return noResult, &hookInvalidArgsError{}
 	}
-	data := make(map[K]K)
-	for key, value := range m1.data {
+	data := make(map[m.K]m.K)
+	for key, value := range m1.Data {
 		data[key] = value
 	}
-	for key, value := range m2.data {
-		m1Val, exists := m1.data[key]
+	for key, value := range m2.Data {
+		m1Val, exists := m1.Data[key]
 		if exists {
 			if m1Val != value {
 				return noResult, &hookInvalidArgsError{}
@@ -122,143 +126,143 @@ func (mapHooksType) concat(kmap1 K, kmap2 K, lbl KLabel, sort Sort, config K) (K
 			data[key] = value
 		}
 	}
-	return Map{Sort: m1.Sort, Label: m1.Label, data: data}, nil
+	return m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) difference(kmap1 K, kmap2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	m1, isMap1 := kmap1.(Map)
-	m2, isMap2 := kmap2.(Map)
+func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	m1, isMap1 := kmap1.(m.Map)
+	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
 		return noResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
 		return noResult, &hookInvalidArgsError{}
 	}
-	data := make(map[K]K)
-	for key, value := range m1.data {
-		_, exists := m2.data[key]
+	data := make(map[m.K]m.K)
+	for key, value := range m1.Data {
+		_, exists := m2.Data[key]
 		if !exists {
 			data[key] = value
 		}
 
 	}
-	return Map{Sort: m1.Sort, Label: m1.Label, data: data}, nil
+	return m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) keys(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	keySet := make(map[K]bool)
-	for key := range m.data {
+	keySet := make(map[m.K]bool)
+	for key := range mp.Data {
 		keySet[key] = true
 	}
-	return Set{Sort: sortSet, Label: klabelForSet, data: keySet}, nil
+	return m.Set{Sort: m.SortSet, Label: m.KLabelForSet, Data: keySet}, nil
 }
 
-func (mapHooksType) keysList(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	var keyList []K
-	for key := range m.data {
+	var keyList []m.K
+	for key := range mp.Data {
 		keyList = append(keyList, key)
 	}
-	return List{Sort: sortList, Label: klabelForList, data: keyList}, nil
+	return m.List{Sort: m.SortList, Label: m.KLabelForList, Data: keyList}, nil
 }
 
-func (mapHooksType) inKeys(kmap K, key K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) inKeys(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	_, keyExists := m.data[key]
-	return Bool(keyExists), nil
+	_, keyExists := mp.Data[key]
+	return m.Bool(keyExists), nil
 }
 
-func (mapHooksType) values(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	var valueList []K
-	for _, value := range m.data {
+	var valueList []m.K
+	for _, value := range mp.Data {
 		valueList = append(valueList, value)
 	}
-	return List{Sort: sortList, Label: klabelForList, data: valueList}, nil
+	return m.List{Sort: m.SortList, Label: m.KLabelForList, Data: valueList}, nil
 }
 
-func (mapHooksType) choice(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) choice(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	m, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	for key := range m.data {
+	for key := range m.Data {
 		return key, nil
 	}
 	return noResult, &hookInvalidArgsError{}
 }
 
-func (mapHooksType) size(kmap K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
+func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return noResult, &hookInvalidArgsError{}
 	}
-	return Int(len(m.data)), nil
+	return m.Int(len(mp.Data)), nil
 }
 
-func (mapHooksType) inclusion(kmap1 K, kmap2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	m1, isMap1 := kmap1.(Map)
-	m2, isMap2 := kmap2.(Map)
+func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	m1, isMap1 := kmap1.(m.Map)
+	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
 		return noResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
 		return noResult, &hookInvalidArgsError{}
 	}
-	for m2Key := range m2.data {
-		_, exists := m1.data[m2Key]
+	for m2Key := range m2.Data {
+		_, exists := m1.Data[m2Key]
 		if !exists {
-			return Bool(false), nil
+			return m.Bool(false), nil
 		}
 	}
-	return Bool(true), nil
+	return m.Bool(true), nil
 }
 
-func (mapHooksType) updateAll(kmap1 K, kmap2 K, lbl KLabel, sort Sort, config K) (K, error) {
-	m1, isMap1 := kmap1.(Map)
-	m2, isMap2 := kmap2.(Map)
+func (mapHooksType) updateAll(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	m1, isMap1 := kmap1.(m.Map)
+	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
 		return noResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
 		return noResult, &hookInvalidArgsError{}
 	}
-	data := make(map[K]K)
-	for key, value := range m1.data {
+	data := make(map[m.K]m.K)
+	for key, value := range m1.Data {
 		data[key] = value
 	}
-	for key, value := range m2.data {
+	for key, value := range m2.Data {
 		data[key] = value
 	}
-	return Map{Sort: m1.Sort, Label: m1.Label, data: data}, nil
+	return m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) removeAll(kmap K, kset K, lbl KLabel, sort Sort, config K) (K, error) {
-	m, isMap := kmap.(Map)
-	s, isSet := kset.(Set)
+func (mapHooksType) removeAll(kmap m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	mp, isMap := kmap.(m.Map)
+	s, isSet := kset.(m.Set)
 	if !isMap || !isSet {
 		return noResult, &hookInvalidArgsError{}
 	}
-	data := make(map[K]K)
-	for key, value := range m.data {
-		_, exists := s.data[key]
+	data := make(map[m.K]m.K)
+	for key, value := range mp.Data {
+		_, exists := s.Data[key]
 		if !exists {
 			data[key] = value
 		}
 
 	}
-	return Map{Sort: m.Sort, Label: m.Label, data: data}, nil
+	return m.Map{Sort: mp.Sort, Label: mp.Label, Data: data}, nil
 }

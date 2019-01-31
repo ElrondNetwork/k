@@ -1,7 +1,7 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ComparisonChain;
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
@@ -45,7 +45,11 @@ public class StepFunctionGen {
 
     public String generateStep() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append(" \n\n");
+
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append(")\n\n");
 
         writeStepFunction(sb, sortedRules, "step");
 
@@ -54,7 +58,11 @@ public class StepFunctionGen {
 
     public String generateLookupsStep() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append(" \n\n");
+        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append(" \n\n");
+
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append(")\n\n");
 
         writeLookupsStepFunction(sb, sortedRules, "step");
 
@@ -66,7 +74,7 @@ public class StepFunctionGen {
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(RuleWriter::hasLookups));
 
-        sb.append("func ").append(funcName).append("(c K) (K, error)").beginBlock();
+        sb.append("func ").append(funcName).append("(c m.K) (m.K, error)").beginBlock();
         sb.writeIndent().append("config := c").newLine();
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
@@ -84,7 +92,7 @@ public class StepFunctionGen {
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
                 .collect(Collectors.groupingBy(RuleWriter::hasLookups));
 
-        sb.append("func ").append(lookupsFuncName).append("(c K, config K, guard int) (K, error)").beginBlock("k * step_function");
+        sb.append("func ").append(lookupsFuncName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
 
         List<Rule> lookupRules = groupedByLookup.getOrDefault(true, Collections.emptyList());
         for (Rule r : lookupRules) {

@@ -1,7 +1,7 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.Sets;
-import org.kframework.backend.go.GoPackageNameManager;
+import org.kframework.backend.go.gopackage.GoPackageNameManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -21,20 +21,24 @@ public class EvalFunctionGen {
 
     public String generate() {
         GoStringBuilder sb = new GoStringBuilder();
-        sb.append("package ").append(packageNameManager.getInterpreterPackageName()).append("\n\n");
+        sb.append("package ").append(packageNameManager.interpreterPackage.getName()).append("\n\n");
 
-        sb.append("const topCellInitializer KLabel = ");
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageNameManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append(")\n\n");
+
+        sb.append("const topCellInitializer m.KLabel = m.");
         sb.append(nameProvider.klabelVariableName(data.topCellInitializer));
         sb.append("\n\n");
 
-        sb.append("func eval(c K, config K) (K, error)").beginBlock();
-        sb.writeIndent().append("kapp, isKapply := c.(KApply)\n");
+        sb.append("func eval(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.writeIndent().append("kapp, isKapply := c.(m.KApply)\n");
         sb.writeIndent().append("if !isKapply").beginBlock();
         sb.writeIndent().append("return c, nil").newLine();
         sb.endOneBlock();
         sb.writeIndent().append("switch kapp.Label").beginBlock();
         for (KLabel label : Sets.union(data.functions, data.anywhereKLabels)) {
-            sb.writeIndent().append("case ");
+            sb.writeIndent().append("case m.");
             sb.append(nameProvider.klabelVariableName(label));
             sb.append(":").newLine().increaseIndent();
 

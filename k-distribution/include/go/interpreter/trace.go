@@ -7,6 +7,7 @@ package %PACKAGE_INTERPRETER%
 import (
 	"bufio"
 	"fmt"
+	m "%INCLUDE_MODEL%"
 	"os"
 	"time"
 )
@@ -29,24 +30,30 @@ func initializeTrace() {
 }
 
 func closeTrace() {
+	if !traceEnabled {
+		return
+	}
 	traceEnabled = false
 	traceWriter.Flush()
 	traceFile.Close()
 }
 
-func traceInitialState(state K) {
+func traceInitialState(state m.K) {
+	if !traceEnabled {
+		return
+	}
     traceWriter.WriteString("initial state:\n\n")
 	traceWriter.WriteString(state.PrettyTreePrint(0))
 }
 
-func traceStepStart(stepNr int, currentState K) {
+func traceStepStart(stepNr int, currentState m.K) {
 	if !traceEnabled {
 		return
 	}
 	traceWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
 }
 
-func traceStepEnd(stepNr int, currentState K) {
+func traceStepEnd(stepNr int, currentState m.K) {
 	if !traceEnabled {
 		return
 	}
@@ -54,7 +61,7 @@ func traceStepEnd(stepNr int, currentState K) {
 	traceWriter.WriteString(currentState.PrettyTreePrint(0))
 }
 
-func traceNoStep(stepNr int, currentState K) {
+func traceNoStep(stepNr int, currentState m.K) {
 	if !traceEnabled {
 		return
 	}

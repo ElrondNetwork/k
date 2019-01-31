@@ -4,6 +4,7 @@ import (
 	"fmt"
 	koreparser "%INCLUDE_PARSER%"
 	"log"
+	m "%INCLUDE_MODEL%"
 	"os/exec"
 )
 
@@ -28,11 +29,11 @@ func Execute(kdir string, execFile string) {
 	fmt.Println(kinput.PrettyTreePrint(0))
 
 	// top cell initialization
-	m := make(map[K]K)
-	m[KToken{Sort: sortKConfigVar, Value: "$PGM"}] = kinput
-	kmap := Map{Sort: sortMap, Label: klabelForMap, data: m}
-	evalK := KApply{Label: topCellInitializer, List: []K{kmap}}
-	kinit, err := eval(evalK, Bottom{})
+	initMap := make(map[m.K]m.K)
+	initMap[m.KToken{Sort: m.SortKConfigVar, Value: "$PGM"}] = kinput
+	kmap := m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: initMap}
+	evalK := m.KApply{Label: topCellInitializer, List: []m.K{kmap}}
+	kinit, err := eval(evalK, m.Bottom{})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -53,7 +54,7 @@ func Execute(kdir string, execFile string) {
 
 }
 
-func takeStepsNoThread(k K, maxSteps int) (K, int) {
+func takeStepsNoThread(k m.K, maxSteps int) (m.K, int) {
 	n := 1
 	current := k
 	traceInitialState(k)
