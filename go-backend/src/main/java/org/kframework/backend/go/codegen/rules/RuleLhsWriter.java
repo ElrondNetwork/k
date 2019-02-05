@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GoLhsVisitor extends VisitK {
+public class RuleLhsWriter extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
     private final GoNameProvider nameProvider;
@@ -57,11 +57,11 @@ public class GoLhsVisitor extends VisitK {
      */
     private final Set<KVariable> alreadySeenVariables = new HashSet<>();
 
-    public GoLhsVisitor(GoStringBuilder sb,
-                        DefinitionData data,
-                        GoNameProvider nameProvider,
-                        FunctionParams functionVars,
-                        RuleVars lhsVars, RuleVars rhsVars) {
+    public RuleLhsWriter(GoStringBuilder sb,
+                         DefinitionData data,
+                         GoNameProvider nameProvider,
+                         FunctionParams functionVars,
+                         RuleVars lhsVars, RuleVars rhsVars) {
         this.sb = sb;
         this.data = data;
         this.nameProvider = nameProvider;
@@ -140,7 +140,7 @@ public class GoLhsVisitor extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        throw KEMException.internalError("GoLhsVisitor.apply(KAs) not implemented.");
+        throw KEMException.internalError("RuleLhsWriter.apply(KAs) not implemented.");
     }
 
     @Override
@@ -153,7 +153,7 @@ public class GoLhsVisitor extends VisitK {
         initTopExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == (");
-        GoRhsVisitor.appendKTokenRepresentation(sb, k, data, nameProvider);
+        RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
         sb.beginBlock("lhs KToken");
     }

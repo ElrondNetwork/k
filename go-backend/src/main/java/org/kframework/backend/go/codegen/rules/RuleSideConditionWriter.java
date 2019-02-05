@@ -9,18 +9,18 @@ import org.kframework.kil.Attribute;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KToken;
 
-public class GoSideConditionVisitor extends GoRhsVisitor {
+public class RuleSideConditionWriter extends RuleRhsWriter {
 
     private enum ExpressionType {BOOLEAN, K}
 
     private ExpressionType expectedExprType = ExpressionType.BOOLEAN;
     private int depthFromFuncIsTrue = -1;
 
-    public GoSideConditionVisitor(DefinitionData data,
-                                  GoNameProvider nameProvider,
-                                  RuleVars lhsVars,
-                                  TempVarCounters tempVarCounters,
-                                  int tabsIndent, int returnValSpacesIndent) {
+    public RuleSideConditionWriter(DefinitionData data,
+                                   GoNameProvider nameProvider,
+                                   RuleVars lhsVars,
+                                   TempVarCounters tempVarCounters,
+                                   int tabsIndent, int returnValSpacesIndent) {
         super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, returnValSpacesIndent);
     }
 

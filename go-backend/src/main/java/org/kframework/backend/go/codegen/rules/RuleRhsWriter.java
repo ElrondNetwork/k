@@ -26,7 +26,7 @@ import org.kframework.utils.errorsystem.KEMException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GoRhsVisitor extends VisitK {
+public class RuleRhsWriter extends VisitK {
     protected GoStringBuilder currentSb;
     protected final List<String> evalCalls = new ArrayList<>();
 
@@ -49,11 +49,11 @@ public class GoRhsVisitor extends VisitK {
     protected void end() {
     }
 
-    public GoRhsVisitor(DefinitionData data,
-                        GoNameProvider nameProvider,
-                        RuleVars lhsVars,
-                        TempVarCounters tempVarCounters,
-                        int tabsIndent, int returnValSpacesIndent) {
+    public RuleRhsWriter(DefinitionData data,
+                         GoNameProvider nameProvider,
+                         RuleVars lhsVars,
+                         TempVarCounters tempVarCounters,
+                         int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
@@ -151,7 +151,7 @@ public class GoRhsVisitor extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        throw KEMException.internalError("GoRhsVisitor.apply(KAs) not implemented.");
+        throw KEMException.internalError("RuleRhsWriter.apply(KAs) not implemented.");
     }
 
     @Override
@@ -176,7 +176,7 @@ public class GoRhsVisitor extends VisitK {
     }
 
     /**
-     * This one is also used by the GoLhsVisitor.
+     * This one is also used by the RuleLhsWriter.
      * */
     public static void appendKTokenRepresentation(GoStringBuilder sb, KToken k, DefinitionData data, GoNameProvider nameProvider) {
         if (data.mainModule.sortAttributesFor().contains(k.sort())) {

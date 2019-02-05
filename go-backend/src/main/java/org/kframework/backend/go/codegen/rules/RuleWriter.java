@@ -80,7 +80,7 @@ public class RuleWriter {
 
             // output LHS
             sb.writeIndent().append("// LHS").newLine();
-            GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, nameProvider, functionVars,
+            RuleLhsWriter lhsVisitor = new RuleLhsWriter(sb, data, nameProvider, functionVars,
                     accumLhsVars.vars(),
                     accumRhsVars.vars());
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
@@ -98,7 +98,7 @@ public class RuleWriter {
             // output requires
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES");
-                GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(data, nameProvider,
+                RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
                         accumLhsVars.vars(), tempVarCounters,
                         sb.getCurrentIndent(), "if ".length());
                 sideCondVisitor.apply(requires);
@@ -114,7 +114,7 @@ public class RuleWriter {
             // output RHS
             sb.appendIndentedLine("// RHS");
             traceLine(sb, type, ruleNum, r);
-            GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
+            RuleRhsWriter rhsVisitor = new RuleRhsWriter(data, nameProvider,
                     accumLhsVars.vars(), tempVarCounters,
                     sb.getCurrentIndent(), 0);
             rhsVisitor.apply(right);
@@ -129,7 +129,7 @@ public class RuleWriter {
             sb.newLine();
 
             // return some info regarding the written rule
-            boolean topLevelIf = lhsVisitor.getTopExpressionType() == GoLhsVisitor.ExpressionType.IF;
+            boolean topLevelIf = lhsVisitor.getTopExpressionType() == RuleLhsWriter.ExpressionType.IF;
             return new RuleInfo(topLevelIf);
         } catch (NoSuchElementException e) {
             System.err.println(r);
@@ -156,7 +156,7 @@ public class RuleWriter {
             switch (lookup.getType()) {
             case MATCH:
                 sb.appendIndentedLine("// #match");
-                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
+                RuleRhsWriter rhsVisitor = new RuleRhsWriter(data, nameProvider,
                         rhsVars, tempVarCounters,
                         sb.getCurrentIndent(), 0);
                 rhsVisitor.apply(k.klist().items().get(1));
@@ -171,13 +171,13 @@ public class RuleWriter {
 
                 int ourElseIndent = sb.getCurrentIndent();
 
-                GoLhsVisitor lhsVisitor = new GoLhsVisitor(sb, data, nameProvider, new FunctionParams(0),
+                RuleLhsWriter lhsVisitor = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
                         lhsVars,
                         rhsVars);
                 lhsVisitor.setNextSubject(matchVar);
                 lhsVisitor.apply(k.klist().items().get(0));
 
-                if (lhsVisitor.getTopExpressionType() == GoLhsVisitor.ExpressionType.IF) {
+                if (lhsVisitor.getTopExpressionType() == RuleLhsWriter.ExpressionType.IF) {
                     // defer final else for when we close the corresponding block
                     sb.addCallbackAfterReturningFromBlock(ourElseIndent, sbRef -> {
                         sbRef.append(" else").beginBlock();
@@ -188,7 +188,7 @@ public class RuleWriter {
                 break;
             case SETCHOICE:
                 sb.appendIndentedLine("// #setChoice");
-                GoRhsVisitor setRhsVisitor = new GoRhsVisitor(data, nameProvider,
+                RuleRhsWriter setRhsVisitor = new RuleRhsWriter(data, nameProvider,
                         rhsVars, tempVarCounters,
                         sb.getCurrentIndent(), 0);
                 setRhsVisitor.apply(k.klist().items().get(1));
