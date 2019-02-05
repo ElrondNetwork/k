@@ -249,13 +249,11 @@ public class DefinitionToGo {
                     kem.registerCompilerWarning("missing entry for hook " + hook);
                 }
                 if (hookCall != null) {
-                    sb.writeIndent().append("//hook: ").append(hook).newLine();
+                    sb.appendIndentedLine("//hook: ", hook);
 
-                    sb.writeIndent().append("lbl := m.").append(nameProvider.klabelVariableName(functionLabel));
-                    sb.append(" // ").append(functionLabel.name()).newLine(); // just for readability
+                    sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
                     Sort sort = mainModule.sortFor().apply(functionLabel);
-                    sb.writeIndent().append("sort := m.").append(nameProvider.sortVariableName(sort));
-                    sb.newLine();
+                    sb.appendIndentedLine("sort := m.", nameProvider.sortVariableName(sort));
 
                     sb.writeIndent().append("if hookRes, hookErr := ");
                     sb.append(hookCall).append("(");
@@ -362,7 +360,25 @@ public class DefinitionToGo {
                 sb.append(functionName);
                 sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K) (m.K, error)");
                 sb.beginBlock();
-                sb.appendIndentedLine("return noResult, &stuckError{}");
+
+                // main!
+                List<Rule> rules = anywhereRules.get(functionLabel);
+                for (Rule r : rules) {
+                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleCounter, functionVars);
+                }
+
+                // final return
+                sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
+                sb.writeIndent().append("return m.KApply{Label: lbl, List: ");
+                if (functionVars.arity() == 0) {
+                    sb.append("nil");
+                } else {
+                    sb.append("[]m.K{");
+                    sb.append(functionVars.paramNamesSeparatedByComma());
+                    sb.append("}");
+                }
+                sb.append("}, nil").newLine();
+
                 sb.endAllBlocks(0);
                 sb.newLine();
             }
