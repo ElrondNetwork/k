@@ -9,6 +9,7 @@ import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.AccumulateRuleVars;
 import org.kframework.backend.go.processors.LookupExtractor;
 import org.kframework.backend.go.processors.LookupVarExtractor;
@@ -22,6 +23,7 @@ import org.kframework.compile.RewriteToTop;
 import org.kframework.definition.Rule;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.KVariable;
 import org.kframework.kore.VisitK;
 import org.kframework.utils.errorsystem.KEMException;
 
@@ -32,6 +34,7 @@ public class RuleWriter {
 
     private final DefinitionData data;
     private final GoNameProvider nameProvider;
+    private final TempVarCounters tempVarCounters = new TempVarCounters();
 
     public RuleWriter(DefinitionData data, GoNameProvider nameProvider) {
         this.data = data;
@@ -96,7 +99,8 @@ public class RuleWriter {
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES");
                 GoSideConditionVisitor sideCondVisitor = new GoSideConditionVisitor(data, nameProvider,
-                        accumLhsVars.vars(), sb.getCurrentIndent(), "if ".length());
+                        accumLhsVars.vars(), tempVarCounters,
+                        sb.getCurrentIndent(), "if ".length());
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
                 sb.writeIndent().append("if ");
@@ -111,7 +115,8 @@ public class RuleWriter {
             sb.appendIndentedLine("// RHS");
             traceLine(sb, type, ruleNum, r);
             GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
-                    accumLhsVars.vars(), sb.getCurrentIndent(), 0);
+                    accumLhsVars.vars(), tempVarCounters,
+                    sb.getCurrentIndent(), 0);
             rhsVisitor.apply(right);
             rhsVisitor.writeEvalCalls(sb);
             sb.writeIndent();
@@ -144,14 +149,16 @@ public class RuleWriter {
 
         int matchIndex = 0;
         for (Lookup lookup : lookups) {
+            KApply k = lookup.getContent();
+            String matchVar = "e" + matchIndex++;
+            String reapply = "return stepLookups(c, config, " + ruleNum + ") // reapply";
+
             switch (lookup.getType()) {
             case MATCH:
-                KApply k = lookup.getContent();
-                String matchVar = "e" + matchIndex;
-                matchIndex++;
-                String reapply = "return stepLookups(c, config, " + ruleNum + ") // reapply";
-
-                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider, rhsVars, sb.getCurrentIndent(), 0);
+                sb.appendIndentedLine("// #match");
+                GoRhsVisitor rhsVisitor = new GoRhsVisitor(data, nameProvider,
+                        rhsVars, tempVarCounters,
+                        sb.getCurrentIndent(), 0);
                 rhsVisitor.apply(k.klist().items().get(1));
                 rhsVisitor.writeEvalCalls(sb);
                 sb.writeIndent().append(matchVar).append(" := ");
@@ -160,7 +167,7 @@ public class RuleWriter {
                 sb.newLine();
                 sb.writeIndent().append("if _, isBottom := ").append(matchVar).append(".(m.Bottom); isBottom").beginBlock();
                 sb.writeIndent().append(reapply).newLine();
-                sb.endOneBlockNoNewline().append(" else").beginBlock();
+                sb.endOneBlock();
 
                 int ourElseIndent = sb.getCurrentIndent();
 
@@ -172,12 +179,83 @@ public class RuleWriter {
 
                 if (lhsVisitor.getTopExpressionType() == GoLhsVisitor.ExpressionType.IF) {
                     // defer final else for when we close the corresponding block
-                    sb.addCallbackWhenReturningFromBlock(ourElseIndent, sbRef -> {
+                    sb.addCallbackAfterReturningFromBlock(ourElseIndent, sbRef -> {
                         sbRef.append(" else").beginBlock();
                         sbRef.writeIndent().append(reapply).newLine();
                         sbRef.endOneBlockNoNewline();
                     });
                 }
+                break;
+            case SETCHOICE:
+                sb.appendIndentedLine("// #setChoice");
+                GoRhsVisitor setRhsVisitor = new GoRhsVisitor(data, nameProvider,
+                        rhsVars, tempVarCounters,
+                        sb.getCurrentIndent(), 0);
+                setRhsVisitor.apply(k.klist().items().get(1));
+                setRhsVisitor.writeEvalCalls(sb);
+                sb.writeIndent().append(matchVar).append(" := ");
+                setRhsVisitor.writeReturnValue(sb);
+                sb.newLine();
+
+                if (!(k.klist().items().get(0) instanceof KVariable)) {
+                    throw new RuntimeException("Expected KVariable argument to #setChoice. Other K types not implemented");
+                }
+                KVariable kvarArg = (KVariable)k.klist().items().get(0);
+                String kvarName = lhsVars.getVarName(kvarArg);
+
+                String setVar = "set" + matchIndex;
+                String isSetVar = "isSet" + matchIndex;
+                matchIndex++;
+                sb.writeIndent().append(setVar).append(", ").append(isSetVar).append(" := ").append(matchVar).append(".(m.Set)").newLine();
+                sb.writeIndent().append("if !").append(isSetVar).beginBlock();
+                sb.writeIndent().append(reapply).newLine();
+                sb.endOneBlock();
+
+                matchVar = "e" + matchIndex++;
+                String choiceVar = "setChoiceResult" + matchIndex;
+                String errVar = "setChoiceErr" + matchIndex;
+                matchIndex++;
+                sb.appendIndentedLine("var ", choiceVar, " = internedBottom");
+                int forIndent = sb.getCurrentIndent();
+                sb.writeIndent().append("for ").append(matchVar).append(" := range ").append(setVar).append(".Data").beginBlock();
+                sb.appendIndentedLine("var ", errVar, " error");
+
+                // this will be after the end of the for, reapply if we didn't hit return in the for loop
+                sb.addCallbackAfterReturningFromBlock(forIndent, s -> {
+                    s.newLine();
+                    s.writeIndent().append("if ").append(choiceVar).append(" == internedBottom").beginBlock();
+                    s.appendIndentedLine(reapply);
+                    s.endOneBlock();
+                    s.appendIndentedLine("return ", choiceVar, ", nil");
+                });
+
+                //sb.appendIndentedLine("doNothing(", kvarName, ")");
+                sb.writeIndent().append("if ").append(matchVar).append(" == ").append(kvarName).beginBlock("TODO: is this always the case?");
+
+                // the function goes inside
+                // I made it a function just because I didn't feel like changing the RHS returns
+                // it can also be done without this function, but then the RHS must assign the result to choice var instead of returning
+                int funcIndent = sb.getCurrentIndent();
+                sb.writeIndent().append(choiceVar).append(", ").append(errVar).append(" = ");
+                sb.append("func(").append(kvarName).append(" m.K) (m.K, error)").beginBlock();
+                sb.appendIndentedLine("// ", kvarName, " -> ", matchVar);
+
+
+                sb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
+                    s.newLine();
+                    s.appendIndentedLine("return internedBottom, nil // #setChoice end");
+                    s.endOneBlock();
+                });
+
+                final String functionCallArg = "(" + matchVar + ")";
+                sb.addCallbackAfterReturningFromBlock(funcIndent, s -> {
+                    s.append(functionCallArg).newLine(); // function call
+                    s.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
+                    s.appendIndentedLine("return noResult, ", errVar);
+                    s.endOneBlock();
+
+                });
+
                 break;
             default:
                 throw KEMException.internalError("Unexpected lookup type");

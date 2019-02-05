@@ -4,7 +4,7 @@ import org.kframework.kore.KApply;
 
 public class Lookup {
 
-    public enum Type { MATCH }
+    public enum Type { MATCH, SETCHOICE }
 
     private final Type type;
     private final KApply content;

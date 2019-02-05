@@ -14,16 +14,17 @@ public class GoStringBuilder {
     private int tabsIndent = 0; // main indent
     private int spacesIndent = 0; // only for special cases
 
-    private class AfterBlockEndCallback {
+    private class BlockEndCallback {
         final int indent;
         final Consumer<GoStringBuilder> callback;
-        public AfterBlockEndCallback(int indent, Consumer<GoStringBuilder> callback) {
+        public BlockEndCallback(int indent, Consumer<GoStringBuilder> callback) {
             this.indent = indent;
             this.callback = callback;
         }
     }
 
-    private final Stack<AfterBlockEndCallback> blockEndCallbackStack = new Stack<>();
+    private final Stack<BlockEndCallback> callbacksBeforeBlockEnd = new Stack<>();
+    private final Stack<BlockEndCallback> callbacksAfterBlockEnd = new Stack<>();
 
     public GoStringBuilder() {
         sb = new StringBuilder();
@@ -75,25 +76,36 @@ public class GoStringBuilder {
         return this;
     }
 
-    public GoStringBuilder beginBlock(String comment) {
+    public GoStringBuilder beginBlock(String... comments) {
         sb.append(" { // ");
-        sb.append(comment);
+        for (String comment : comments) {
+            sb.append(comment);
+        }
         sb.append('\n');
         tabsIndent++;
         return this;
     }
 
-    public GoStringBuilder addCallbackWhenReturningFromBlock(int blockIndent, Consumer<GoStringBuilder> callback) {
-        blockEndCallbackStack.push(new AfterBlockEndCallback(blockIndent, callback));
+
+    public GoStringBuilder addCallbackBeforeReturningFromBlock(int blockIndent, Consumer<GoStringBuilder> callback) {
+        callbacksBeforeBlockEnd.push(new BlockEndCallback(blockIndent, callback));
+        return this;
+    }
+
+    public GoStringBuilder addCallbackAfterReturningFromBlock(int blockIndent, Consumer<GoStringBuilder> callback) {
+        callbacksAfterBlockEnd.push(new BlockEndCallback(blockIndent, callback));
         return this;
     }
 
     public GoStringBuilder endOneBlockNoNewline() {
+        if (!callbacksBeforeBlockEnd.empty() && callbacksBeforeBlockEnd.peek().indent == tabsIndent - 1) {
+            callbacksBeforeBlockEnd.pop().callback.accept(this);
+        }
         tabsIndent--;
         writeIndent();
         sb.append("}");
-        if (!blockEndCallbackStack.empty() && blockEndCallbackStack.peek().indent == tabsIndent) {
-            blockEndCallbackStack.pop().callback.accept(this);
+        if (!callbacksAfterBlockEnd.empty() && callbacksAfterBlockEnd.peek().indent == tabsIndent) {
+            callbacksAfterBlockEnd.pop().callback.accept(this);
         }
         return this;
     }

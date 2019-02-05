@@ -27,6 +27,9 @@ public class LookupVarExtractor {
                 accumLhsVars.apply(k.klist().items().get(0));
                 accumRhsVars.apply(k.klist().items().get(1));
                 break;
+            case SETCHOICE:
+                // TODO
+                break;
             default:
                 throw KEMException.internalError("Unexpected lookup type");
             }

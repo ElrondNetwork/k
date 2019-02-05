@@ -36,9 +36,10 @@ public class LookupExtractor extends TransformK {
                 throw KEMException.internalError("Unexpected arity of lookup: " + k.klist().size(), k);
             }
             extractedLookups.add(new Lookup(Lookup.Type.MATCH, k));
-            return PrecomputePredicates.trueTokenWithComment("lookup");
+            return PrecomputePredicates.trueTokenWithComment("lookup #match");
         } else if (k.klabel().name().equals("#setChoice")) {
-            throw new NotImplementedException("#setChoice");
+            extractedLookups.add(new Lookup(Lookup.Type.SETCHOICE, k));
+            return PrecomputePredicates.trueTokenWithComment("lookup #setChoice");
         } else if (k.klabel().name().equals("#mapChoice")) {
             throw new NotImplementedException("#mapChoice");
         } else if (k.klabel().name().equals("#filterMapChoice")) {

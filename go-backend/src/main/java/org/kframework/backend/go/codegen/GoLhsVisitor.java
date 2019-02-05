@@ -166,9 +166,9 @@ public class GoLhsVisitor extends VisitK {
             sb.writeIndent();
             sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
-            alreadySeenVariables.add(k);
             return;
         }
+        alreadySeenVariables.add(k);
 
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
@@ -179,7 +179,9 @@ public class GoLhsVisitor extends VisitK {
                 initTopExpressionType(ExpressionType.IF);
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
-                String declarationVarName = rhsVars.containsVar(k) ? varName : "_";
+                boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
+                                || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
+                String declarationVarName = varNeeded ? varName : "_";
                 sb.append(String.format(pattern,
                         declarationVarName, consumeSubject()));
                 sb.beginBlock("lhs KVariable with hook:" + hook);
@@ -208,9 +210,11 @@ public class GoLhsVisitor extends VisitK {
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
         } else if (!rhsVars.containsVar(k)) {
             initTopExpressionType(ExpressionType.NOTHING);
+            String subject = consumeSubject();
             sb.writeIndent();
+            sb.append("doNothing(").append(subject).append(") ");
             sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable not used\n");
+            sb.append(varName).append(" := ").append(subject).append(" // lhs KVariable not used").newLine();
         } else {
             initTopExpressionType(ExpressionType.STATEMENT);
             sb.writeIndent();
@@ -221,6 +225,9 @@ public class GoLhsVisitor extends VisitK {
     @Override
     public void apply(KSequence k) {
         switch (k.items().size()) {
+        case 0:
+            sb.appendIndentedLine("// lhs KSequence size:" + k.items().size());
+            return;
         case 1:
             // no KSequence, go straight to the only item
             sb.appendIndentedLine("// lhs KSequence size:" + k.items().size());

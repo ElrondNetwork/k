@@ -2,6 +2,7 @@ package org.kframework.backend.go.codegen;
 
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -31,10 +32,10 @@ public class GoRhsVisitor extends VisitK {
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
     private final RuleVars lhsVars;
+    private final TempVarCounters tempVarCounters;
     private final int topLevelIndent;
 
     private boolean newlineNext = false;
-    private int evalVarIndex = 0;
 
     protected void start() {
         if (newlineNext) {
@@ -50,12 +51,14 @@ public class GoRhsVisitor extends VisitK {
     public GoRhsVisitor(DefinitionData data,
                         GoNameProvider nameProvider,
                         RuleVars lhsVars,
+                        TempVarCounters tempVarCounters,
                         int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.nameProvider = nameProvider;
         this.lhsVars = lhsVars;
+        this.tempVarCounters = tempVarCounters;
     }
 
     public void writeEvalCalls(GoStringBuilder sb) {
@@ -108,9 +111,9 @@ public class GoRhsVisitor extends VisitK {
     }
 
     protected void applyKApplyExecute(KApply k) {
+        int evalVarIndex = tempVarCounters.consumeEvalVarIndex();
         String evalVarName = "eval" + evalVarIndex;
         String errVarName = "err" + evalVarIndex;
-        evalVarIndex++;
 
         // return the eval variable
         currentSb.append(evalVarName);
