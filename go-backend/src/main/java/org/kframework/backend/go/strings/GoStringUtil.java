@@ -48,6 +48,10 @@ public class GoStringUtil {
         return result.toString();
     }
 
+    public static String packageName(String dirName) {
+        return dirName.replaceAll("[\\-_.]", "").toLowerCase();
+    }
+
     public static void appendRuleComment(GoStringBuilder sb, Rule r) {
         sb.append("{| rule ");
         sb.append(ToKast.apply(r.body()).replace("|}", "| )"));

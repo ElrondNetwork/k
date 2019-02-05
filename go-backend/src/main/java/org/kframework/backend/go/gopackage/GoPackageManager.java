@@ -2,6 +2,7 @@ package org.kframework.backend.go.gopackage;
 
 import org.apache.commons.io.FileUtils;
 import org.kframework.backend.go.GoOptions;
+import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.file.FileUtil;
 
@@ -27,6 +28,7 @@ public class GoPackageManager {
         if (goSrc == null) {
             throw KEMException.criticalError("GOSRC environment variable not set. This should point to the $GOPATH/src/");
         }
+        final String packageNameBase = GoStringUtil.packageName(languageName);
 
         try {
             goSrcPath = new File(goSrc).getCanonicalFile().toPath();
@@ -34,11 +36,11 @@ public class GoPackageManager {
             // TODO: make package output path configurable
             this.koreParserPackage = packageFromRelativePath("koreparser", "./koreparser");
 
-            String modelPackageName = languageName + "model";
+            String modelPackageName = packageNameBase + "model";
             this.modelPackage = packageFromRelativePath(modelPackageName, "./" + modelPackageName);
             this.modelPackage.setAlias("m");
 
-            String interpreterPackageName = languageName + "interpreter";
+            String interpreterPackageName = packageNameBase + "interpreter";
             this.interpreterPackage = packageFromRelativePath(interpreterPackageName, "./" + interpreterPackageName);
         } catch (IOException e) {
             throw KEMException.criticalError("Failed to initialize GoPackageManager, error: " + e.getMessage(), e);

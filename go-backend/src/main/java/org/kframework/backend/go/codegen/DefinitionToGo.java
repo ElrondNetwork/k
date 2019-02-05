@@ -9,6 +9,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import org.apache.commons.lang3.NotImplementedException;
 import org.kframework.backend.go.GoOptions;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
 import org.kframework.backend.go.gopackage.GoPackage;
@@ -263,7 +264,7 @@ public class DefinitionToGo {
                     sb.beginBlock();
 
                     if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
-                        sb.append("\t// eval ???\n");
+                        throw new NotImplementedException("'canTakeSteps' attribute not implemented in Go backend.");
                     }
 
                     sb.writeIndent().append("return hookRes, nil").newLine();
@@ -349,6 +350,21 @@ public class DefinitionToGo {
                     sb.append("\n\n");
                     //encodeMemoizationOfFunction(currentSb, conn, functionLabel, functionName, arity);
                 }
+            } else if (anywhereKLabels.contains(functionLabel)) {
+                FunctionParams functionVars = functionParams.get(functionLabel);
+                String functionName = nameProvider.evalFunctionName(functionLabel);
+
+                assert sb.getCurrentIndent() == 0;
+
+                // start typing
+                sb.appendIndentedLine("// ANYWHERE");
+                sb.append("func ");
+                sb.append(functionName);
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K) (m.K, error)");
+                sb.beginBlock();
+                sb.appendIndentedLine("return noResult, &stuckError{}");
+                sb.endAllBlocks(0);
+                sb.newLine();
             }
         }
 

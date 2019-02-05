@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class RuleVars {
     private final Map<KVariable, String> kVarToName = new HashMap<>();
+    private final Map<KVariable, Integer> kVarCount = new HashMap<>();
     public final Map<String, KLabel> listVars = new HashMap<>(); // TEMP
 
     public RuleVars() {
@@ -25,4 +26,21 @@ public class RuleVars {
         return kVarToName.get(kv);
     }
 
+    public void incrementVarCount(KVariable kv) {
+        Integer currentCount = kVarCount.get(kv);
+        if (currentCount == null) {
+            kVarCount.put(kv, 1);
+        } else {
+            kVarCount.put(kv, currentCount + 1);
+        }
+    }
+
+    public int getVarCount(KVariable kv) {
+        Integer currentCount = kVarCount.get(kv);
+        if (currentCount == null) {
+            return 0;
+        } else {
+            return currentCount;
+        }
+    }
 }

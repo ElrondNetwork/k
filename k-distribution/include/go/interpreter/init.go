@@ -26,12 +26,17 @@ func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.KSequence) {
 	return true, k, emptyKSequence
 }
 
-func assembleFromHeadTail(head m.K, tail m.KSequence) m.K {
-	if tail.IsEmpty() {
-		// output the element intself instead of a m.KSequence with 1 element
-		return head
+func assembleFromHeadTail(head m.K, tail m.K) m.K {
+	if kseqTail, isKseq := tail.(m.KSequence); isKseq {
+		if kseqTail.IsEmpty() {
+			// output the head itself instead of a KSequence with 1 element
+			return head
+		}
+		return m.KSequence{Ks: append([]m.K{head}, kseqTail.Ks...)}
 	}
-	return m.KSequence{Ks: append([]m.K{head}, tail.Ks...)}
+
+	// tail is not KSequence, so we end up with a KSequence of 2 elements: head and tail
+	return m.KSequence{Ks: []m.K{head, tail}}
 }
 
 var freshCounter int
@@ -41,4 +46,8 @@ func isTrue(c m.K) bool {
 		return bool(b)
 	}
 	return false
+}
+
+// helps us deal with unused variables in some situations
+func doNothing(c m.K) {
 }

@@ -25,5 +25,6 @@ public class AccumulateRuleVars extends VisitK {
             assert varInfo.getVarName(k).equals(varName);
         }
         varInfo.putVar(k, varName);
+        varInfo.incrementVarCount(k);
     }
 }
