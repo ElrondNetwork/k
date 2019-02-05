@@ -11,6 +11,7 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.apache.commons.lang3.NotImplementedException;
 import org.kframework.backend.go.GoOptions;
+import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
 import org.kframework.backend.go.gopackage.GoPackage;
 import org.kframework.backend.go.gopackage.GoPackageManager;

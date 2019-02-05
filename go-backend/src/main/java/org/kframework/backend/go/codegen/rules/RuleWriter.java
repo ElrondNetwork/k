@@ -1,4 +1,4 @@
-package org.kframework.backend.go.codegen;
+package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;

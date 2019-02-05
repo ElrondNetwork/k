@@ -1,6 +1,7 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ComparisonChain;
+import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;

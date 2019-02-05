@@ -1,5 +1,6 @@
-package org.kframework.backend.go.codegen;
+package org.kframework.backend.go.codegen.rules;
 
+import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleVars;
