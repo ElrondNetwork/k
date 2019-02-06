@@ -18,7 +18,6 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
-import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,10 +36,17 @@ public class RuleLhsWriter extends VisitK {
     public enum ExpressionType { IF, STATEMENT, NOTHING }
 
     private ExpressionType topExpressionType = null;
+    private boolean containsIf = false;
 
-    private void initTopExpressionType(ExpressionType et) {
+    private void handleExpressionType(ExpressionType et) {
         if (topExpressionType == null) {
             topExpressionType = et;
+            if (et != ExpressionType.IF) {
+                sb.scopingBlock("scoping block, to avoid variable name collisions");
+            }
+        }
+        if (et == ExpressionType.IF) {
+            containsIf = true;
         }
     }
 
@@ -49,6 +55,10 @@ public class RuleLhsWriter extends VisitK {
             topExpressionType = ExpressionType.NOTHING;
         }
         return topExpressionType;
+    }
+
+    public boolean containsIf() {
+        return containsIf;
     }
 
     /**
@@ -92,7 +102,7 @@ public class RuleLhsWriter extends VisitK {
     }
 
     private void lhsTypeIf(String castVar, String subject, String type) {
-        initTopExpressionType(ExpressionType.IF);
+        handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
         sb.append(subject).append(".(m.").append(type).append("); t");
@@ -140,7 +150,8 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        throw KEMException.internalError("RuleLhsWriter.apply(KAs) not implemented.");
+        //throw KEMException.internalError("RuleLhsWriter.apply(KAs) not implemented.");
+        sb.appendIndentedLine("// KAs .....");
     }
 
     @Override
@@ -150,7 +161,7 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(KToken k) {
-        initTopExpressionType(ExpressionType.IF);
+        handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(consumeSubject()).append(" == (");
         RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
@@ -163,7 +174,7 @@ public class RuleLhsWriter extends VisitK {
         String varName = lhsVars.getVarName(k);
 
         if (alreadySeenVariables.contains(k)) {
-            initTopExpressionType(ExpressionType.IF);
+            handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
             sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
@@ -177,7 +188,7 @@ public class RuleLhsWriter extends VisitK {
             if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook)) {
                 // these ones don't need to get passed a sort name
                 // but if the variable doesn't appear on the RHS, we must make it '_'
-                initTopExpressionType(ExpressionType.IF);
+                handleExpressionType(ExpressionType.IF);
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
                 boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
@@ -190,7 +201,7 @@ public class RuleLhsWriter extends VisitK {
             } else if (GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook)) {
                 // these ones need to get passed a sort name
                 // since the variable is used in the condition, we never have to make it '_'
-                initTopExpressionType(ExpressionType.IF);
+                handleExpressionType(ExpressionType.IF);
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_2.get(hook);
                 sb.append(String.format(pattern,
@@ -201,23 +212,23 @@ public class RuleLhsWriter extends VisitK {
         }
 
         if (varName == null) {
-            initTopExpressionType(ExpressionType.NOTHING);
+            handleExpressionType(ExpressionType.NOTHING);
             sb.writeIndent();
             sb.append("// varName=null").newLine();
         } else if (varName.equals("_")) {
-            initTopExpressionType(ExpressionType.NOTHING);
+            handleExpressionType(ExpressionType.NOTHING);
             sb.writeIndent();
             sb.append("// "); // no code here, it is redundant
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
         } else if (!rhsVars.containsVar(k)) {
-            initTopExpressionType(ExpressionType.NOTHING);
+            handleExpressionType(ExpressionType.NOTHING);
             String subject = consumeSubject();
             sb.writeIndent();
             sb.append("doNothing(").append(subject).append(") ");
             sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
             sb.append(varName).append(" := ").append(subject).append(" // lhs KVariable not used").newLine();
         } else {
-            initTopExpressionType(ExpressionType.STATEMENT);
+            handleExpressionType(ExpressionType.STATEMENT);
             sb.writeIndent();
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ").append(k.name()).newLine();
         }

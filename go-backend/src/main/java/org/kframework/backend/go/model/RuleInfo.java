@@ -2,13 +2,13 @@ package org.kframework.backend.go.model;
 
 public class RuleInfo {
 
-    private final boolean topLevelIf;
+    private final boolean alwaysMatches;
 
-    public RuleInfo(boolean topLevelIf) {
-        this.topLevelIf = topLevelIf;
+    public RuleInfo(boolean alwaysMatches) {
+        this.alwaysMatches = alwaysMatches;
     }
 
-    public boolean isTopLevelIf() {
-        return topLevelIf;
+    public boolean alwaysMatches() {
+        return alwaysMatches;
     }
 }

@@ -70,22 +70,42 @@ public class GoStringBuilder {
         return this;
     }
 
-    public GoStringBuilder beginBlock() {
-        sb.append(" {\n");
-        tabsIndent++;
-        return this;
-    }
-
+    /**
+     * Opens a new block after an instruction. Increases indent and inserts a newline.
+     * @param comments optional text to print as comment after '{'
+     * @return this, for call chaining
+     */
     public GoStringBuilder beginBlock(String... comments) {
-        sb.append(" { // ");
-        for (String comment : comments) {
-            sb.append(comment);
+        sb.append(" {");
+        if (comments.length > 0) {
+            sb.append(" // ");
+            for (String comment : comments) {
+                sb.append(comment);
+            }
         }
         sb.append('\n');
         tabsIndent++;
         return this;
     }
 
+    /**
+     * Opens a new block after an instruction. Increases indent and inserts a newline.
+     * @param comments optional text to print as comment after '{'
+     * @return this, for call chaining
+     */
+    public GoStringBuilder scopingBlock(String... comments) {
+        writeIndent();
+        sb.append("{");
+        if (comments.length > 0) {
+            sb.append(" // ");
+            for (String comment : comments) {
+                sb.append(comment);
+            }
+        }
+        sb.append('\n');
+        tabsIndent++;
+        return this;
+    }
 
     public GoStringBuilder addCallbackBeforeReturningFromBlock(int blockIndent, Consumer<GoStringBuilder> callback) {
         callbacksBeforeBlockEnd.push(new BlockEndCallback(blockIndent, callback));

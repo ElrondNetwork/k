@@ -96,6 +96,7 @@ public class RuleWriter {
                     accumRhsVars.vars());
 
             // output requires
+            boolean requiresContainsIf = false;
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES");
                 RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
@@ -104,6 +105,7 @@ public class RuleWriter {
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
                 sb.writeIndent().append("if ");
+                requiresContainsIf = true;
                 sideCondVisitor.writeReturnValue(sb);
                 sb.beginBlock();
             } else if (requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
@@ -129,8 +131,8 @@ public class RuleWriter {
             sb.newLine();
 
             // return some info regarding the written rule
-            boolean topLevelIf = lhsVisitor.getTopExpressionType() == RuleLhsWriter.ExpressionType.IF;
-            return new RuleInfo(topLevelIf);
+            boolean alwaysMatches = !lhsVisitor.containsIf() && !requiresContainsIf;
+            return new RuleInfo(alwaysMatches);
         } catch (NoSuchElementException e) {
             System.err.println(r);
             throw e;

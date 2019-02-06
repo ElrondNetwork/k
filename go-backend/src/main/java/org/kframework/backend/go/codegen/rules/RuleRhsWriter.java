@@ -227,6 +227,11 @@ public class RuleRhsWriter extends VisitK {
     public void apply(KSequence k) {
         int size = k.items().size();
         switch (k.items().size()) {
+        case 0:
+            start();
+            currentSb.append("emptyKSequence");
+            end();
+            return;
         case 1:
             currentSb.append("/* rhs KSequence size=1 */ ");
             apply(k.items().get(0));
@@ -242,6 +247,7 @@ public class RuleRhsWriter extends VisitK {
             }
             currentSb.decreaseIndent();
             currentSb.newLine().writeIndent().append(")");
+            end();
             return;
         default:
             start();
