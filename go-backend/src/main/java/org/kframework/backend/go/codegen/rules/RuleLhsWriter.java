@@ -82,6 +82,7 @@ public class RuleLhsWriter extends VisitK {
 
     private String nextSubject = null;
     private int nextFunctionVarIndex = 0;
+    private KVariable nextAlias = null;
 
     private String consumeSubject() {
         if (nextSubject != null) {
@@ -99,6 +100,15 @@ public class RuleLhsWriter extends VisitK {
 
     public void setNextSubject(String subj) {
         nextSubject = subj;
+    }
+
+    private KVariable consumeAlias() {
+        if (nextAlias != null) {
+            KVariable alias = nextAlias;
+            nextAlias = null;
+            return alias;
+        }
+        return null;
     }
 
     private void lhsTypeIf(String castVar, String subject, String type) {
@@ -127,12 +137,21 @@ public class RuleLhsWriter extends VisitK {
         } else if (k.klabel().name().equals("#Bottom")) {
             lhsTypeIf("_", consumeSubject(), "Bottom");
         } else {
-            String kappVar = "kapp" + kitemIndex;
-            kitemIndex++;
+            KVariable alias  = consumeAlias();
+            String kappVar;
+            String aliasComment = "";
+            if (alias != null) {
+                kappVar = lhsVars.getVarName(alias);
+                aliasComment = ", alias: " + alias.name();
+            } else {
+                kappVar = "kapp" + kitemIndex;
+                kitemIndex++;
+            }
+
             lhsTypeIf(kappVar, consumeSubject(), "KApply");
             sb.append(" && ").append(kappVar).append(".Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
             sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
-            sb.beginBlock("lhs KApply " + k.klabel().name());
+            sb.beginBlock("lhs KApply ", k.klabel().name(), aliasComment);
             int i = 0;
             for (K item : k.klist().items()) {
                 nextSubject = kappVar + ".List[" + i + "]";
@@ -150,8 +169,16 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(KAs k) {
-        //throw KEMException.internalError("RuleLhsWriter.apply(KAs) not implemented.");
-        sb.appendIndentedLine("// KAs .....");
+
+        if (!(k.alias() instanceof KVariable)) {
+            throw new IllegalArgumentException("KAs alias is not a KVariable.");
+        }
+        nextAlias = (KVariable)k.alias();
+        apply(k.pattern());
+
+        if (nextAlias != null) {
+            throw new RuntimeException("KAs alias was not consumed. This scenario was not handled. An alias will be missing ");
+        }
     }
 
     @Override
