@@ -16,7 +16,7 @@ func (arrayHooksType) makeEmpty(len m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) lookup(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (arrayHooksType) lookup(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
 
@@ -40,6 +40,6 @@ func (arrayHooksType) inKeys(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	return noResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) ctor(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (arrayHooksType) ctor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return noResult, &hookNotImplementedError{}
 }
