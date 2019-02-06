@@ -291,7 +291,7 @@ public class RuleWriter {
                 ")");
     }
 
-    static int numLookups(Rule r) {
+    public static int numLookups(Rule r) {
         class Holder {
             int i;
         }
@@ -308,7 +308,7 @@ public class RuleWriter {
         return h.i;
     }
 
-    static boolean hasLookups(Rule r) {
+    public static boolean hasLookups(Rule r) {
         return numLookups(r) > 0;
     }
 
