@@ -111,7 +111,7 @@ public class GoBuiltin {
         builder.put("INT.Int",   "if %1$s, t := %2$s.(m.Int); t");
         builder.put("FLOAT.Float",  "if %1$s, t := %2$s.(m.Float); t");
         builder.put("STRING.String", "if %1$s, t := %2$s.(m.String); t");
-        builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(m.Bytes); t.(m.Bytes); t");
+        builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(m.Bytes); t");
         builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(m.StringBuffer); t");
         SORT_VAR_HOOKS_1 = builder.build();
         builder = ImmutableMap.builder();

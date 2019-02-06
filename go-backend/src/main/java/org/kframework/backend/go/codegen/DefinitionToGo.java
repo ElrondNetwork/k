@@ -313,10 +313,12 @@ public class DefinitionToGo {
                 for (Rule r : rules) {
                     if (unreachableCode) {
                         sb.appendIndentedLine("// unreachable");
+                        sb.writeIndent().append("// ");
                         GoStringUtil.appendRuleComment(sb, r);
+                        sb.newLine();
                     } else {
                         RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionVars);
-                        if (!ruleInfo.isTopLevelIf()) {
+                        if (ruleInfo.alwaysMatches()) {
                             unreachableCode = true;
                         }
                     }
