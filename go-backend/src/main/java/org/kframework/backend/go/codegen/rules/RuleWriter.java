@@ -42,7 +42,7 @@ public class RuleWriter {
     }
 
     public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, RuleCounter ruleCounter,
-                              FunctionParams functionVars) {
+                              String functionName, FunctionParams functionVars) {
         try {
             int ruleNum = ruleCounter.consumeRuleIndex();
             sb.appendIndentedLine("// rule #" + ruleNum);
@@ -91,7 +91,7 @@ public class RuleWriter {
             }
 
             // output lookups
-            writeLookups(sb, ruleNum, lookups,
+            writeLookups(sb, ruleNum, functionName, lookups,
                     accumLhsVars.vars(),
                     accumRhsVars.vars());
 
@@ -142,7 +142,8 @@ public class RuleWriter {
         }
     }
 
-    private void writeLookups(GoStringBuilder sb, int ruleNum, List<Lookup> lookups, RuleVars lhsVars, RuleVars rhsVars) {
+    private void writeLookups(GoStringBuilder sb, int ruleNum, String functionName,
+                              List<Lookup> lookups, RuleVars lhsVars, RuleVars rhsVars) {
         if (lookups.isEmpty()) {
             return;
         }
@@ -153,7 +154,7 @@ public class RuleWriter {
         for (Lookup lookup : lookups) {
             KApply k = lookup.getContent();
             String matchVar = "e" + matchIndex++;
-            String reapply = "return stepLookups(c, config, " + ruleNum + ") // reapply";
+            String reapply = "return "+ functionName + "(c, config, " + ruleNum + ") // reapply";
 
             switch (lookup.getType()) {
             case MATCH:

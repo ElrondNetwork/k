@@ -233,7 +233,7 @@ public class DefinitionToGo {
                 // start typing
                 sb.append("func ");
                 sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K) (m.K, error)");
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
 
                 // if we print a return under no if, all code that follows is unreachable
@@ -317,7 +317,7 @@ public class DefinitionToGo {
                         GoStringUtil.appendRuleComment(sb, r);
                         sb.newLine();
                     } else {
-                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionVars);
+                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionName, functionVars);
                         if (ruleInfo.alwaysMatches()) {
                             unreachableCode = true;
                         }
@@ -358,13 +358,13 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("// ANYWHERE");
                 sb.append("func ");
                 sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K) (m.K, error)");
+                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
 
                 // main!
                 List<Rule> rules = anywhereRules.get(functionLabel);
                 for (Rule r : rules) {
-                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleCounter, functionVars);
+                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleCounter, functionName, functionVars);
                 }
 
                 // final return
@@ -404,7 +404,7 @@ public class DefinitionToGo {
         // eval function
         sb.append("func ");
         sb.append(nameProvider.evalFunctionName(functionLabel));
-        sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K) (m.K, error)");
+        sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
         sb.beginBlock();
 
         sb.writeIndent().append("memoKey := ");
@@ -426,7 +426,7 @@ public class DefinitionToGo {
         sb.endOneBlock();
         sb.writeIndent().append("computation, err := ");
         sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
-        sb.append(functionArgs.callParameters()).append("config)").newLine();
+        sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
         sb.writeIndent().append("if err != nil").beginBlock();
         sb.appendIndentedLine("return noResult, err");
         sb.endOneBlock();

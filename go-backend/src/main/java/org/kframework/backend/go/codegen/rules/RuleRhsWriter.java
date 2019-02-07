@@ -124,19 +124,21 @@ public class RuleRhsWriter extends VisitK {
         GoStringBuilder backupSb = currentSb;
         currentSb = evalSb; // we trick all nodes below to output to the eval call instead of the return by changing the string builder
 
+        String comment = k.klabel().name();
+
         evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
         evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
         if (k.items().size() == 0) { // call parameters
-            evalSb.append("(config)").newLine();
+            evalSb.append("(config, -1) // ").append(comment).newLine();
         } else {
-            evalSb.append("(");
+            evalSb.append("( // ").append(comment);
             evalSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;
                 apply(item);
                 evalSb.append(",");
             }
-            evalSb.newLine().writeIndent().append("config)");
+            evalSb.newLine().writeIndent().append("config, -1)");
             evalSb.decreaseIndent();
             evalSb.newLine();
         }

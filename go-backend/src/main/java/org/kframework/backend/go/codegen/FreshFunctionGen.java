@@ -36,7 +36,7 @@ public class FreshFunctionGen {
             sb.append("\t\t\treturn ");
             KLabel freshFunction = data.mainModule.freshFunctionFor().apply(sort);
             sb.append(nameProvider.evalFunctionName(freshFunction));
-            sb.append("(m.Int(counter), config)\n");
+            sb.append("(m.Int(counter), config, -1)\n");
         }
         sb.append("\t\tdefault:\n");
         sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.Name())\n");

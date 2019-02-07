@@ -79,7 +79,9 @@ public class StepFunctionGen {
         sb.writeIndent().append("config := c").newLine();
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
-                RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.REGULAR, ruleCounter, new FunctionParams(1));
+                RuleInfo ruleInfo = ruleWriter.writeRule(
+                        r, sb, RuleType.REGULAR, ruleCounter,
+                        "step", new FunctionParams(1));
                 assert !ruleInfo.alwaysMatches();
             }
         }
@@ -97,7 +99,9 @@ public class StepFunctionGen {
 
         List<Rule> lookupRules = groupedByLookup.getOrDefault(true, Collections.emptyList());
         for (Rule r : lookupRules) {
-            RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.REGULAR, ruleCounter, new FunctionParams(1));
+            RuleInfo ruleInfo = ruleWriter.writeRule(
+                    r, sb, RuleType.REGULAR, ruleCounter,
+                    lookupsFuncName, new FunctionParams(1));
             assert !ruleInfo.alwaysMatches();
         }
 

@@ -58,7 +58,7 @@ public class EvalFunctionGen {
             for (int i = 0; i < arity; i++) {
                 sb.append("kapp.List[").append(i).append("], ");
             }
-            sb.append("config)").newLine();
+            sb.append("config, -1)").newLine();
             sb.decreaseIndent();
         }
         sb.writeIndent().append("default:").newLine().increaseIndent();
