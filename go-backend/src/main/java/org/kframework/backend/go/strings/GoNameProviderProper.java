@@ -17,7 +17,6 @@ public class GoNameProviderProper implements GoNameProvider {
         return sb.toString();
     }
 
-
     @Override
     public String sortVariableName(Sort sort) {
         StringBuilder sb = new StringBuilder();
@@ -46,6 +45,14 @@ public class GoNameProviderProper implements GoNameProvider {
     public String memoFunctionName(KLabel lbl) {
         StringBuilder sb = new StringBuilder();
         sb.append("memo");
+        appendAlphanumericEncodedString(sb, lbl.name());
+        return sb.toString();
+    }
+
+    @Override
+    public String memoTableName(KLabel lbl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("memoTable");
         appendAlphanumericEncodedString(sb, lbl.name());
         return sb.toString();
     }

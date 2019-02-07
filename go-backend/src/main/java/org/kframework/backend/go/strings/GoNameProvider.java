@@ -15,5 +15,7 @@ public interface GoNameProvider {
 
     String memoFunctionName(KLabel lbl);
 
+    String memoTableName(KLabel lbl);
+
     String ruleVariableName(String varName);
 }

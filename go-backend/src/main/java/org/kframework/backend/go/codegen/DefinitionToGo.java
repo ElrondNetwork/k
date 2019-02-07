@@ -346,10 +346,7 @@ public class DefinitionToGo {
                     sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
                     sb.append("(internedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    sb.append("//memoization not yet implemented. Function name: ");
-                    sb.append(functionLabel.toString());
-                    sb.append("\n\n");
-                    //encodeMemoizationOfFunction(currentSb, conn, functionLabel, functionName, arity);
+                    writeMemoTableAndEval(sb, functionLabel, functionVars);
                 }
             } else if (anywhereKLabels.contains(functionLabel)) {
                 FunctionParams functionVars = functionParams.get(functionLabel);
@@ -388,6 +385,55 @@ public class DefinitionToGo {
         }
 
         return sb.toString();
+    }
+
+    private void writeMemoTableAndEval(GoStringBuilder sb, KLabel functionLabel, FunctionParams functionArgs) {
+        // table declaration
+        String tableName = nameProvider.memoTableName(functionLabel);
+        sb.writeIndent().append("var ").append(tableName).append(" map[");
+        switch (functionArgs.arity()) {
+        case 0:
+        case 1:
+            sb.append("m.K");
+            break;
+        default:
+            sb.append("[").append(functionArgs.arity()).append("]m.K");
+        }
+        sb.append("]m.K").newLine().newLine();
+
+        // eval function
+        sb.append("func ");
+        sb.append(nameProvider.evalFunctionName(functionLabel));
+        sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K) (m.K, error)");
+        sb.beginBlock();
+
+        sb.writeIndent().append("memoKey := ");
+        switch (functionArgs.arity()) {
+        case 0:
+            sb.append("internedBottom");
+            break;
+        case 1:
+            sb.append(functionArgs.varName(0));
+            break;
+        default:
+            sb.append("[").append(functionArgs.arity()).append("]m.K{").append(functionArgs.paramNamesSeparatedByComma()).append("}");
+            break;
+        }
+        sb.newLine();
+
+        sb.writeIndent().append("if result, found := ").append(tableName).append("[memoKey]; found").beginBlock();
+        sb.appendIndentedLine("return result, nil");
+        sb.endOneBlock();
+        sb.writeIndent().append("computation, err := ");
+        sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
+        sb.append(functionArgs.callParameters()).append("config)").newLine();
+        sb.writeIndent().append("if err != nil").beginBlock();
+        sb.appendIndentedLine("return noResult, err");
+        sb.endOneBlock();
+        sb.writeIndent().append(tableName).append("[memoKey] = computation").newLine();
+        sb.appendIndentedLine("return computation, nil");
+        sb.endOneBlock();
+        sb.newLine();
     }
 
     private int getArity(KLabel functionLabel) {

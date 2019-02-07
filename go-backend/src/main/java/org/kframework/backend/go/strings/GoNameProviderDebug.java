@@ -51,6 +51,14 @@ public class GoNameProviderDebug implements GoNameProvider {
     }
 
     @Override
+    public String memoTableName(KLabel lbl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("memoTable");
+        appendAlphanumericEncodedString(sb, lbl.name());
+        return sb.toString();
+    }
+
+    @Override
     public String ruleVariableName(String varName) {
         if (varName.equals("_")) {
             return "_";
