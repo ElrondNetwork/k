@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.Sort;
-import org.kframework.utils.StringUtil;
 
 import java.util.function.Function;
 
@@ -70,28 +69,6 @@ public class GoBuiltin {
         builder.put("MAP.Map", s -> "Map (" + GoStringUtil.sortVariableName(s) + ",_,_)");
         builder.put("SET.Set", s -> "Set (" + GoStringUtil.sortVariableName(s) + ",_,_)");
         OCAML_SORT_VAR_HOOKS = builder.build();
-    }
-
-
-    public static final ImmutableMap<String, Function<String, String>> GO_SORT_TOKEN_HOOKS;
-    static {
-        ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
-        builder.put("BOOL.Bool", s -> "m.Bool(" + s + ")");
-        builder.put("MINT.MInt", s -> "m.MInt(" + s + ")");
-//        builder.put("MINT.MInt", s -> {
-//            MIntBuiltin m = MIntBuiltin.of(s);
-//            return "(MInt (" + m.precision() + ", Z.of_string \"" + m.value() + "))";
-//        });
-        builder.put("INT.Int", s -> "m.Int(" + s + ")");
-        builder.put("FLOAT.Float", s -> "m.Float(" + s + ")");
-//        builder.put("FLOAT.Float", s -> {
-//            FloatBuiltin f = FloatBuiltin.of(s);
-//            return "(round_to_range(Float ((Gmp.FR.from_string_prec_base " + f.precision() + " Gmp.GMP_RNDN 10 \"" + f.value() + "\"), " + f.exponent() + ", " + f.precision() + ")))";
-//        });
-        builder.put("STRING.String", s -> "m.String (" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + ")");
-        builder.put("BYTES.Bytes", s -> "m.Bytes([]byte(" + GoStringUtil.enquoteString(StringUtil.unquoteKString(s)) + "))");
-        builder.put("BUFFER.StringBuffer", s -> "m.StringBuffer{}");
-        GO_SORT_TOKEN_HOOKS = builder.build();
     }
 
     /**

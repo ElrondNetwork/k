@@ -1,6 +1,5 @@
 package org.kframework.backend.go.codegen.rules;
 
-import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
@@ -21,6 +20,7 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
+import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayList;
@@ -131,7 +131,7 @@ public class RuleRhsWriter extends VisitK {
         } else {
             evalSb.append("(");
             evalSb.increaseIndent();
-            for(K item : k.items()) {
+            for (K item : k.items()) {
                 newlineNext = true;
                 apply(item);
                 evalSb.append(",");
@@ -170,19 +170,42 @@ public class RuleRhsWriter extends VisitK {
     protected void appendKTokenComment(KToken k) {
         if (k.sort().equals(Sorts.Bool()) && k.att().contains(PrecomputePredicates.COMMENT_KEY)) {
             currentSb.append("/* rhs precomputed ").append(k.att().get(PrecomputePredicates.COMMENT_KEY)).append(" */ ");
-        } else{
+        } else {
             currentSb.append("/* rhs KToken */ ");
         }
     }
 
     /**
      * This one is also used by the RuleLhsWriter.
-     * */
+     */
     public static void appendKTokenRepresentation(GoStringBuilder sb, KToken k, DefinitionData data, GoNameProvider nameProvider) {
         if (data.mainModule.sortAttributesFor().contains(k.sort())) {
             String hook = data.mainModule.sortAttributesFor().apply(k.sort()).<String>getOptional("hook").orElse("");
-            if (GoBuiltin.GO_SORT_TOKEN_HOOKS.containsKey(hook)) {
-                sb.append(GoBuiltin.GO_SORT_TOKEN_HOOKS.get(hook).apply(k.s()));
+            switch (hook) {
+            case "BOOL.Bool":
+                sb.append("m.Bool(").append(k.s()).append(")");
+                return;
+            case "MINT.MInt":
+                sb.append("m.MInt(").append(k.s()).append(")");
+                return;
+            case "INT.Int":
+                sb.append("m.Int(").append(k.s()).append(")");
+                return;
+            case "FLOAT.Float":
+                sb.append("m.Float(").append(k.s()).append(")");
+                return;
+            case "STRING.String":
+                String unquotedStr = StringUtil.unquoteKString(k.s());
+                String goStr = GoStringUtil.enquoteString(unquotedStr);
+                sb.append("m.String(").append(goStr).append(")");
+                return;
+            case "BYTES.Bytes":
+                String unquotedBytes = StringUtil.unquoteKString(k.s());
+                String goBytes = GoStringUtil.enquoteString(unquotedBytes);
+                sb.append("m.Bytes(").append(goBytes).append(")");
+                return;
+            case "BUFFER.StringBuffer":
+                sb.append("m.StringBuffer{}");
                 return;
             }
         }

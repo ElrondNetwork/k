@@ -31,17 +31,12 @@ public class GoStringUtil {
                 result.append("\\b");
             } else if (codepoint >= 32 && codepoint < 127) {
                 result.append((char) codepoint);
-            } else if (codepoint <= 0xff) {
-                if (codepoint < 10) {
-                    result.append("\\00");
-                    result.append(codepoint);
-                } else if (codepoint < 100) {
-                    result.append("\\0");
-                    result.append(codepoint);
-                } else {
-                    result.append("\\");
-                    result.append(codepoint);
-                }
+            } else if (codepoint == 0) {
+                result.append("\\x00");
+            } else if (codepoint <= 0xFF) {
+                result.append("\\x");
+                result.append(Integer.toHexString(codepoint));
+
             }
         }
         result.append(delimiter);
