@@ -20,6 +20,7 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
+import org.kframework.unparser.ToKast;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KEMException;
 
@@ -124,7 +125,7 @@ public class RuleRhsWriter extends VisitK {
         GoStringBuilder backupSb = currentSb;
         currentSb = evalSb; // we trick all nodes below to output to the eval call instead of the return by changing the string builder
 
-        String comment = k.klabel().name();
+        String comment = ToKast.apply(k);
 
         evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
         evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name

@@ -1,8 +1,6 @@
 package org.kframework.backend.go.processors;
 
 import org.kframework.backend.go.model.Lookup;
-import org.kframework.kore.KApply;
-import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.List;
 
@@ -18,21 +16,8 @@ public class LookupVarExtractor {
 
     public void apply(List<Lookup> lookups) {
         for (Lookup lookup : lookups) {
-            switch (lookup.getType()) {
-            case MATCH:
-                KApply k = lookup.getContent();
-                if (k.klist().items().size() != 2) {
-                    throw KEMException.internalError("Unexpected arity of lookup: " + k.klist().size(), k);
-                }
-                accumLhsVars.apply(k.klist().items().get(0));
-                accumRhsVars.apply(k.klist().items().get(1));
-                break;
-            case SETCHOICE:
-                // TODO
-                break;
-            default:
-                throw KEMException.internalError("Unexpected lookup type");
-            }
+            accumLhsVars.apply(lookup.getLhs());
+            accumRhsVars.apply(lookup.getRhs());
         }
     }
 }

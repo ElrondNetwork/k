@@ -18,8 +18,8 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
+import org.kframework.unparser.ToKast;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +31,13 @@ public class RuleLhsWriter extends VisitK {
     private final RuleVars lhsVars;
     private final RuleVars rhsVars;
 
+    /**
+     * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
+     * This structure keeps track of that.
+     */
+    private final Set<KVariable> alreadySeenVariables;
+    private final boolean startWithScopeBlockIfNecessary;
+
     private int kitemIndex = 0;
 
     public enum ExpressionType { IF, STATEMENT, NOTHING }
@@ -41,7 +48,7 @@ public class RuleLhsWriter extends VisitK {
     private void handleExpressionType(ExpressionType et) {
         if (topExpressionType == null) {
             topExpressionType = et;
-            if (et != ExpressionType.IF) {
+            if (startWithScopeBlockIfNecessary && et != ExpressionType.IF) {
                 sb.scopingBlock("scoping block, to avoid variable name collisions");
             }
         }
@@ -61,23 +68,21 @@ public class RuleLhsWriter extends VisitK {
         return containsIf;
     }
 
-    /**
-     * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
-     * This structure keeps track of that.
-     */
-    private final Set<KVariable> alreadySeenVariables = new HashSet<>();
-
     public RuleLhsWriter(GoStringBuilder sb,
                          DefinitionData data,
                          GoNameProvider nameProvider,
                          FunctionParams functionVars,
-                         RuleVars lhsVars, RuleVars rhsVars) {
+                         RuleVars lhsVars, RuleVars rhsVars,
+                         Set<KVariable> alreadySeenVariables,
+                         boolean startWithScopeBlockIfNecessary) {
         this.sb = sb;
         this.data = data;
         this.nameProvider = nameProvider;
         this.functionVars = functionVars;
         this.lhsVars = lhsVars;
         this.rhsVars = rhsVars;
+        this.alreadySeenVariables = alreadySeenVariables;
+        this.startWithScopeBlockIfNecessary = startWithScopeBlockIfNecessary;
     }
 
     private String nextSubject = null;
@@ -142,7 +147,7 @@ public class RuleLhsWriter extends VisitK {
             String aliasComment = "";
             if (alias != null) {
                 kappVar = lhsVars.getVarName(alias);
-                aliasComment = ", alias: " + alias.name();
+                aliasComment = " as " + alias.name();
             } else {
                 kappVar = "kapp" + kitemIndex;
                 kitemIndex++;
@@ -151,7 +156,7 @@ public class RuleLhsWriter extends VisitK {
             lhsTypeIf(kappVar, consumeSubject(), "KApply");
             sb.append(" && ").append(kappVar).append(".Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
             sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
-            sb.beginBlock("lhs KApply ", k.klabel().name(), aliasComment);
+            sb.beginBlock(ToKast.apply(k), aliasComment);
             int i = 0;
             for (K item : k.klist().items()) {
                 nextSubject = kappVar + ".List[" + i + "]";
@@ -193,7 +198,7 @@ public class RuleLhsWriter extends VisitK {
         sb.append("if ").append(consumeSubject()).append(" == (");
         RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
-        sb.beginBlock("lhs KToken");
+        sb.beginBlock(ToKast.apply(k));
     }
 
     @Override
@@ -265,11 +270,11 @@ public class RuleLhsWriter extends VisitK {
     public void apply(KSequence k) {
         switch (k.items().size()) {
         case 0:
-            sb.appendIndentedLine("// lhs KSequence size:" + k.items().size());
+            sb.appendIndentedLine("// KSequence, size 0:", ToKast.apply(k));
             return;
         case 1:
             // no KSequence, go straight to the only item
-            sb.appendIndentedLine("// lhs KSequence size:" + k.items().size());
+            sb.appendIndentedLine("// KSequence, size 1:", ToKast.apply(k));
             apply(k.items().get(0));
             return;
         case 2:
@@ -280,7 +285,7 @@ public class RuleLhsWriter extends VisitK {
             sb.writeIndent().append("if ok, ");
             sb.append(kseqHead).append(", ");
             sb.append(kseqTail).append(" := trySplitToHeadTail(").append(consumeSubject()).append("); ok");
-            sb.beginBlock("lhs KSequence size:" + k.items().size());
+            sb.beginBlock(ToKast.apply(k));
             nextSubject = kseqHead;
             apply(k.items().get(0));
             nextSubject = kseqTail;

@@ -27,8 +27,10 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.VisitK;
 import org.kframework.utils.errorsystem.KEMException;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 public class RuleWriter {
 
@@ -78,22 +80,28 @@ public class RuleWriter {
             // also collect vars from lookups
             new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
 
-            // output LHS
+            // output main LHS
             sb.writeIndent().append("// LHS").newLine();
-            RuleLhsWriter lhsVisitor = new RuleLhsWriter(sb, data, nameProvider, functionVars,
+            Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
+            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, functionVars,
                     accumLhsVars.vars(),
-                    accumRhsVars.vars());
+                    accumRhsVars.vars(),
+                    alreadySeenLhsVariables,
+                    true);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) left;
-                lhsVisitor.applyTuple(kapp.klist().items());
+                lhsWriter.applyTuple(kapp.klist().items());
             } else {
-                lhsVisitor.apply(left);
+                lhsWriter.apply(left);
             }
 
             // output lookups
-            writeLookups(sb, ruleNum, functionName, lookups,
+            writeLookups(sb, ruleNum,
+                    functionName, functionVars,
+                    lookups,
                     accumLhsVars.vars(),
-                    accumRhsVars.vars());
+                    accumRhsVars.vars(),
+                    alreadySeenLhsVariables);
 
             // output requires
             boolean requiresContainsIf = false;
@@ -116,14 +124,14 @@ public class RuleWriter {
             // output RHS
             sb.appendIndentedLine("// RHS");
             traceLine(sb, type, ruleNum, r);
-            RuleRhsWriter rhsVisitor = new RuleRhsWriter(data, nameProvider,
+            RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
                     accumLhsVars.vars(), tempVarCounters,
                     sb.getCurrentIndent(), 0);
-            rhsVisitor.apply(right);
-            rhsVisitor.writeEvalCalls(sb);
+            rhsWriter.apply(right);
+            rhsWriter.writeEvalCalls(sb);
             sb.writeIndent();
             sb.append("return ");
-            rhsVisitor.writeReturnValue(sb);
+            rhsWriter.writeReturnValue(sb);
             sb.append(", nil").newLine();
 
             // done
@@ -131,7 +139,7 @@ public class RuleWriter {
             sb.newLine();
 
             // return some info regarding the written rule
-            boolean alwaysMatches = !lhsVisitor.containsIf() && !requiresContainsIf;
+            boolean alwaysMatches = !lhsWriter.containsIf() && !requiresContainsIf;
             return new RuleInfo(alwaysMatches);
         } catch (NoSuchElementException e) {
             System.err.println(r);
@@ -142,30 +150,38 @@ public class RuleWriter {
         }
     }
 
-    private void writeLookups(GoStringBuilder sb, int ruleNum, String functionName,
-                              List<Lookup> lookups, RuleVars lhsVars, RuleVars rhsVars) {
+    private void writeLookups(GoStringBuilder sb, int ruleNum,
+                              String functionName, FunctionParams functionArgs,
+                              List<Lookup> lookups,
+                              RuleVars lhsVars, RuleVars rhsVars,
+                              Set<KVariable> alreadySeenLhsVariables) {
         if (lookups.isEmpty()) {
             return;
         }
         sb.appendIndentedLine("// LOOKUPS");
         sb.writeIndent().append("if guard < ").append(ruleNum).beginBlock();
 
-        int matchIndex = 0;
+        int lookupIndex = 0;
         for (Lookup lookup : lookups) {
-            KApply k = lookup.getContent();
-            String matchVar = "e" + matchIndex++;
-            String reapply = "return "+ functionName + "(c, config, " + ruleNum + ") // reapply";
+            String reapply = "return " + functionName + "("+ functionArgs.callParameters() +"config, " + ruleNum + ") // reapply";
+
+            sb.appendIndentedLine("// lookup:", lookup.comment());
+
+            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+                    lhsVars, rhsVars,
+                    alreadySeenLhsVariables,
+                    false);
+            RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
+                    rhsVars, tempVarCounters,
+                    sb.getCurrentIndent(), 0);
+            rhsWriter.apply(lookup.getRhs());
 
             switch (lookup.getType()) {
             case MATCH:
-                sb.appendIndentedLine("// #match");
-                RuleRhsWriter rhsVisitor = new RuleRhsWriter(data, nameProvider,
-                        rhsVars, tempVarCounters,
-                        sb.getCurrentIndent(), 0);
-                rhsVisitor.apply(k.klist().items().get(1));
-                rhsVisitor.writeEvalCalls(sb);
+                String matchVar = "matchEval" + lookupIndex;
+                rhsWriter.writeEvalCalls(sb);
                 sb.writeIndent().append(matchVar).append(" := ");
-                rhsVisitor.writeReturnValue(sb);
+                rhsWriter.writeReturnValue(sb);
 
                 sb.newLine();
                 sb.writeIndent().append("if _, isBottom := ").append(matchVar).append(".(m.Bottom); isBottom").beginBlock();
@@ -174,13 +190,10 @@ public class RuleWriter {
 
                 int ourElseIndent = sb.getCurrentIndent();
 
-                RuleLhsWriter lhsVisitor = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
-                        lhsVars,
-                        rhsVars);
-                lhsVisitor.setNextSubject(matchVar);
-                lhsVisitor.apply(k.klist().items().get(0));
+                lhsWriter.setNextSubject(matchVar);
+                lhsWriter.apply(lookup.getLhs());
 
-                if (lhsVisitor.getTopExpressionType() == RuleLhsWriter.ExpressionType.IF) {
+                if (lhsWriter.getTopExpressionType() == RuleLhsWriter.ExpressionType.IF) {
                     // defer final else for when we close the corresponding block
                     sb.addCallbackAfterReturningFromBlock(ourElseIndent, sbRef -> {
                         sbRef.append(" else").beginBlock();
@@ -190,82 +203,96 @@ public class RuleWriter {
                 }
                 break;
             case SETCHOICE:
-                sb.appendIndentedLine("// #setChoice");
-                RuleRhsWriter setRhsVisitor = new RuleRhsWriter(data, nameProvider,
-                        rhsVars, tempVarCounters,
-                        sb.getCurrentIndent(), 0);
-                setRhsVisitor.apply(k.klist().items().get(1));
-                setRhsVisitor.writeEvalCalls(sb);
-                sb.writeIndent().append(matchVar).append(" := ");
-                setRhsVisitor.writeReturnValue(sb);
-                sb.newLine();
-
-                if (!(k.klist().items().get(0) instanceof KVariable)) {
-                    throw new RuntimeException("Expected KVariable argument to #setChoice. Other K types not implemented");
-                }
-                KVariable kvarArg = (KVariable)k.klist().items().get(0);
-                String kvarName = lhsVars.getVarName(kvarArg);
-
-                String setVar = "set" + matchIndex;
-                String isSetVar = "isSet" + matchIndex;
-                matchIndex++;
-                sb.writeIndent().append(setVar).append(", ").append(isSetVar).append(" := ").append(matchVar).append(".(m.Set)").newLine();
-                sb.writeIndent().append("if !").append(isSetVar).beginBlock();
-                sb.writeIndent().append(reapply).newLine();
-                sb.endOneBlock();
-
-                matchVar = "e" + matchIndex++;
-                String choiceVar = "setChoiceResult" + matchIndex;
-                String errVar = "setChoiceErr" + matchIndex;
-                matchIndex++;
-                sb.appendIndentedLine("var ", choiceVar, " = internedBottom");
-                int forIndent = sb.getCurrentIndent();
-                sb.writeIndent().append("for ").append(matchVar).append(" := range ").append(setVar).append(".Data").beginBlock();
-                sb.appendIndentedLine("var ", errVar, " error");
-
-                // this will be after the end of the for, reapply if we didn't hit return in the for loop
-                sb.addCallbackAfterReturningFromBlock(forIndent, s -> {
-                    s.newLine();
-                    s.writeIndent().append("if ").append(choiceVar).append(" == internedBottom").beginBlock();
-                    s.appendIndentedLine(reapply);
-                    s.endOneBlock();
-                    s.appendIndentedLine("return ", choiceVar, ", nil");
-                });
-
-                //sb.appendIndentedLine("doNothing(", kvarName, ")");
-                sb.writeIndent().append("if ").append(matchVar).append(" == ").append(kvarName).beginBlock("TODO: is this always the case?");
-
-                // the function goes inside
-                // I made it a function just because I didn't feel like changing the RHS returns
-                // it can also be done without this function, but then the RHS must assign the result to choice var instead of returning
-                int funcIndent = sb.getCurrentIndent();
-                sb.writeIndent().append(choiceVar).append(", ").append(errVar).append(" = ");
-                sb.append("func(").append(kvarName).append(" m.K) (m.K, error)").beginBlock();
-                sb.appendIndentedLine("// ", kvarName, " -> ", matchVar);
-
-
-                sb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
-                    s.newLine();
-                    s.appendIndentedLine("return internedBottom, nil // #setChoice end");
-                    s.endOneBlock();
-                });
-
-                final String functionCallArg = "(" + matchVar + ")";
-                sb.addCallbackAfterReturningFromBlock(funcIndent, s -> {
-                    s.append(functionCallArg).newLine(); // function call
-                    s.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
-                    s.appendIndentedLine("return noResult, ", errVar);
-                    s.endOneBlock();
-
-                });
-
+                lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+                        lhsVars, rhsVars,
+                        alreadySeenLhsVariables,
+                        false);
+                writeChoiceLookup(
+                        sb, lookup,
+                        "setChoice" + lookupIndex, "m.Set",
+                        reapply,
+                        lhsWriter, rhsWriter);
+                break;
+            case MAPCHOICE:
+                lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+                        lhsVars, rhsVars,
+                        alreadySeenLhsVariables,
+                        false);
+                writeChoiceLookup(
+                        sb, lookup,
+                        "mapChoice" + lookupIndex, "m.Map",
+                        reapply,
+                        lhsWriter, rhsWriter);
                 break;
             default:
                 throw KEMException.internalError("Unexpected lookup type");
             }
 
+            lookupIndex++;
         }
+    }
 
+    private void writeChoiceLookup(
+            GoStringBuilder sb, Lookup lookup,
+            String varPrefix, String expectedKType,
+            String reapply,
+            RuleLhsWriter lhsWriter, RuleRhsWriter rhsWriter) {
+
+        String setChoiceVar = varPrefix + "Eval";
+        String setVar = varPrefix + "Obj";
+        String isSetVar = varPrefix + "TypeOk";
+        String setElemVar = varPrefix + "Elem";
+        String choiceVar = varPrefix + "Result";
+        String errVar = varPrefix + "Err";
+
+        rhsWriter.writeEvalCalls(sb);
+        sb.writeIndent().append(setChoiceVar).append(" := ");
+        rhsWriter.writeReturnValue(sb);
+        sb.newLine();
+
+        sb.writeIndent()
+                .append(setVar).append(", ").append(isSetVar).append(" := ")
+                .append(setChoiceVar).append(".(").append(expectedKType).append(")").newLine();
+        sb.writeIndent().append("if !").append(isSetVar).beginBlock();
+        sb.writeIndent().append(reapply).newLine();
+        sb.endOneBlock();
+
+        sb.appendIndentedLine("var ", choiceVar, " = internedBottom");
+        int forIndent = sb.getCurrentIndent();
+        sb.writeIndent().append("for ").append(setElemVar).append(" := range ").append(setVar).append(".Data").beginBlock();
+        sb.appendIndentedLine("var ", errVar, " error");
+
+        // this will be after the end of the for, reapply if we didn't hit return in the for loop
+        sb.addCallbackAfterReturningFromBlock(forIndent, s -> {
+            s.newLine();
+            s.writeIndent().append("if ").append(choiceVar).append(" == internedBottom").beginBlock();
+            s.appendIndentedLine(reapply);
+            s.endOneBlock();
+            s.appendIndentedLine("return ", choiceVar, ", nil");
+        });
+
+        lhsWriter.setNextSubject(setElemVar);
+        lhsWriter.apply(lookup.getLhs());
+
+        // the function goes inside
+        // I made it a function just because I didn't feel like changing the RHS returns
+        // it can also be done without this function, but then the RHS must assign the result to choice var instead of returning
+        int funcIndent = sb.getCurrentIndent();
+        sb.writeIndent().append(choiceVar).append(", ").append(errVar).append(" = ");
+        sb.append("func() (m.K, error)").beginBlock();
+
+        sb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
+            s.newLine();
+            s.appendIndentedLine("return internedBottom, nil // #setChoice end");
+            s.endOneBlock();
+        });
+
+        sb.addCallbackAfterReturningFromBlock(funcIndent, s -> {
+            s.append("()").newLine(); // function call
+            s.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
+            s.appendIndentedLine("return noResult, ", errVar);
+            s.endOneBlock();
+        });
     }
 
     private static String traceRuleTypeString(RuleType ruleType) {

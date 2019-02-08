@@ -5,6 +5,7 @@ import org.kframework.backend.go.model.Lookup;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.TransformK;
+import org.kframework.unparser.ToKast;
 import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayList;
@@ -33,15 +34,31 @@ public class LookupExtractor extends TransformK {
     public K apply(KApply k) {
         if (k.klabel().name().equals("#match")) {
             if (k.klist().items().size() != 2) {
-                throw KEMException.internalError("Unexpected arity of lookup: " + k.klist().size(), k);
+                throw KEMException.internalError("Unexpected arity of lookup: " + ToKast.apply(k), k);
             }
-            extractedLookups.add(new Lookup(Lookup.Type.MATCH, k));
+            extractedLookups.add(new Lookup(
+                    Lookup.Type.MATCH,
+                    k.klist().items().get(0),
+                    k.klist().items().get(1)));
             return PrecomputePredicates.trueTokenWithComment("lookup #match");
         } else if (k.klabel().name().equals("#setChoice")) {
-            extractedLookups.add(new Lookup(Lookup.Type.SETCHOICE, k));
+            if (k.klist().items().size() != 2) {
+                throw KEMException.internalError("Unexpected arity of lookup: " + ToKast.apply(k), k);
+            }
+            extractedLookups.add(new Lookup(
+                    Lookup.Type.SETCHOICE,
+                    k.klist().items().get(0),
+                    k.klist().items().get(1)));
             return PrecomputePredicates.trueTokenWithComment("lookup #setChoice");
         } else if (k.klabel().name().equals("#mapChoice")) {
-            throw new NotImplementedException("#mapChoice");
+            if (k.klist().items().size() != 2) {
+                throw KEMException.internalError("Unexpected arity of lookup: " + ToKast.apply(k), k);
+            }
+            extractedLookups.add(new Lookup(
+                    Lookup.Type.MAPCHOICE,
+                    k.klist().items().get(0),
+                    k.klist().items().get(1)));
+            return PrecomputePredicates.trueTokenWithComment("lookup #mapChoice");
         } else if (k.klabel().name().equals("#filterMapChoice")) {
             throw new NotImplementedException("#filterMapChoice");
         }
