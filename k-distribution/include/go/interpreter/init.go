@@ -26,7 +26,7 @@ func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.KSequence) {
 	return true, k, emptyKSequence
 }
 
-func assembleFromHeadTail(head m.K, tail m.K) m.K {
+func assembleFromHeadAndTail(head m.K, tail m.K) m.K {
 	if kseqTail, isKseq := tail.(m.KSequence); isKseq {
 		if kseqTail.IsEmpty() {
 			// output the head itself instead of a KSequence with 1 element
@@ -37,6 +37,19 @@ func assembleFromHeadTail(head m.K, tail m.K) m.K {
 
 	// tail is not KSequence, so we end up with a KSequence of 2 elements: head and tail
 	return m.KSequence{Ks: []m.K{head, tail}}
+}
+
+func assembleFromHeadSliceAndTail(headSlice []m.K, tail m.K) m.K {
+	if kseqTail, isKseq := tail.(m.KSequence); isKseq {
+		if kseqTail.IsEmpty() {
+			// output the head itself instead of a KSequence with 1 element
+			return m.KSequence{Ks: headSlice}
+		}
+		return m.KSequence{Ks: append(headSlice, kseqTail.Ks...)}
+	}
+
+	// tail is not KSequence, so we end up with a KSequence of 2 elements: head and tail
+	return m.KSequence{Ks: append(headSlice, tail)}
 }
 
 var freshCounter int

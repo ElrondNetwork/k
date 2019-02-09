@@ -264,7 +264,7 @@ public class RuleRhsWriter extends VisitK {
             return;
         case 2:
             start();
-            currentSb.append("assembleFromHeadTail(");
+            currentSb.append("assembleFromHeadAndTail(");
             currentSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;
@@ -277,9 +277,9 @@ public class RuleRhsWriter extends VisitK {
             return;
         default:
             start();
-            currentSb.append("m.KSequence { Ks: append([]m.K{ ");
+            currentSb.append("assembleFromHeadSliceAndTail([]m.K{");
             currentSb.increaseIndent();
-            // heads
+            // head slice
             for (int i = 0; i < k.items().size() - 1; i++) {
                 newlineNext = true;
                 apply(k.items().get(i));
@@ -288,8 +288,9 @@ public class RuleRhsWriter extends VisitK {
             // tail
             currentSb.decreaseIndent();
             currentSb.newLine().writeIndent().append("}, ");
-            apply(k.items().get(k.items().size() - 1));
-            currentSb.append(".Ks...)}");
+            K tail = k.items().get(k.items().size() - 1);
+            apply(tail);
+            currentSb.append(")");
             end();
         }
     }
