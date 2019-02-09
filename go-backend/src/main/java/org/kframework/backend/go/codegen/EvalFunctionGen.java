@@ -45,7 +45,7 @@ public class EvalFunctionGen {
             // arity check
             int arity = data.functionParams.get(label).arity();
             sb.writeIndent().append("if len(kapp.List) != ").append(arity).beginBlock();
-            sb.writeIndent().append("return noResult, &evalArityViolatedError{funcName:\"");
+            sb.writeIndent().append("return m.NoResult, &evalArityViolatedError{funcName:\"");
             sb.append(nameProvider.evalFunctionName(label));
             sb.append("\", expectedArity: ").append(arity);
             sb.append(", actualArity: len(kapp.List)}").newLine();

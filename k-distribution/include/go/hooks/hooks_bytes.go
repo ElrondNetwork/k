@@ -9,50 +9,50 @@ type bytesHooksType int
 const bytesHooks bytesHooksType = 0
 
 func (bytesHooksType) empty(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) bytes2int(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) int2bytes(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) bytes2string(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) string2bytes(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) replaceAt(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) length(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) padRight(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) padLeft(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) reverse(c m.K,lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (bytesHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 

@@ -23,7 +23,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 	l1, isList1 := klist1.(m.List)
 	l2, isList2 := klist2.(m.List)
 	if !isList1 || !isList2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	data := make([]m.K, len(l1.Data)+len(l2.Data))
 	for _, x := range l1.Data {
@@ -38,7 +38,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	if !isList {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	for _, x := range l.Data {
 		if x == e {
@@ -52,7 +52,7 @@ func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config
 	l, isList := klist.(m.List)
 	i, isInt := index.(m.Int)
 	if !isList || !isInt {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	return l.Data[int(i)], nil
 }
@@ -62,7 +62,7 @@ func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort
 	si, isInt1 := start.(m.Int)
 	ei, isInt2 := end.(m.Int)
 	if !isList || !isInt1 || isInt2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	return m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[si:ei]}, nil
 }
@@ -70,23 +70,23 @@ func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort
 func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	if !isList {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	return m.Int(len(l.Data)), nil
 }
 
 func (listHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (listHooksType) fill(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (listHooksType) update(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (listHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }

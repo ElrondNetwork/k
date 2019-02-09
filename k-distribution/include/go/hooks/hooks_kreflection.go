@@ -27,7 +27,7 @@ func (kreflectionHooksType) sort(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	case m.Set:
 		return m.String(k.Sort.Name()), nil
 	default:
-		return noResult, &hookNotImplementedError{}
+		return m.NoResult, &hookNotImplementedError{}
 	}
 }
 
@@ -35,7 +35,7 @@ func (kreflectionHooksType) getKLabel(c m.K, lbl m.KLabel, sort m.Sort, config m
 	if k, t := c.(m.KApply); t {
 		return m.InjectedKLabel{Label: k.Label}, nil
 	}
-	return internedBottom, nil
+	return m.InternedBottom, nil
 }
 
 func (kreflectionHooksType) configuration(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -47,12 +47,12 @@ func (kreflectionHooksType) fresh(c m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 		sort := m.ParseSort(string(k))
 		result, err := freshFunction(sort, config, freshCounter)
 		if err != nil {
-		    return noResult, err
+		    return m.NoResult, err
 		}
 		freshCounter++
 		return result, nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (kreflectionHooksType) isConcrete(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -60,9 +60,9 @@ func (kreflectionHooksType) isConcrete(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort
 }
 
 func (kreflectionHooksType) getenv(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (kreflectionHooksType) argv(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }

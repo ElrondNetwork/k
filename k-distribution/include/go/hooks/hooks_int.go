@@ -9,11 +9,11 @@ type intHooksType int
 const intHooks intHooksType = 0
 
 func (intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -22,7 +22,7 @@ func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Int(i1 + i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -31,7 +31,7 @@ func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 == i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -40,7 +40,7 @@ func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 != i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -49,7 +49,7 @@ func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Int(i1 & i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -58,7 +58,7 @@ func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Int(i1 * i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -67,7 +67,7 @@ func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Int(i1 - i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -76,7 +76,7 @@ func (intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
     	if ok1 && ok2 {
     		return m.Int(i1 / i2), nil
     	}
-    	return noResult, &hookNotImplementedError{}
+    	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -85,7 +85,7 @@ func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
         	if ok1 && ok2 {
         		return m.Int(i1 % i2), nil
         	}
-        	return noResult, &hookNotImplementedError{}
+        	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -94,7 +94,7 @@ func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
     if ok1 && ok2 {
         return m.Int(i1 << uint32(i2)), nil
     }
-    return noResult, &hookNotImplementedError{}
+    return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -103,7 +103,7 @@ func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Int(i1 >> uint32(i2)), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -112,7 +112,7 @@ func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 <= i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -121,7 +121,7 @@ func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 < i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -130,7 +130,7 @@ func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 >= i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -139,19 +139,19 @@ func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Bool(i1 > i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -160,11 +160,11 @@ func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	if ok1 && ok2 {
 		return m.Int(i1 | i2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -175,33 +175,33 @@ func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, erro
 		}
 		return m.Int(i), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) log2(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) bitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) signExtendBitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) rand(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (intHooksType) srand(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }

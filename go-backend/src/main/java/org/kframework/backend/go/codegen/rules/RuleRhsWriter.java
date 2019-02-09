@@ -144,7 +144,7 @@ public class RuleRhsWriter extends VisitK {
             evalSb.newLine();
         }
         evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
-        evalSb.writeIndent().append("return noResult, ").append(errVarName).newLine();
+        evalSb.writeIndent().append("return m.NoResult, ").append(errVarName).newLine();
         evalSb.endOneBlock();
 
         evalCalls.add(evalSb.toString());
@@ -224,7 +224,7 @@ public class RuleRhsWriter extends VisitK {
         start();
         String varName = lhsVars.getVarName(v);
         if (varName == null) {
-            currentSb.append("/* varName=null */ internedBottom");
+            currentSb.append("/* varName=null */ m.InternedBottom");
             end();
             return;
         }
@@ -255,7 +255,7 @@ public class RuleRhsWriter extends VisitK {
         switch (k.items().size()) {
         case 0:
             start();
-            currentSb.append("emptyKSequence");
+            currentSb.append("m.EmptyKSequence");
             end();
             return;
         case 1:

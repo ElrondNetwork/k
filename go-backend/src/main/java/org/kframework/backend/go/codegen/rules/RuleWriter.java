@@ -257,7 +257,7 @@ public class RuleWriter {
         sb.writeIndent().append(reapply).newLine();
         sb.endOneBlock();
 
-        sb.appendIndentedLine("var ", choiceVar, " = internedBottom");
+        sb.appendIndentedLine("var ", choiceVar, " = m.InternedBottom");
         int forIndent = sb.getCurrentIndent();
         sb.writeIndent().append("for ").append(setElemVar).append(" := range ").append(setVar).append(".Data").beginBlock();
         sb.appendIndentedLine("var ", errVar, " error");
@@ -265,7 +265,7 @@ public class RuleWriter {
         // this will be after the end of the for, reapply if we didn't hit return in the for loop
         sb.addCallbackAfterReturningFromBlock(forIndent, s -> {
             s.newLine();
-            s.writeIndent().append("if ").append(choiceVar).append(" == internedBottom").beginBlock();
+            s.writeIndent().append("if ").append(choiceVar).append(" == m.InternedBottom").beginBlock();
             s.appendIndentedLine(reapply);
             s.endOneBlock();
             s.appendIndentedLine("return ", choiceVar, ", nil");
@@ -283,14 +283,14 @@ public class RuleWriter {
 
         sb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
             s.newLine();
-            s.appendIndentedLine("return internedBottom, nil // #setChoice end");
+            s.appendIndentedLine("return m.InternedBottom, nil // #setChoice end");
             s.endOneBlock();
         });
 
         sb.addCallbackAfterReturningFromBlock(funcIndent, s -> {
             s.append("()").newLine(); // function call
             s.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
-            s.appendIndentedLine("return noResult, ", errVar);
+            s.appendIndentedLine("return m.NoResult, ", errVar);
             s.endOneBlock();
         });
     }

@@ -4,26 +4,20 @@ import (
 	m "%INCLUDE_MODEL%"
 )
 
-var internedBottom m.K = m.Bottom{}
-
-var noResult m.K = m.Bottom{}
-
-var emptyKSequence = m.KSequence{Ks: nil}
-
 func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.KSequence) {
 	if kseq, isKseq := k.(m.KSequence); isKseq {
 		switch len(kseq.Ks) {
 		case 0:
-			return false, noResult, emptyKSequence
+			return false, m.NoResult, m.EmptyKSequence
 		case 1:
-			return true, kseq.Ks[0], emptyKSequence
+			return true, kseq.Ks[0], m.EmptyKSequence
 		default:
 			return true, kseq.Ks[0], m.KSequence{Ks: kseq.Ks[1:]}
 		}
 	}
 
 	// treat non-KSequences as if they were KSequences with 1 element
-	return true, k, emptyKSequence
+	return true, k, m.EmptyKSequence
 }
 
 func assembleFromHeadAndTail(head m.K, tail m.K) m.K {

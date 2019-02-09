@@ -14,7 +14,7 @@ func (boolHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	if ok1 && ok2 {
 		return m.Bool(b1 && b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (h boolHooksType) andThen(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -27,7 +27,7 @@ func (boolHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Bool(b1 || b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (h boolHooksType) orElse(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -39,7 +39,7 @@ func (boolHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, err
 	if ok {
 		return m.Bool(!b), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (boolHooksType) implies(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -48,7 +48,7 @@ func (boolHooksType) implies(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	if ok1 && ok2 {
 		return m.Bool((!b1) || b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (boolHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -57,7 +57,7 @@ func (boolHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Bool(b1 != b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (boolHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -66,7 +66,7 @@ func (boolHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if ok1 && ok2 {
 		return m.Bool(b1 == b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }
 
 func (boolHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -75,5 +75,5 @@ func (boolHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	if ok1 && ok2 {
 		return m.Bool(b1 != b2), nil
 	}
-	return noResult, &hookNotImplementedError{}
+	return m.NoResult, &hookNotImplementedError{}
 }

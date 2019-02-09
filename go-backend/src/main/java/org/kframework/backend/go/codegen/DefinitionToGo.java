@@ -271,7 +271,7 @@ public class DefinitionToGo {
                     sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
                     sb.writeIndent().append("fmt.Println(\"Warning! Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
-                    sb.writeIndent().append("return noResult, hookErr").newLine();
+                    sb.writeIndent().append("return m.NoResult, hookErr").newLine();
                     sb.endOneBlock().newLine();
                 }
 
@@ -326,7 +326,7 @@ public class DefinitionToGo {
 
                 if (!unreachableCode) {
                     // stuck!
-                    sb.writeIndent().append("return noResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
+                    sb.writeIndent().append("return m.NoResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
                     if (functionVars.arity() == 0) {
                         sb.append("nil");
                     } else {
@@ -344,7 +344,7 @@ public class DefinitionToGo {
                 if (constants.contains(functionLabel)) {
                     sb.append("//var ").append(nameProvider.constFunctionName(functionLabel));
                     sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
-                    sb.append("(internedBottom)\n\n");
+                    sb.append("(m.InternedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
                     writeMemoTableAndEval(sb, functionLabel, functionVars);
                 }
@@ -410,7 +410,7 @@ public class DefinitionToGo {
         sb.writeIndent().append("memoKey := ");
         switch (functionArgs.arity()) {
         case 0:
-            sb.append("internedBottom");
+            sb.append("m.InternedBottom");
             break;
         case 1:
             sb.append(functionArgs.varName(0));
@@ -428,7 +428,7 @@ public class DefinitionToGo {
         sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
         sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
         sb.writeIndent().append("if err != nil").beginBlock();
-        sb.appendIndentedLine("return noResult, err");
+        sb.appendIndentedLine("return m.NoResult, err");
         sb.endOneBlock();
         sb.writeIndent().append(tableName).append("[memoKey] = computation").newLine();
         sb.appendIndentedLine("return computation, nil");

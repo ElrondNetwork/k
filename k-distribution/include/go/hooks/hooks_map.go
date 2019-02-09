@@ -47,7 +47,7 @@ func (mapHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 }
 
 func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return mh.lookupOrDefault(kmap, key, internedBottom, lbl, sort, config)
+	return mh.lookupOrDefault(kmap, key, m.InternedBottom, lbl, sort, config)
 }
 
 func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -63,16 +63,16 @@ func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLa
 	}
 
 	if _, isBottom := kmap.(m.Map); isBottom {
-		return internedBottom, nil
+		return m.InternedBottom, nil
 	}
 
-	return noResult, &hookInvalidArgsError{}
+	return m.NoResult, &hookInvalidArgsError{}
 }
 
 func (mapHooksType) update(kmap m.K, newKey m.K, newValue m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	if !isValidKey(newKey) {
 		panic("Invaid key")
@@ -91,7 +91,7 @@ func (mapHooksType) update(kmap m.K, newKey m.K, newValue m.K, lbl m.KLabel, sor
 func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	// no updating of input map
 	newData := make(map[m.K]m.K)
@@ -107,10 +107,10 @@ func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, conf
 	m1, isMap1 := kmap1.(m.Map)
 	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	data := make(map[m.K]m.K)
 	for key, value := range m1.Data {
@@ -120,7 +120,7 @@ func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, conf
 		m1Val, exists := m1.Data[key]
 		if exists {
 			if m1Val != value {
-				return noResult, &hookInvalidArgsError{}
+				return m.NoResult, &hookInvalidArgsError{}
 			}
 		} else {
 			data[key] = value
@@ -133,10 +133,10 @@ func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, 
 	m1, isMap1 := kmap1.(m.Map)
 	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	data := make(map[m.K]m.K)
 	for key, value := range m1.Data {
@@ -152,7 +152,7 @@ func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, 
 func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	keySet := make(map[m.K]bool)
 	for key := range mp.Data {
@@ -164,7 +164,7 @@ func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	var keyList []m.K
 	for key := range mp.Data {
@@ -176,7 +176,7 @@ func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 func (mapHooksType) inKeys(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	_, keyExists := mp.Data[key]
 	return m.Bool(keyExists), nil
@@ -185,7 +185,7 @@ func (mapHooksType) inKeys(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config 
 func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	var valueList []m.K
 	for _, value := range mp.Data {
@@ -195,20 +195,20 @@ func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 }
 
 func (mapHooksType) choice(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	m, isMap := kmap.(m.Map)
+	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
-	for key := range m.Data {
+	for key := range mp.Data {
 		return key, nil
 	}
-	return noResult, &hookInvalidArgsError{}
+	return m.NoResult, &hookInvalidArgsError{}
 }
 
 func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	return m.Int(len(mp.Data)), nil
 }
@@ -217,10 +217,10 @@ func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, c
 	m1, isMap1 := kmap1.(m.Map)
 	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	for m2Key := range m2.Data {
 		_, exists := m1.Data[m2Key]
@@ -235,10 +235,10 @@ func (mapHooksType) updateAll(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, c
 	m1, isMap1 := kmap1.(m.Map)
 	m2, isMap2 := kmap2.(m.Map)
 	if !isMap1 || !isMap2 {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	if m1.Label != m2.Label {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	data := make(map[m.K]m.K)
 	for key, value := range m1.Data {
@@ -254,7 +254,7 @@ func (mapHooksType) removeAll(kmap m.K, kset m.K, lbl m.KLabel, sort m.Sort, con
 	mp, isMap := kmap.(m.Map)
 	s, isSet := kset.(m.Set)
 	if !isMap || !isSet {
-		return noResult, &hookInvalidArgsError{}
+		return m.NoResult, &hookInvalidArgsError{}
 	}
 	data := make(map[m.K]m.K)
 	for key, value := range mp.Data {

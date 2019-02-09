@@ -15,6 +15,9 @@ type KSequence struct {
 	Ks []K
 }
 
+// EmptyKSequence ... the KSequence with no elements
+var EmptyKSequence = KSequence{Ks: nil}
+
 // KItem ...
 type KItem interface {
 }
@@ -94,6 +97,12 @@ type Bool bool
 // Bottom ... a type of KItem, TODO: document
 type Bottom struct {
 }
+
+// InternedBottom ... usually used as a dummy object
+var InternedBottom K = Bottom{}
+
+// NoResult ... what to return when a function returns an error
+var NoResult K = Bottom{}
 
 func addIndent(sb *strings.Builder, indent int) {
 	for i := 0; i < indent; i++ {
