@@ -54,6 +54,7 @@ import scala.Function1;
 import scala.Option;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -184,7 +185,7 @@ public class DefinitionToGo {
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         // generating imports
-        Set<GoPackage> importsSorted = new TreeSet<>((p1, p2) -> p1.getName().compareTo(p2.getName()));
+        Set<GoPackage> importsSorted = new TreeSet<>(Comparator.comparing(GoPackage::getName));
         importsSorted.add(new GoPackage("fmt", null, null));
         importsSorted.add(packageManager.modelPackage);
         for (KLabel functionLabel : functions) {
@@ -196,7 +197,6 @@ public class DefinitionToGo {
                     importsSorted.add(externalHookPkg);
                 }
             }
-
         }
         sb.append("import (").newLine();
         for (GoPackage pkg : importsSorted) {
@@ -245,7 +245,7 @@ public class DefinitionToGo {
                 if (GoBuiltin.HOOK_NAMESPACES.contains(funcHook.getNamespace())) {
                     hookCall = funcHook.getGoHookObjName() + "." + funcHook.getGoFuncName();
                 } else if (extHookManager.containsPackage(funcHook.getExternalGoPackageName())) {
-                    hookCall = funcHook.getExternalGoPackageName() + "." + funcHook.getGoFuncName();
+                    hookCall = funcHook.getExternalGoPackageName() + "." + funcHook.getExternalGoFuncName();
                 } else if (!hook.equals(".")) {
                     kem.registerCompilerWarning("missing entry for hook " + hook);
                 }

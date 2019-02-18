@@ -40,6 +40,10 @@ public class FunctionHookName {
         return namespace.toLowerCase();
     }
 
+    public String getExternalGoFuncName() {
+        return Character.toUpperCase(goFuncName.charAt(0)) + goFuncName.substring(1);
+    }
+
     @Override
     public String toString() {
         return namespace + "." + goFuncName;
