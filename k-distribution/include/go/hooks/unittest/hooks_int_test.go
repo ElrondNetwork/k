@@ -28,8 +28,8 @@ func TestParseIntError(t *testing.T) {
 }
 
 func TestIntHooks1(t *testing.T) {
-	a := m.NewIntFromInt64(1)
-	b := m.NewIntFromInt64(2)
+	a := m.NewIntFromInt(1)
+	b := m.NewIntFromInt(2)
 	var z m.K
 	var err error
 
@@ -85,10 +85,10 @@ func TestIntHooks1(t *testing.T) {
 	assertIntOk(t, "3", z, err)
 
 	z, err = intHooks.xor(a, b, m.LblIsInt, m.SortInt, m.InternedBottom)
-	assertIntOk(t, "0", z, err)
+	assertIntOk(t, "3", z, err)
 
 	z, err = intHooks.not(b, m.LblIsInt, m.SortInt, m.InternedBottom)
-	assertIntOk(t, "-4", z, err)
+	assertIntOk(t, "-3", z, err)
 
 	z, err = intHooks.abs(b, m.LblIsInt, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
@@ -102,8 +102,8 @@ func TestIntHooks1(t *testing.T) {
 }
 
 func TestIntHooks2(t *testing.T) {
-	a := m.NewIntFromInt64(1)
-	b := m.NewIntFromInt64(1)
+	a := m.NewIntFromInt(1)
+	b := m.NewIntFromInt(1)
 
 	var z m.K
 	var err error
