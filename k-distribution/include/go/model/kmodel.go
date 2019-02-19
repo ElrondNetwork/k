@@ -97,10 +97,16 @@ type StringBuffer struct {
 // Bytes ... a type of KItem, TODO: document
 type Bytes []byte
 
-// Bool ... a type of KItem, TODO: document
+// Bool ... K boolean value
 type Bool bool
 
-// Bottom ... a type of KItem, TODO: document
+// BoolTrue ... K boolean value with value true
+var BoolTrue = Bool(true)
+
+// BoolFalse ... K boolean value with value false
+var BoolFalse = Bool(false)
+
+// Bottom ... a K item that contains no data
 type Bottom struct {
 }
 

@@ -52,6 +52,8 @@ public class KLabelsGen {
             sb.writeIndent().append(nameProvider.klabelVariableName(klabel));
             sb.append(" KLabel = iota\n");
         }
+        sb.appendIndentedLine("// LblDummy ... dummy label used in tests");
+        sb.appendIndentedLine("LblDummy KLabel = iota");
         sb.decreaseIndent();
         sb.append(")").newLine().newLine();
 
