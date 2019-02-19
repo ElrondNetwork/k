@@ -3,9 +3,11 @@ package org.kframework.backend.go.codegen.rules;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
+import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
+import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KToken;
 
@@ -61,13 +63,33 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
             case "BOOL.and":
             case "BOOL.andThen":
                 assert k.klist().items().size() == 2;
+                K arg1 = k.klist().items().get(0);
+                K arg2 = k.klist().items().get(1);
 
-                currentSb.append("(");
-                apply(k.klist().items().get(0));
-                //currentSb.append(") && (");
-                currentSb.append(") &&").newLine().writeIndent().append("(");
-                apply(k.klist().items().get(1));
-                currentSb.append(")");
+                if (PrecomputePredicates.istrueTokenWithComment(arg1) &&
+                        PrecomputePredicates.istrueTokenWithComment(arg2)) {
+                    throw new RuntimeException("true && true should already have been collapsed in PrecomputePredicates.");
+                } else if (PrecomputePredicates.istrueTokenWithComment(arg1)) {
+                    // true && ...
+                    // comment everything other than the second argument
+                    appendKTokenComment((KToken)arg1);
+                    currentSb.append("/* && */").newLine().writeIndent();
+                    apply(arg2);
+                } else if (PrecomputePredicates.istrueTokenWithComment(arg2)) {
+                    // ... && true
+                    // comment everything other than the first argument
+                    apply(arg1);
+                    currentSb.append(" /* && */ ");
+                    appendKTokenComment((KToken)arg2);
+                } else {
+                    // output && with both arguments
+                    currentSb.append("(");
+                    apply(arg1);
+                    //currentSb.append(") && (");
+                    currentSb.append(") &&").newLine().writeIndent().append("(");
+                    apply(arg2);
+                    currentSb.append(")");
+                }
                 return;
             case "BOOL.or":
             case "BOOL.orElse":
@@ -106,4 +128,5 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
 
         super.apply(k);
     }
+
 }
