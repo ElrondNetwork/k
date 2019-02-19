@@ -53,3 +53,10 @@ type hookInvalidArgsError struct {
 func (e *hookInvalidArgsError) Error() string {
 	return "Invalid argument(s) provided to hook."
 }
+
+type hookDivisionByZeroError struct {
+}
+
+func (e *hookDivisionByZeroError) Error() string {
+	return "Division by zero."
+}

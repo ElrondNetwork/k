@@ -35,11 +35,11 @@ func convertParserModelToKModel(pk koreparser.K) m.K {
 func convertKToken(sort m.Sort, value string) m.K {
 	switch sort {
 	case m.SortInt:
-		i, err := strconv.Atoi(value)
+		i, err := m.ParseInt(value)
 		if err != nil {
-			panic("Could not parse Int token: " + value)
+			panic(err)
 		}
-		return m.Int(i)
+		return i
 	case m.SortFloat:
 		panic("Float token parse not implemented.")
 	case m.SortString:
@@ -48,7 +48,7 @@ func convertKToken(sort m.Sort, value string) m.K {
 	case m.SortBool:
 		b, err := strconv.ParseBool(value)
 		if err != nil {
-			panic("Could not parse Int token: " + value)
+			panic("Could not parse bool token: " + value)
 		}
 		return m.Bool(b)
 	default:

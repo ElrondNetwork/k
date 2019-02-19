@@ -192,7 +192,7 @@ public class RuleRhsWriter extends VisitK {
                 sb.append("m.MInt(").append(k.s()).append(")");
                 return;
             case "INT.Int":
-                sb.append("m.Int(").append(k.s()).append(")");
+                sb.append("m.NewIntFromString(\"").append(k.s()).append("\")");
                 return;
             case "FLOAT.Float":
                 sb.append("m.Float(").append(k.s()).append(")");

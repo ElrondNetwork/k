@@ -116,7 +116,9 @@ public class GoBackend implements Backend {
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/model/kmodel.go"),
                     packageManager.modelPackage, "kmodel.go");
-
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/model/error.go"),
+                    packageManager.modelPackage, "error.go");
 
             // copy: interpreter
             packageManager.copyFileToPackage(
@@ -141,6 +143,13 @@ public class GoBackend implements Backend {
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/hooks/" + fileName),
                         packageManager.interpreterPackage, fileName);
+            }
+
+            // copy: hook unit tests
+            if (options.unitTests) {
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/hooks/unittest/hooks_int_test.go"),
+                        packageManager.interpreterPackage, "hooks_int_test.go");
             }
 
             // main

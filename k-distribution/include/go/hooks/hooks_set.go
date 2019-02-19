@@ -109,7 +109,7 @@ func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	if !isSet {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
-	return m.Int(len(s.Data)), nil
+	return m.NewIntFromInt(len(s.Data)), nil
 }
 
 func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

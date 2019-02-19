@@ -26,6 +26,9 @@ public class GoOptions implements Serializable {
     @Parameter(names="--go-verbose-vars", description="Generate more verbose variable names. They can be easier to read when debugging, but are not Go idiomatic.")
     public boolean verboseVars;
 
+    @Parameter(names="--go-unit-tests", description="Also create some unit tests in target folder.")
+    public boolean unitTests = true;
+
     // TODO: clean up
     //@Parameter(names="--no-link-prelude", description="Do not link interpreter binaries against constants.cmx and prelude.cmx. Do not use this if you don't know what you're doing.")
     public boolean noLinkPrelude;

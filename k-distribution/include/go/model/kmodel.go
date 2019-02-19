@@ -2,6 +2,7 @@ package %PACKAGE_MODEL%
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 )
 
@@ -72,10 +73,15 @@ type Array struct {
 	Data  []K
 }
 
-// Int ... a type of KItem, TODO: document
-type Int int32
+// Int ... integer type, implemented via a big int
+type Int struct {
+	Value *big.Int
+}
 
-// MInt ... a type of KItem, TODO: document
+// IntZero ... K Int with value zero
+var IntZero = Int{Value: big.NewInt(0)}
+
+// MInt ... machine integer
 type MInt int32
 
 // Float ... a type of KItem, TODO: document
@@ -139,22 +145,22 @@ func (k KApply) PrettyTreePrint(indent int) string {
 	return sb.String()
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a InjectedKLabel object
 func (k InjectedKLabel) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {Label:%s}", k.Label.Name()))
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a KToken object
 func (k KToken) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KToken {Sort:%s, Value:%s}", k.Sort.Name(), k.Value))
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a KVariable object
 func (k KVariable) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("KVariable {Name:%s}", k.Name))
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a Map object
 func (k Map) PrettyTreePrint(indent int) string {
 	var sb strings.Builder
 	addIndent(&sb, indent)
@@ -168,11 +174,11 @@ func (k Map) PrettyTreePrint(indent int) string {
 	} else {
 		for k, v := range k.Data {
 			sb.WriteString("\n")
-			addIndent(&sb, indent + 1)
+			addIndent(&sb, indent+1)
 			sb.WriteString("key: ")
 			sb.WriteString(k.PrettyTreePrint(0))
 			sb.WriteString("  value: ")
-            sb.WriteString(v.PrettyTreePrint(0))
+			sb.WriteString(v.PrettyTreePrint(0))
 		}
 		sb.WriteRune('\n')
 		addIndent(&sb, indent)
@@ -182,12 +188,12 @@ func (k Map) PrettyTreePrint(indent int) string {
 	return sb.String()
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a List object
 func (k List) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("List {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
-// PrettyTreePrint ... A tree representation of a KApply object
+// PrettyTreePrint ... A tree representation of a Set object
 func (k Set) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Set {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
@@ -197,9 +203,45 @@ func (k Array) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Array {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
+// NewInt ... provides new Int instance
+func NewInt(bi *big.Int) Int {
+	return Int{Value: bi}
+}
+
+// NewIntFromInt ... provides new Int instance
+func NewIntFromInt(x int) Int {
+	return NewIntFromInt64(int64(x))
+}
+
+// NewIntFromInt64 ... provides new Int instance
+func NewIntFromInt64(x int64) Int {
+	return Int{Value: big.NewInt(x)}
+}
+
+// ParseInt ... creates K int from string representation
+func ParseInt(s string) (Int, error) {
+	b := big.NewInt(0)
+	if s != "0" {
+		b.UnmarshalText([]byte(s))
+		if b.Cmp(IntZero.Value) == 0 {
+			return IntZero, &parseIntError{parseVal: s}
+		}
+	}
+	return NewInt(b), nil
+}
+
+// NewIntFromString ... same as ParseInt but panics instead of error
+func NewIntFromString(s string) Int {
+    i, err := ParseInt(s)
+    if err != nil {
+        panic(err)
+    }
+	return i
+}
+
 // PrettyTreePrint ... A tree representation of a KApply object
 func (k Int) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Int (%d)", k))
+	return simplePrint(indent, fmt.Sprintf("Int (%s)", k.Value.String()))
 }
 
 // PrettyTreePrint ... A tree representation of a KApply object

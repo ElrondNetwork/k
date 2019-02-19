@@ -210,7 +210,7 @@ func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	if !isMap {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
-	return m.Int(len(mp.Data)), nil
+	return m.NewIntFromInt(len(mp.Data)), nil
 }
 
 func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

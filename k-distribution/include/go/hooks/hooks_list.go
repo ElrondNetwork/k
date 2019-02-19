@@ -54,17 +54,22 @@ func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config
 	if !isList || !isInt {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
-	return l.Data[int(i)], nil
+	if !i.Value.IsUint64() {
+		return m.NoResult, &hookInvalidArgsError{}
+	}
+	return l.Data[i.Value.Uint64()], nil
 }
 
 func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	si, isInt1 := start.(m.Int)
 	ei, isInt2 := end.(m.Int)
-	if !isList || !isInt1 || isInt2 {
+	if !isList || !isInt1 || isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
-	return m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[si:ei]}, nil
+	siUint := si.Value.Uint64()
+	eiUint := ei.Value.Uint64()
+	return m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[siUint:eiUint]}, nil
 }
 
 func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -72,7 +77,7 @@ func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	if !isList {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
-	return m.Int(len(l.Data)), nil
+	return m.NewIntFromInt(len(l.Data)), nil
 }
 
 func (listHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
