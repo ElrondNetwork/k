@@ -4,13 +4,15 @@ import (
 	m "%INCLUDE_MODEL%"
 )
 
-func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.KSequence) {
+func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.K) {
 	if kseq, isKseq := k.(m.KSequence); isKseq {
 		switch len(kseq.Ks) {
 		case 0:
 			return false, m.NoResult, m.EmptyKSequence
 		case 1:
 			return true, kseq.Ks[0], m.EmptyKSequence
+		case 2:
+		    return true, kseq.Ks[0], kseq.Ks[1]
 		default:
 			return true, kseq.Ks[0], m.KSequence{Ks: kseq.Ks[1:]}
 		}

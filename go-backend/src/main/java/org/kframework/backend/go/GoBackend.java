@@ -175,6 +175,7 @@ public class GoBackend implements Backend {
                 throw KEMException.criticalError("go generate returned nonzero exit code: " + exit + "\nExamine output to see errors.");
             }
             if (!options.srcOnly) {
+                System.out.println("Starting go build.");
                 exit = pb.command("go", "build").directory(files.resolveKompiled(".")).inheritIO().start().waitFor();
                 if (exit != 0) {
                     throw KEMException.criticalError("go build returned nonzero exit code: " + exit + "\nExamine output to see errors.");
