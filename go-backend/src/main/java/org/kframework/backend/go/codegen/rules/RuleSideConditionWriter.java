@@ -66,16 +66,16 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
                 K arg1 = k.klist().items().get(0);
                 K arg2 = k.klist().items().get(1);
 
-                if (PrecomputePredicates.istrueTokenWithComment(arg1) &&
-                        PrecomputePredicates.istrueTokenWithComment(arg2)) {
+                if (PrecomputePredicates.isTrueToken(arg1) &&
+                        PrecomputePredicates.isTrueToken(arg2)) {
                     throw new RuntimeException("true && true should already have been collapsed in PrecomputePredicates.");
-                } else if (PrecomputePredicates.istrueTokenWithComment(arg1)) {
+                } else if (PrecomputePredicates.isTrueToken(arg1)) {
                     // true && ...
                     // comment everything other than the second argument
                     appendKTokenComment((KToken)arg1);
                     currentSb.append("/* && */").newLine().writeIndent();
                     apply(arg2);
-                } else if (PrecomputePredicates.istrueTokenWithComment(arg2)) {
+                } else if (PrecomputePredicates.isTrueToken(arg2)) {
                     // ... && true
                     // comment everything other than the first argument
                     apply(arg1);
