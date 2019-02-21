@@ -5,7 +5,6 @@ import org.kframework.attributes.Source;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
-import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.model.RuleVars;
@@ -43,10 +42,9 @@ public class RuleWriter {
         this.nameProvider = nameProvider;
     }
 
-    public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, RuleCounter ruleCounter,
+    public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, int ruleNum,
                               String functionName, FunctionParams functionVars) {
         try {
-            int ruleNum = ruleCounter.consumeRuleIndex();
             sb.appendIndentedLine("// rule #" + ruleNum);
             sb.append("\t// ");
             GoStringUtil.appendRuleComment(sb, r);

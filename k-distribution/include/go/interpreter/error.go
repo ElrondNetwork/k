@@ -12,6 +12,8 @@ func (e *noStepError) Error() string {
 	return "No step could be performed."
 }
 
+var noStep = &noStepError{}
+
 type stuckError struct {
 	funcName string
 	args     []m.K

@@ -89,6 +89,8 @@ public class GoBackend implements Backend {
                     stepFunctionGen.generateStep());
             packageManager.saveToPackage(packageManager.interpreterPackage, "stepLookups.go",
                     stepFunctionGen.generateLookupsStep());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "stepRules.go",
+                    stepFunctionGen.generateStepRules());
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
 

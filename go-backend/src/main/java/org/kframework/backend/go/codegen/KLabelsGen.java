@@ -48,6 +48,7 @@ public class KLabelsGen {
         for (KLabel klabel : klabels) {
             sb.appendIndentedLine("// ", nameProvider.klabelVariableName(klabel), " ... ", klabel.name());
             sb.appendIndentedLine("const ", nameProvider.klabelVariableName(klabel), " KLabel = ", Integer.toString(i++));
+            sb.newLine();
         }
         sb.appendIndentedLine("// LblDummy ... dummy label used in tests");
         sb.appendIndentedLine("const LblDummy KLabel = ", Integer.toString(i++));

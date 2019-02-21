@@ -44,6 +44,7 @@ public class SortsGen {
         for (Sort s : sorts) {
             sb.appendIndentedLine("// ", nameProvider.sortVariableName(s), " ... ", s.name());
             sb.appendIndentedLine("const ", nameProvider.sortVariableName(s), " Sort = ", Integer.toString(i++));
+            sb.newLine();
         }
 
         // sort name method

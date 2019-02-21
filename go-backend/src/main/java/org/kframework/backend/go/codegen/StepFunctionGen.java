@@ -13,7 +13,7 @@ import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.definition.Rule;
 import org.kframework.kil.Attribute;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +27,8 @@ public class StepFunctionGen {
     private final RuleWriter ruleWriter;
 
     private final List<Rule> sortedRules;
+    private final Map<Integer, Rule> stepRules = new HashMap<>();
+    private final Map<Integer, Rule> lookupRules = new HashMap<>();
 
     private final RuleCounter ruleCounter = new RuleCounter();
 
@@ -42,6 +44,21 @@ public class StepFunctionGen {
                 .sorted(this::sortRules)
                 .filter(r -> !data.functionRules.values().contains(r) && !r.att().contains(Attribute.MACRO_KEY) && !r.att().contains(Attribute.ALIAS_KEY) && !r.att().contains(Attribute.ANYWHERE_KEY))
                 .collect(Collectors.toList());
+
+        Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
+                .collect(Collectors.groupingBy(RuleWriter::hasLookups));
+        if (groupedByLookup.containsKey(false)) {
+            for (Rule r : groupedByLookup.get(false)) {
+                int ruleNum = ruleCounter.consumeRuleIndex();
+                stepRules.put(ruleNum, r);
+            }
+        }
+        if (groupedByLookup.containsKey(true)) {
+            for (Rule r : groupedByLookup.get(true)) {
+                int ruleNum = ruleCounter.consumeRuleIndex();
+                lookupRules.put(ruleNum, r);
+            }
+        }
     }
 
     public String generateStep() {
@@ -52,7 +69,7 @@ public class StepFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        writeStepFunction(sb, sortedRules, "step");
+        writeStepFunction(sb, sortedRules);
 
         return sb.toString();
     }
@@ -65,49 +82,100 @@ public class StepFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        writeLookupsStepFunction(sb, sortedRules, "step");
+        writeLookupsStepFunction(sb, sortedRules);
 
         return sb.toString();
     }
 
-    private void writeStepFunction(GoStringBuilder sb, List<Rule> sortedRules, String funcName) {
-        String lookupsFuncName = funcName + "Lookups";
-        Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
-                .collect(Collectors.groupingBy(RuleWriter::hasLookups));
+    public String generateStepRules() {
+        GoStringBuilder sb = new GoStringBuilder();
+        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
-        sb.append("func ").append(funcName).append("(c m.K) (m.K, error)").beginBlock();
-        sb.writeIndent().append("config := c").newLine();
-        if (groupedByLookup.containsKey(false)) {
-            for (Rule r : groupedByLookup.get(false)) {
-                RuleInfo ruleInfo = ruleWriter.writeRule(
-                        r, sb, RuleType.REGULAR, ruleCounter,
-                        "step", new FunctionParams(1));
-                assert !ruleInfo.alwaysMatches();
-            }
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
+        sb.append(")\n\n");
+
+        writeStepRules(sb, sortedRules);
+
+        return sb.toString();
+    }
+
+
+    private void writeStepRules(GoStringBuilder sb, List<Rule> sortedRules) {
+        for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
+            int ruleNum = entry.getKey();
+            Rule r = entry.getValue();
+
+            String funcName = "stepRule" + ruleNum;
+
+            sb.append("func ").append(funcName).append("(c m.K, config m.K) (m.K, error)").beginBlock();
+
+            RuleInfo ruleInfo = ruleWriter.writeRule(
+                    r, sb, RuleType.REGULAR, ruleNum,
+                    "step", new FunctionParams(1));
+            assert !ruleInfo.alwaysMatches();
+
+            sb.appendIndentedLine("return c, noStep");
+            sb.endOneBlock().newLine();
         }
 
-        sb.writeIndent().append("return ").append(lookupsFuncName).append("(c, config, -1)\n");
+        for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
+            int ruleNum = entry.getKey();
+            Rule r = entry.getValue();
+
+            String funcName = "stepLookupRule" + ruleNum;
+
+            sb.append("func ").append(funcName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+
+            RuleInfo ruleInfo = ruleWriter.writeRule(
+                    r, sb, RuleType.REGULAR, ruleNum,
+                    "stepLookups", new FunctionParams(1));
+            assert !ruleInfo.alwaysMatches();
+
+            sb.appendIndentedLine("return c, noStep");
+            sb.endOneBlock().newLine();
+        }
+    }
+
+    private void writeStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
+        sb.append("func step(c m.K) (m.K, error)").beginBlock();
+        sb.writeIndent().append("config := c").newLine();
+        sb.appendIndentedLine("var result m.K");
+        sb.appendIndentedLine("var err error");
+        for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
+            int ruleNum = entry.getKey();
+            String funcName = "stepRule" + ruleNum;
+            sb.appendIndentedLine("result, err = ", funcName, "(c, config)");
+            sb.writeIndent().append("if err == nil").beginBlock();
+            sb.appendIndentedLine("return result, nil");
+            sb.endOneBlock();
+            sb.writeIndent().append("if _, isNoStep := err.(*noStepError); !isNoStep").beginBlock();
+            sb.appendIndentedLine("return result, err");
+            sb.endOneBlock();
+        }
+
+        sb.writeIndent().append("return stepLookups(c, config, -1)\n");
         sb.endOneBlock().newLine();
     }
 
-    private void writeLookupsStepFunction(GoStringBuilder sb, List<Rule> sortedRules, String funcName) {
-        String lookupsFuncName = funcName + "Lookups";
-        Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
-                .collect(Collectors.groupingBy(RuleWriter::hasLookups));
-
-        sb.append("func ").append(lookupsFuncName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
-
-        List<Rule> lookupRules = groupedByLookup.getOrDefault(true, Collections.emptyList());
-        for (Rule r : lookupRules) {
-            RuleInfo ruleInfo = ruleWriter.writeRule(
-                    r, sb, RuleType.REGULAR, ruleCounter,
-                    lookupsFuncName, new FunctionParams(1));
-            assert !ruleInfo.alwaysMatches();
+    private void writeLookupsStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
+        sb.append("func stepLookups(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+        sb.appendIndentedLine("var result m.K");
+        sb.appendIndentedLine("var err error");
+        for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
+            int ruleNum = entry.getKey();
+            String funcName = "stepLookupRule" + ruleNum;
+            sb.appendIndentedLine("result, err = ", funcName, "(c, config, guard)");
+            sb.writeIndent().append("if err == nil").beginBlock();
+            sb.appendIndentedLine("return result, nil");
+            sb.endOneBlock();
+            sb.writeIndent().append("if _, isNoStep := err.(*noStepError); !isNoStep").beginBlock();
+            sb.appendIndentedLine("return result, err");
+            sb.endOneBlock();
         }
 
-        sb.appendIndentedLine("return c, &noStepError{}");
-        sb.endAllBlocks(0);
-        sb.append("\n");
+        sb.appendIndentedLine("return c, noStep");
+        sb.endOneBlock().newLine();
     }
 
 

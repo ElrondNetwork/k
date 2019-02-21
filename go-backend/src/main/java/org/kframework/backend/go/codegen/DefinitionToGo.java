@@ -317,7 +317,8 @@ public class DefinitionToGo {
                         GoStringUtil.appendRuleComment(sb, r);
                         sb.newLine();
                     } else {
-                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleCounter, functionName, functionVars);
+                        int ruleNum = ruleCounter.consumeRuleIndex();
+                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleNum, functionName, functionVars);
                         if (ruleInfo.alwaysMatches()) {
                             unreachableCode = true;
                         }
@@ -364,7 +365,8 @@ public class DefinitionToGo {
                 // main!
                 List<Rule> rules = anywhereRules.get(functionLabel);
                 for (Rule r : rules) {
-                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleCounter, functionName, functionVars);
+                    int ruleNum = ruleCounter.consumeRuleIndex();
+                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleNum, functionName, functionVars);
                 }
 
                 // final return
