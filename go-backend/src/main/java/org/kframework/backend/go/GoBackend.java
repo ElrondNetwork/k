@@ -160,6 +160,12 @@ public class GoBackend implements Backend {
                     files.resolveKBase("include/go/main.go"),
                     files.resolveKompiled("main.go"));
 
+            //save .vscode config, it is convenient for VSCode users for debugging
+            copyFileAndReplaceVsCodeConfig(
+                    files.resolveKBase("include/go/vscode_launch.json"),
+                    files.resolveKompiled(".vscode/launch.json"),
+                    options.quickTest == null ? "" : '"' + options.quickTest + '"');
+
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);
         } catch (Exception e) {
@@ -174,6 +180,7 @@ public class GoBackend implements Backend {
             if (exit != 0) {
                 throw KEMException.criticalError("go generate returned nonzero exit code: " + exit + "\nExamine output to see errors.");
             }
+
             if (!options.srcOnly) {
                 System.out.println("Starting go build.");
                 exit = pb.command("go", "build").directory(files.resolveKompiled(".")).inheritIO().start().waitFor();
@@ -182,12 +189,6 @@ public class GoBackend implements Backend {
                 }
 
                 if (options.quickTest != null) {
-                    //save .vscode config, it is convenient VSCode users for debugging
-                    copyFileAndReplaceVsCodeConfig(
-                            files.resolveKBase("include/go/vscode_launch.json"),
-                            files.resolveKompiled(".vscode/launch.json"),
-                            options.quickTest);
-
                     // execute
                     String execCommand = "./" + files.getKompiledDirectoryName();
                     exit = pb.command(execCommand, options.quickTest).directory(files.resolveKompiled(".")).inheritIO().start().waitFor();

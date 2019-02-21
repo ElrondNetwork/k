@@ -9,7 +9,7 @@
       "program": "${workspaceFolder}/main.go",
       "stackTraceDepth": 50,
       "env": {},
-      "args": ["%INPUT_PGM_FILE%"]
+      "args": [%INPUT_PGM_FILE%]
     }
   ]
 }
