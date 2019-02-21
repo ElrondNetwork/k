@@ -3,6 +3,7 @@ package org.kframework.backend.go.codegen;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
+import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.Sorts;
 import org.kframework.kore.Sort;
@@ -33,19 +34,17 @@ public class SortsGen {
         sorts.add(Sorts.StringBuffer());
         sorts.add(Sorts.Bytes());
 
-        StringBuilder sb = new StringBuilder();
+        GoStringBuilder sb = new GoStringBuilder();
         sb.append("package ").append(packageManager.modelPackage.getName()).append(" \n\n");
         sb.append("// Sort ... a K sort identifier\n");
         sb.append("type Sort int\n\n");
 
         // const declaration
-        sb.append("const (\n");
+        int i = 0;
         for (Sort s : sorts) {
-            sb.append("\t// ").append(nameProvider.sortVariableName(s)).append(" ... ").append(s.name()).append("\n");
-            sb.append("\t").append(nameProvider.sortVariableName(s));
-            sb.append(" Sort = iota\n");
+            sb.appendIndentedLine("// ", nameProvider.sortVariableName(s), " ... ", s.name());
+            sb.appendIndentedLine("const ", nameProvider.sortVariableName(s), " Sort = ", Integer.toString(i++));
         }
-        sb.append(")\n\n");
 
         // sort name method
         sb.append("// Name ... Sort name\n");

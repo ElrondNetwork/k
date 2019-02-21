@@ -44,18 +44,14 @@ public class KLabelsGen {
         sb.append("// KLabel ... a k label identifier").newLine();
         sb.append("type KLabel int\n\n");
 
-        // const declaration
-        sb.append("const (\n");
-        sb.increaseIndent();
+        int i = 0;
         for (KLabel klabel : klabels) {
-            sb.writeIndent().append("// ").append(nameProvider.klabelVariableName(klabel)).append(" ... ").append(klabel.name()).newLine();
-            sb.writeIndent().append(nameProvider.klabelVariableName(klabel));
-            sb.append(" KLabel = iota\n");
+            sb.appendIndentedLine("// ", nameProvider.klabelVariableName(klabel), " ... ", klabel.name());
+            sb.appendIndentedLine("const ", nameProvider.klabelVariableName(klabel), " KLabel = ", Integer.toString(i++));
         }
         sb.appendIndentedLine("// LblDummy ... dummy label used in tests");
-        sb.appendIndentedLine("LblDummy KLabel = iota");
-        sb.decreaseIndent();
-        sb.append(")").newLine().newLine();
+        sb.appendIndentedLine("const LblDummy KLabel = ", Integer.toString(i++));
+        sb.newLine().newLine();
 
         sb.append("//KLabelForMap ... The KLabel that identifies maps").newLine();
         sb.append("const KLabelForMap KLabel = ").append(nameProvider.klabelVariableName(KORE.KLabel("_Map_"))).newLine();
