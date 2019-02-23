@@ -175,6 +175,23 @@ func TestIntHooks2(t *testing.T) {
 	assertIntOk(t, "1", z, err)
 }
 
+func TestIntHooksPow(t *testing.T) {
+	a := m.NewIntFromInt(2)
+	b := m.NewIntFromInt(10)
+	c := m.NewIntFromInt(1000)
+	var z m.K
+	var err error
+
+	z, err = intHooks.pow(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "1024", z, err)
+
+	z, err = intHooks.pow(b, a, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "100", z, err)
+
+	z, err = intHooks.powmod(a, b, c, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "24", z, err)
+}
+
 func assertIntOk(t *testing.T, expected string, i m.K, err error) {
 	if err != nil {
 		t.Error(err)

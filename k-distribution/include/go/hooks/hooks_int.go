@@ -136,11 +136,26 @@ func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 }
 
 func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	i1, ok1 := c1.(m.Int)
+	i2, ok2 := c2.(m.Int)
+	if !ok1 || !ok2 {
+		return m.NoResult, &hookInvalidArgsError{}
+	}
+	var z big.Int
+	z.Exp(i1.Value, i2.Value, nil)
+	return m.NewInt(&z), nil
 }
 
 func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	i1, ok1 := c1.(m.Int)
+	i2, ok2 := c2.(m.Int)
+	i3, ok3 := c2.(m.Int)
+	if !ok1 || !ok2 || !ok3 {
+		return m.NoResult, &hookInvalidArgsError{}
+	}
+	var z big.Int
+	z.Exp(i1.Value, i2.Value, i3.Value)
+	return m.NewInt(&z), nil
 }
 
 func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
