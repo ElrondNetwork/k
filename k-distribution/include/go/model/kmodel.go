@@ -66,11 +66,11 @@ type List struct {
 	Data  []K
 }
 
-// Array ... a type of KItem, TODO: document
+// Array ... array of K Items of fixed size
 type Array struct {
-	Sort  Sort
-	Label KLabel
-	Data  []K
+	Sort    Sort
+	Data    []*K
+	Default *K
 }
 
 // Int ... integer type, implemented via a big int
@@ -206,7 +206,7 @@ func (k Set) PrettyTreePrint(indent int) string {
 
 // PrettyTreePrint ... A tree representation of a KApply object
 func (k Array) PrettyTreePrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Array {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
+	return simplePrint(indent, fmt.Sprintf("Array {Sort:%s}", k.Sort.Name()))
 }
 
 // NewInt ... provides new Int instance
