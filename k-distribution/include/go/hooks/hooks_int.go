@@ -149,7 +149,7 @@ func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
-	i3, ok3 := c2.(m.Int)
+	i3, ok3 := c3.(m.Int)
 	if !ok1 || !ok2 || !ok3 {
 		return m.NoResult, &hookInvalidArgsError{}
 	}
