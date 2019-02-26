@@ -87,6 +87,9 @@ func TestStringSubstr(t *testing.T) {
 	result, err = stringHooks.substr(str, m.NewIntFromInt(0), m.NewIntFromInt(6), m.LblDummy, m.SortString, m.InternedBottom)
 	assertStringOk(t, "abcdef", result, err)
 
+	result, err = stringHooks.substr(str, m.NewIntFromInt(0), m.NewIntFromInt(1000), m.LblDummy, m.SortString, m.InternedBottom)
+	assertStringOk(t, "abcdef", result, err)
+
 	result, err = stringHooks.substr(str, m.NewIntFromInt(2), m.NewIntFromInt(3), m.LblDummy, m.SortString, m.InternedBottom)
 	assertStringOk(t, "c", result, err)
 

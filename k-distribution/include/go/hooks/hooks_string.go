@@ -126,8 +126,11 @@ func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort,
 	fromInt := from.Value.Uint64()
 	toInt := to.Value.Uint64()
 	length := uint64(len(str.String()))
-	if fromInt > toInt || fromInt > length || toInt > length {
-		return m.NoResult, &hookInvalidArgsError{}
+	if fromInt > toInt || fromInt > length {
+		return invalidArgsResult()
+	}
+	if toInt > length {
+		toInt = length
 	}
 	return m.NewString(str.String()[fromInt:toInt]), nil
 }
