@@ -11,7 +11,7 @@ const setHooks setHooksType = 0
 func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	s, isSet := kset.(m.Set)
 	if !isSet {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	_, exists := s.Data[e]
 	return m.Bool(exists), nil
@@ -33,7 +33,7 @@ func (setHooksType) concat(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, conf
 	s1, isSet1 := kset1.(m.Set)
 	s2, isSet2 := kset2.(m.Set)
 	if !isSet1 || !isSet2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	data := make(map[m.K]bool)
 	for e1 := range s1.Data {
@@ -49,7 +49,7 @@ func (setHooksType) difference(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, 
 	s1, isSet1 := kset1.(m.Set)
 	s2, isSet2 := kset2.(m.Set)
 	if !isSet1 || !isSet2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	data := make(map[m.K]bool)
 	for e1 := range s1.Data {
@@ -66,7 +66,7 @@ func (setHooksType) inclusion(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, c
 	s1, isSet1 := kset1.(m.Set)
 	s2, isSet2 := kset2.(m.Set)
 	if !isSet1 || !isSet2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	for e1 := range s1.Data {
 		_, existsInS2 := s2.Data[e1]
@@ -81,7 +81,7 @@ func (setHooksType) intersection(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort
 	s1, isSet1 := kset1.(m.Set)
 	s2, isSet2 := kset2.(m.Set)
 	if !isSet1 || !isSet2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	data := make(map[m.K]bool)
 	for e1 := range s1.Data {
@@ -96,18 +96,18 @@ func (setHooksType) intersection(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort
 func (setHooksType) choice(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	s, isSet := kset.(m.Set)
 	if !isSet {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	for e := range s.Data {
 		return e, nil
 	}
-	return m.NoResult, &hookInvalidArgsError{}
+	return invalidArgsResult()
 }
 
 func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	s, isSet := kset.(m.Set)
 	if !isSet {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.NewIntFromInt(len(s.Data)), nil
 }
@@ -115,7 +115,7 @@ func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	s, isSet := kset.(m.Set)
 	if !isSet {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var list []m.K
 	for e := range s.Data {
@@ -127,7 +127,7 @@ func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 func (setHooksType) list2set(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	if !isList {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	data := make(map[m.K]bool)
 	for _, e := range l.Data {

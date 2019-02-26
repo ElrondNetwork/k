@@ -14,7 +14,7 @@ func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config 
 	k1, ok1 := c1.(m.String)
 	k2, ok2 := c2.(m.String)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.NewString(k1.String() + k2.String()), nil
 }
@@ -39,7 +39,7 @@ func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	k1, ok1 := c1.(m.String)
 	k2, ok2 := c2.(m.String)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(k1.String() == k2.String()), nil
 }
@@ -48,7 +48,7 @@ func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	k1, ok1 := c1.(m.String)
 	k2, ok2 := c2.(m.String)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(k1.String() != k2.String()), nil
 }
@@ -56,7 +56,7 @@ func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i, ok := c.(m.Int)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	r := rune(i.Value.Uint64())
 	return m.String(string(r)), nil
@@ -67,14 +67,14 @@ func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, c
 	substr, ok2 := c2.(m.String)
 	firstIdx, ok3 := c3.(m.Int)
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !firstIdx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	firstIdxInt := firstIdx.Value.Uint64()
 	if firstIdxInt > uint64(len(str.String())) {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 
 	result := strings.Index(str.String()[firstIdxInt:], substr.String())
@@ -89,14 +89,14 @@ func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, 
 	substr, ok2 := c2.(m.String)
 	lastIdx, ok3 := c3.(m.Int)
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !lastIdx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	lastIdxInt := lastIdx.Value.Uint64()
 	if lastIdxInt > uint64(len(str.String())) {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	result := strings.LastIndex(str.String()[0:lastIdxInt], substr.String())
 	if result == -1 {
@@ -108,20 +108,20 @@ func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, 
 func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	k, ok := c.(m.String)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.NewIntFromInt(len(k.String())), nil
 }
 
 func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	str, ok1 := c1.(m.String)
-	from, ok2 := c2.(m.Int)
-	to, ok3 := c3.(m.Int)
+	from, ok2 := c2.(m.Int) // from is inclusive
+	to, ok3 := c3.(m.Int)   // to is exclusive
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !from.Value.IsUint64() || !to.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	fromInt := from.Value.Uint64()
 	toInt := to.Value.Uint64()
@@ -155,7 +155,7 @@ func (stringHooksType) base2string(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, co
 func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	k, ok := c.(m.String)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.KToken{Sort: sort, Value: k.String()}, nil
 }
@@ -177,7 +177,7 @@ func (stringHooksType) token2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K
 		return m.NoResult, &hookNotImplementedError{}
 	}
 
-	return m.NoResult, &hookInvalidArgsError{}
+	return invalidArgsResult()
 }
 
 func (stringHooksType) float2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

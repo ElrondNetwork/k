@@ -11,10 +11,10 @@ const arrayHooks arrayHooksType = 0
 func (arrayHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	len, ok := c1.(m.Int)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !len.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	lenUint := len.Value.Uint64()
 	data := make([]*m.K, lenUint)
@@ -36,10 +36,10 @@ func (arrayHooksType) lookup(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	arr, ok1 := c1.(m.Array)
 	idx, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	idxInt := idx.Value.Uint64()
 	if idxInt >= uint64(len(arr.Data)) {
@@ -52,10 +52,10 @@ func (arrayHooksType) remove(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	arr, ok1 := c1.(m.Array)
 	idx, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	idxInt := idx.Value.Uint64()
 	if idxInt < uint64(len(arr.Data)) {
@@ -68,10 +68,10 @@ func (arrayHooksType) update(c1 m.K, c2 m.K, newVal m.K, lbl m.KLabel, sort m.So
 	arr, ok1 := c1.(m.Array)
 	idx, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	idxInt := idx.Value.Uint64()
 	if idxInt >= 0 || idxInt < uint64(len(arr.Data)) {
@@ -85,10 +85,10 @@ func (arrayHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sor
 	idx, ok2 := c2.(m.Int)
 	list, ok3 := c3.(m.List)
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	idxInt := idx.Value.Uint64()
 	for i := uint64(0); i < uint64(len(list.Data)) && idxInt+i < uint64(len(arr.Data)); i++ {
@@ -102,10 +102,10 @@ func (arrayHooksType) fill(c1 m.K, c2 m.K, c3 m.K, elt m.K, lbl m.KLabel, sort m
 	from, ok2 := c2.(m.Int)
 	to, ok3 := c3.(m.Int)
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !from.Value.IsUint64() || !to.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	fromInt := from.Value.Uint64()
 	toInt := to.Value.Uint64()
@@ -119,10 +119,10 @@ func (arrayHooksType) inKeys(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	idx, ok2 := c1.(m.Int)
 	arr, ok1 := c2.(m.Array)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	idxInt := idx.Value.Uint64()
 	if idxInt >= uint64(len(arr.Data)) {

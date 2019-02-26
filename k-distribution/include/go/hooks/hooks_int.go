@@ -13,7 +13,7 @@ func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) == 0), nil
 }
@@ -22,7 +22,7 @@ func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) != 0), nil
 }
@@ -31,7 +31,7 @@ func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) <= 0), nil
 }
@@ -40,7 +40,7 @@ func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) < 0), nil
 }
@@ -49,7 +49,7 @@ func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) >= 0), nil
 }
@@ -58,7 +58,7 @@ func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.Bool(i1.Value.Cmp(i2.Value) > 0), nil
 }
@@ -67,7 +67,7 @@ func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Add(i1.Value, i2.Value)
@@ -78,7 +78,7 @@ func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Sub(i1.Value, i2.Value)
@@ -89,7 +89,7 @@ func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Mul(i1.Value, i2.Value)
@@ -111,7 +111,7 @@ func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if i2.Value.Cmp(m.IntZero.Value) == 0 {
 		return m.NoResult, &hookDivisionByZeroError{}
@@ -125,7 +125,7 @@ func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if i2.Value.Cmp(m.IntZero.Value) == 0 {
 		return m.NoResult, &hookDivisionByZeroError{}
@@ -139,7 +139,7 @@ func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Exp(i1.Value, i2.Value, nil)
@@ -151,7 +151,7 @@ func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, co
 	i2, ok2 := c2.(m.Int)
 	i3, ok3 := c3.(m.Int)
 	if !ok1 || !ok2 || !ok3 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Exp(i1.Value, i2.Value, i3.Value)
@@ -162,10 +162,10 @@ func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !i2.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Lsh(i1.Value, uint(i2.Value.Uint64()))
@@ -176,10 +176,10 @@ func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !i2.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Rsh(i1.Value, uint(i2.Value.Uint64()))
@@ -190,7 +190,7 @@ func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.And(i1.Value, i2.Value)
@@ -201,7 +201,7 @@ func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Or(i1.Value, i2.Value)
@@ -212,7 +212,7 @@ func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Xor(i1.Value, i2.Value)
@@ -222,7 +222,7 @@ func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i, ok := c.(m.Int)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Not(i.Value)
@@ -232,7 +232,7 @@ func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, erro
 func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i, ok := c.(m.Int)
 	if !ok {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Abs(i.Value)
@@ -243,7 +243,7 @@ func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if i1.Value.Cmp(i2.Value) >= 0 {
 		return c1, nil
@@ -255,7 +255,7 @@ func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	i1, ok1 := c1.(m.Int)
 	i2, ok2 := c2.(m.Int)
 	if !ok1 || !ok2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if i1.Value.Cmp(i2.Value) >= 0 {
 		return c2, nil

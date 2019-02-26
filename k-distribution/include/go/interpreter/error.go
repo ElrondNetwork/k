@@ -56,6 +56,10 @@ func (e *hookInvalidArgsError) Error() string {
 	return "Invalid argument(s) provided to hook."
 }
 
+func invalidArgsResult() (m.K, error) {
+    return m.NoResult, &hookInvalidArgsError{}
+}
+
 type hookDivisionByZeroError struct {
 }
 

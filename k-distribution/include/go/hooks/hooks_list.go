@@ -23,7 +23,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 	l1, isList1 := klist1.(m.List)
 	l2, isList2 := klist2.(m.List)
 	if !isList1 || !isList2 {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	data := make([]m.K, len(l1.Data)+len(l2.Data))
 	for _, x := range l1.Data {
@@ -38,7 +38,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	if !isList {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	for _, x := range l.Data {
 		if x == e {
@@ -52,10 +52,10 @@ func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config
 	l, isList := klist.(m.List)
 	i, isInt := index.(m.Int)
 	if !isList || !isInt {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	if !i.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return l.Data[i.Value.Uint64()], nil
 }
@@ -65,7 +65,7 @@ func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort
 	si, isInt1 := start.(m.Int)
 	ei, isInt2 := end.(m.Int)
 	if !isList || !isInt1 || isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	siUint := si.Value.Uint64()
 	eiUint := ei.Value.Uint64()
@@ -75,7 +75,7 @@ func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort
 func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(m.List)
 	if !isList {
-		return m.NoResult, &hookInvalidArgsError{}
+		return invalidArgsResult()
 	}
 	return m.NewIntFromInt(len(l.Data)), nil
 }
