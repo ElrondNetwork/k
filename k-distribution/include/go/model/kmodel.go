@@ -81,6 +81,9 @@ type Int struct {
 // IntZero ... K Int with value zero
 var IntZero = Int{Value: big.NewInt(0)}
 
+// IntMinusOne ... K Int with value -1
+var IntMinusOne = Int{Value: big.NewInt(-1)}
+
 // MInt ... machine integer
 type MInt int32
 
@@ -224,6 +227,13 @@ func NewIntFromInt64(x int64) Int {
 	return Int{Value: big.NewInt(x)}
 }
 
+// NewIntFromUint64 ... provides new Int instance
+func NewIntFromUint64(x uint64) Int {
+	var z big.Int
+	z.SetUint64(x)
+	return Int{Value: &z}
+}
+
 // ParseInt ... creates K int from string representation
 func ParseInt(s string) (Int, error) {
 	b := big.NewInt(0)
@@ -238,10 +248,10 @@ func ParseInt(s string) (Int, error) {
 
 // NewIntFromString ... same as ParseInt but panics instead of error
 func NewIntFromString(s string) Int {
-    i, err := ParseInt(s)
-    if err != nil {
-        panic(err)
-    }
+	i, err := ParseInt(s)
+	if err != nil {
+		panic(err)
+	}
 	return i
 }
 
@@ -258,6 +268,16 @@ func (k MInt) PrettyTreePrint(indent int) string {
 // PrettyTreePrint ... A tree representation of a KApply object
 func (k Float) PrettyTreePrint(indent int) string {
 	return simplePrint(indent, fmt.Sprintf("Float (%f)", k))
+}
+
+// NewString ... Creates a new K string object from a Go string
+func NewString(str string) String {
+	return String(str)
+}
+
+// String ... Yields a Go string representation of the K String
+func (k String) String() string {
+	return string(k)
 }
 
 // PrettyTreePrint ... A tree representation of a KApply object
