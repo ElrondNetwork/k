@@ -173,7 +173,7 @@ func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.List{Sort: m.SortList, Label: m.KLabelForList, Data: keyList}, nil
 }
 
-func (mapHooksType) inKeys(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) inKeys(key m.K, kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	mp, isMap := kmap.(m.Map)
 	if !isMap {
 		return invalidArgsResult()
