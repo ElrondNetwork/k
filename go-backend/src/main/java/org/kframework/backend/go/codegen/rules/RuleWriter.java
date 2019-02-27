@@ -161,7 +161,7 @@ public class RuleWriter {
 
         int lookupIndex = 0;
         for (Lookup lookup : lookups) {
-            String reapply = "return " + functionName + "("+ functionArgs.callParameters() +"config, " + ruleNum + ") // reapply";
+            String reapply = "return " + functionName + "(" + functionArgs.callParameters() + "config, " + ruleNum + ") // reapply";
 
             sb.appendIndentedLine("// lookup:", lookup.comment());
 
@@ -239,7 +239,8 @@ public class RuleWriter {
         String setChoiceVar = varPrefix + "Eval";
         String setVar = varPrefix + "Obj";
         String isSetVar = varPrefix + "TypeOk";
-        String setElemVar = varPrefix + "Elem";
+        String choiceKeyVar = varPrefix + "Key";
+        String choiceKeyKItem = varPrefix + "Elem";
         String choiceVar = varPrefix + "Result";
         String errVar = varPrefix + "Err";
 
@@ -250,15 +251,19 @@ public class RuleWriter {
 
         sb.writeIndent()
                 .append(setVar).append(", ").append(isSetVar).append(" := ")
-                .append(setChoiceVar).append(".(").append(expectedKType).append(")").newLine();
+                .append(setChoiceVar).append(".(*").append(expectedKType).append(")").newLine();
         sb.writeIndent().append("if !").append(isSetVar).beginBlock();
         sb.writeIndent().append(reapply).newLine();
         sb.endOneBlock();
 
-        sb.appendIndentedLine("var ", choiceVar, " = m.InternedBottom");
+        sb.appendIndentedLine("var ", choiceVar, " m.K = m.InternedBottom");
         int forIndent = sb.getCurrentIndent();
-        sb.writeIndent().append("for ").append(setElemVar).append(" := range ").append(setVar).append(".Data").beginBlock();
+        sb.writeIndent().append("for ").append(choiceKeyVar).append(" := range ").append(setVar).append(".Data").beginBlock();
         sb.appendIndentedLine("var ", errVar, " error");
+        sb.appendIndentedLine(choiceKeyKItem, ", ", errVar, " := ", choiceKeyVar, ".ToKItem()");
+        sb.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
+        sb.appendIndentedLine("return m.NoResult, ", errVar);
+        sb.endOneBlock();
 
         // this will be after the end of the for, reapply if we didn't hit return in the for loop
         sb.addCallbackAfterReturningFromBlock(forIndent, s -> {
@@ -269,7 +274,7 @@ public class RuleWriter {
             s.appendIndentedLine("return ", choiceVar, ", nil");
         });
 
-        lhsWriter.setNextSubject(setElemVar);
+        lhsWriter.setNextSubject(choiceKeyKItem);
         lhsWriter.apply(lookup.getLhs());
 
         // the function goes inside

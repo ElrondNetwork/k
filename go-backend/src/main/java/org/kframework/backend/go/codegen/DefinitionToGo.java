@@ -371,7 +371,7 @@ public class DefinitionToGo {
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
-                sb.writeIndent().append("return m.KApply{Label: lbl, List: ");
+                sb.writeIndent().append("return &m.KApply{Label: lbl, List: ");
                 if (functionVars.arity() == 0) {
                     sb.append("nil");
                 } else {
