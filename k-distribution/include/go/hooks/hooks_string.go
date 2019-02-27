@@ -11,8 +11,8 @@ type stringHooksType int
 const stringHooks stringHooksType = 0
 
 func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	k1, ok1 := c1.(m.String)
-	k2, ok2 := c2.(m.String)
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -36,36 +36,36 @@ func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 }
 
 func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	k1, ok1 := c1.(m.String)
-	k2, ok2 := c2.(m.String)
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.Bool(k1.String() == k2.String()), nil
+	return m.ToBool(k1.String() == k2.String()), nil
 }
 
 func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	k1, ok1 := c1.(m.String)
-	k2, ok2 := c2.(m.String)
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.Bool(k1.String() != k2.String()), nil
+	return m.ToBool(k1.String() != k2.String()), nil
 }
 
 func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	i, ok := c.(m.Int)
+	i, ok := c.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
 	}
 	r := rune(i.Value.Uint64())
-	return m.String(string(r)), nil
+	return m.NewString(string(r)), nil
 }
 
 func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	str, ok1 := c1.(m.String)
-	substr, ok2 := c2.(m.String)
-	firstIdx, ok3 := c3.(m.Int)
+	str, ok1 := c1.(*m.String)
+	substr, ok2 := c2.(*m.String)
+	firstIdx, ok3 := c3.(*m.Int)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -85,9 +85,9 @@ func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, c
 }
 
 func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	str, ok1 := c1.(m.String)
-	substr, ok2 := c2.(m.String)
-	lastIdx, ok3 := c3.(m.Int)
+	str, ok1 := c1.(*m.String)
+	substr, ok2 := c2.(*m.String)
+	lastIdx, ok3 := c3.(*m.Int)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -106,7 +106,7 @@ func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, 
 }
 
 func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	k, ok := c.(m.String)
+	k, ok := c.(*m.String)
 	if !ok {
 		return invalidArgsResult()
 	}
@@ -114,9 +114,9 @@ func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 }
 
 func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	str, ok1 := c1.(m.String)
-	from, ok2 := c2.(m.Int) // from is inclusive
-	to, ok3 := c3.(m.Int)   // to is exclusive
+	str, ok1 := c1.(*m.String)
+	from, ok2 := c2.(*m.Int) // from is inclusive
+	to, ok3 := c3.(*m.Int)   // to is exclusive
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -156,27 +156,27 @@ func (stringHooksType) base2string(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, co
 }
 
 func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	k, ok := c.(m.String)
+	k, ok := c.(*m.String)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return m.KToken{Sort: sort, Value: k.String()}, nil
+	return &m.KToken{Sort: sort, Value: k.String()}, nil
 }
 
 func (stringHooksType) token2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	if k, typeOk := c.(m.KToken); typeOk {
-		return m.String(k.Value), nil
+	if k, typeOk := c.(*m.KToken); typeOk {
+		return m.NewString(k.Value), nil
 	}
-	if k, typeOk := c.(m.Bool); typeOk {
-		return m.String(strconv.FormatBool(bool(k))), nil
+	if k, typeOk := c.(*m.Bool); typeOk {
+		return m.NewString(strconv.FormatBool(k.Value)), nil
 	}
-	if k, typeOk := c.(m.String); typeOk {
+	if k, typeOk := c.(*m.String); typeOk {
 		return k, nil // TODO: should do escaping
 	}
-	if k, typeOk := c.(m.Int); typeOk {
-		return m.String(k.Value.String()), nil
+	if k, typeOk := c.(*m.Int); typeOk {
+		return m.NewString(k.Value.String()), nil
 	}
-	if _, typeOk := c.(m.Float); typeOk {
+	if _, typeOk := c.(*m.Float); typeOk {
 		return m.NoResult, &hookNotImplementedError{}
 	}
 

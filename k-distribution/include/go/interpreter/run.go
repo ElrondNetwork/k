@@ -34,11 +34,12 @@ func Execute(kdir string, execFile string, options ExecuteOptions) {
 	fmt.Println(kinput.PrettyTreePrint(0))
 
 	// top cell initialization
-	initMap := make(map[m.K]m.K)
-	initMap[m.KToken{Sort: m.SortKConfigVar, Value: "$PGM"}] = kinput
-	kmap := m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: initMap}
-	evalK := m.KApply{Label: topCellInitializer, List: []m.K{kmap}}
-	kinit, err := eval(evalK, m.Bottom{})
+	initMap := make(map[m.KMapKey]m.K)
+    var pgmToken = &m.KToken{Sort: m.SortKConfigVar, Value: "$PGM"}
+    initMap[pgmToken.AsMapKey()] = kinput
+	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: initMap}
+	evalK := &m.KApply{Label: topCellInitializer, List: []m.K{kmap}}
+	kinit, err := eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

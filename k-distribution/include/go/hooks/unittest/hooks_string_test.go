@@ -108,8 +108,8 @@ func TestString2Token(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	expected := m.KToken{Sort: m.SortString, Value: "abc"}
-	if result != expected {
+	expected := &m.KToken{Sort: m.SortString, Value: "abc"}
+	if !result.Equals(expected) {
 		t.Errorf("Wrong KToken. Got: %s Want: %s.",
 			result.PrettyTreePrint(0),
 			expected.PrettyTreePrint(0))
@@ -120,7 +120,7 @@ func TestToken2String(t *testing.T) {
 	var result m.K
 	var err error
 
-	ktoken := m.KToken{Sort: m.SortKResult, Value: "token!"}
+	ktoken := &m.KToken{Sort: m.SortKResult, Value: "token!"}
 	result, err = stringHooks.token2string(ktoken, m.LblDummy, m.SortString, m.InternedBottom)
 	assertStringOk(t, "token!", result, err)
 
@@ -139,7 +139,7 @@ func assertStringOk(t *testing.T, expectedStr string, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)
 	}
-	k, isString := actual.(m.String)
+	k, isString := actual.(*m.String)
 	if !isString {
 		t.Error("Result is not a String.")
 		return

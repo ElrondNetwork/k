@@ -109,7 +109,7 @@ func TestArrayUpdateAll1(t *testing.T) {
 	var bottom = m.InternedBottom
 
 	arr, _ = arrayHooks.makeEmpty(m.NewIntFromInt(4), m.LblDummy, m.SortInt, m.InternedBottom)
-	list1 := m.List{Sort: m.SortInt, Data: []m.K{m.NewIntFromInt(1), m.NewIntFromInt(2)}}
+	list1 := &m.List{Sort: m.SortInt, Data: []m.K{m.NewIntFromInt(1), m.NewIntFromInt(2)}}
 	arrayHooks.updateAll(arr, m.NewIntFromInt(1), list1, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertArrayOk(t, bottom, []m.K{bottom, m.NewIntFromInt(1), m.NewIntFromInt(2), bottom}, arr, err)
 }
@@ -120,7 +120,7 @@ func TestArrayUpdateAll2(t *testing.T) {
 	var bottom = m.InternedBottom
 
 	arr, _ = arrayHooks.makeEmpty(m.NewIntFromInt(4), m.LblDummy, m.SortInt, m.InternedBottom)
-	list2 := m.List{Sort: m.SortInt, Data: []m.K{m.NewIntFromInt(1), m.NewIntFromInt(2), m.NewIntFromInt(3), m.NewIntFromInt(4)}}
+	list2 := &m.List{Sort: m.SortInt, Data: []m.K{m.NewIntFromInt(1), m.NewIntFromInt(2), m.NewIntFromInt(3), m.NewIntFromInt(4)}}
 	arrayHooks.updateAll(arr, m.NewIntFromInt(1), list2, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertArrayOk(t, bottom, []m.K{bottom, m.NewIntFromInt(1), m.NewIntFromInt(2), m.NewIntFromInt(3)}, arr, err)
 }
@@ -172,14 +172,14 @@ func assertArrayOk(t *testing.T, expectedDefault m.K, expectedElems []m.K, a m.K
 	if err != nil {
 		t.Error(err)
 	}
-	arr, isArray := a.(m.Array)
+	arr, isArray := a.(*m.Array)
 	if !isArray {
 		t.Error("Result is not an Array.")
 		return
 	}
-	if expectedDefault.PrettyTreePrint(0) != (*arr.Default).PrettyTreePrint(0) { // TODO: replace with new equals method
+	if !expectedDefault.Equals(arr.Default) {
 		t.Errorf("Unexpected Array default. Got: %s Want: %s.",
-			(*arr.Default).PrettyTreePrint(0),
+			arr.Default.PrettyTreePrint(0),
 			expectedDefault.PrettyTreePrint(0))
 	}
 	if len(expectedElems) != len(arr.Data) {
@@ -189,10 +189,10 @@ func assertArrayOk(t *testing.T, expectedDefault m.K, expectedElems []m.K, a m.K
 		return
 	}
 	for i := 0; i < len(expectedElems); i++ {
-		if (*arr.Data[i]).PrettyTreePrint(0) != expectedElems[i].PrettyTreePrint(0) { // TODO: replace with new equals method
+		if !arr.Data[i].Equals(expectedElems[i]) {
 			t.Errorf("Unexpected element at position %d. Got: %s Want: %s.",
 				i,
-				(*arr.Data[i]).PrettyTreePrint(0),
+				arr.Data[i].PrettyTreePrint(0),
 				expectedElems[i].PrettyTreePrint(0))
 		}
 	}
@@ -202,7 +202,7 @@ func assertBottomOk(t *testing.T, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)
 	}
-	_, isBottom := actual.(m.Bottom)
+	_, isBottom := actual.(*m.Bottom)
 	if !isBottom {
 		t.Errorf("Bottom expected. Got: %s", actual.PrettyTreePrint(0))
 		return

@@ -32,7 +32,7 @@ public class EvalFunctionGen {
         sb.append("\n\n");
 
         sb.append("func eval(c m.K, config m.K) (m.K, error)").beginBlock();
-        sb.writeIndent().append("kapp, isKapply := c.(m.KApply)\n");
+        sb.writeIndent().append("kapp, isKapply := c.(*m.KApply)\n");
         sb.writeIndent().append("if !isKapply").beginBlock();
         sb.writeIndent().append("return c, nil").newLine();
         sb.endOneBlock();

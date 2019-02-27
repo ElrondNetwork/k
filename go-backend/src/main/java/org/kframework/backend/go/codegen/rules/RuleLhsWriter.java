@@ -120,7 +120,7 @@ public class RuleLhsWriter extends VisitK {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
-        sb.append(subject).append(".(m.").append(type).append("); t");
+        sb.append(subject).append(".(*m.").append(type).append("); t");
     }
 
     @Override
@@ -195,7 +195,7 @@ public class RuleLhsWriter extends VisitK {
     public void apply(KToken k) {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
-        sb.append("if ").append(consumeSubject()).append(" == (");
+        sb.append("if ").append(consumeSubject()).append(".Equals(");
         RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
         sb.beginBlock(ToKast.apply(k));
@@ -208,7 +208,7 @@ public class RuleLhsWriter extends VisitK {
         if (alreadySeenVariables.contains(k)) {
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
-            sb.append("if ").append(consumeSubject()).append(" == ").append(varName);
+            sb.append("if ").append(consumeSubject()).append(".Equals(").append(varName).append(")");
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
             return;
         }
@@ -305,7 +305,7 @@ public class RuleLhsWriter extends VisitK {
                 apply(k.items().get(i));
             }
             // tail
-            nextSubject = "m.KSequence{Ks:" + kseqVar + ".Ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
+            nextSubject = "&m.KSequence{Ks:" + kseqVar + ".Ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
             apply(k.items().get(nrHeads)); // last element
             return;
         }

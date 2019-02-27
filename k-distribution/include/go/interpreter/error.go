@@ -1,6 +1,7 @@
 package %PACKAGE_INTERPRETER%
 
 import (
+    "errors"
 	"fmt"
 	m "%INCLUDE_MODEL%"
 )
@@ -66,3 +67,7 @@ type hookDivisionByZeroError struct {
 func (e *hookDivisionByZeroError) Error() string {
 	return "Division by zero."
 }
+
+var errInvalidMapKey = errors.New("invalid map key")
+
+var errBadSetElement = errors.New("type cannot be used as a set element")

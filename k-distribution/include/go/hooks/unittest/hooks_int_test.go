@@ -108,10 +108,10 @@ func TestIntHooks2(t *testing.T) {
 	var z m.K
 	var err error
 
-	z, err = intHooks.eq(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
+	z, err = intHooks.eq(m.NewIntFromInt(1), m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
 
-	z, err = intHooks.ne(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
+	z, err = intHooks.ne(m.NewIntFromInt(1), m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
 
 	z, err = intHooks.le(a, b, m.LblDummy, m.SortInt, m.InternedBottom)

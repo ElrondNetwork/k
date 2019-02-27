@@ -119,6 +119,9 @@ public class GoBackend implements Backend {
                     files.resolveKBase("include/go/model/kmodel.go"),
                     packageManager.modelPackage, "kmodel.go");
             packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/model/kmapkey.go"),
+                    packageManager.modelPackage, "kmapkey.go");
+            packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/model/error.go"),
                     packageManager.modelPackage, "error.go");
 

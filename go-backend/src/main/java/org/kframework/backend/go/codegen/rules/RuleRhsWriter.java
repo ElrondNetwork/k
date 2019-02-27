@@ -83,12 +83,12 @@ public class RuleRhsWriter extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            currentSb.append("m.KToken{Sort: m.").append(nameProvider.sortVariableName(sort));
+            currentSb.append("&m.KToken{Sort: m.").append(nameProvider.sortVariableName(sort));
             currentSb.append(", Value:");
             apply(value);
             currentSb.append("}");
         } else if (k.klabel().name().equals("#Bottom")) {
-            currentSb.append("m.Bottom{}");
+            currentSb.append("&m.Bottom{}");
         } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
             applyKApplyExecute(k);
         } else {
@@ -98,7 +98,7 @@ public class RuleRhsWriter extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("m.KApply{Label: m.").append(nameProvider.klabelVariableName(k.klabel()));
+        currentSb.append("&m.KApply{Label: m.").append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append(", List: []m.K{ // as-is ").append(k.klabel().name());
         currentSb.increaseIndent();
         for (K item : k.klist().items()) {
@@ -186,34 +186,40 @@ public class RuleRhsWriter extends VisitK {
             String hook = data.mainModule.sortAttributesFor().apply(k.sort()).<String>getOptional("hook").orElse("");
             switch (hook) {
             case "BOOL.Bool":
-                sb.append("m.Bool(").append(k.s()).append(")");
+                if (k.s().equals("true")) {
+                    sb.append("m.BoolTrue");
+                } else if (k.s().equals("false")) {
+                    sb.append("m.BoolFalse");
+                } else {
+                    throw new RuntimeException("Unexpected Bool token value: " + k.s());
+                }
                 return;
             case "MINT.MInt":
-                sb.append("m.MInt(").append(k.s()).append(")");
+                sb.append("&m.MInt{Value: ").append(k.s()).append("}");
                 return;
             case "INT.Int":
                 sb.append("m.NewIntFromString(\"").append(k.s()).append("\")");
                 return;
             case "FLOAT.Float":
-                sb.append("m.Float(").append(k.s()).append(")");
+                sb.append("&m.Float{Value: ").append(k.s()).append("}");
                 return;
             case "STRING.String":
                 String unquotedStr = StringUtil.unquoteKString(k.s());
                 String goStr = GoStringUtil.enquoteString(unquotedStr);
-                sb.append("m.String(").append(goStr).append(")");
+                sb.append("m.NewString(").append(goStr).append(")");
                 return;
             case "BYTES.Bytes":
                 String unquotedBytes = StringUtil.unquoteKString(k.s());
                 String goBytes = GoStringUtil.enquoteString(unquotedBytes);
-                sb.append("m.Bytes(").append(goBytes).append(")");
+                sb.append("&m.Bytes{Value: ").append(goBytes).append("}");
                 return;
             case "BUFFER.StringBuffer":
-                sb.append("m.StringBuffer{}");
+                sb.append("&m.StringBuffer{}");
                 return;
             }
         }
 
-        sb.append("m.KToken{Sort: m.").append(nameProvider.sortVariableName(k.sort()));
+        sb.append("&m.KToken{Sort: m.").append(nameProvider.sortVariableName(k.sort()));
         sb.append(", Value: ");
         sb.append(GoStringUtil.enquoteString(k.s()));
         sb.append("}");
@@ -237,7 +243,7 @@ public class RuleRhsWriter extends VisitK {
             KLabel listVar = lhsVars.listVars.get(varName);
             if (listVar != null) {
                 Sort sort = data.mainModule.sortFor().apply(listVar);
-                currentSb.append("m.List{Sort: m.").append(nameProvider.sortVariableName(sort));
+                currentSb.append("&m.List{Sort: m.").append(nameProvider.sortVariableName(sort));
                 currentSb.append(", Label: m.").append(nameProvider.klabelVariableName(listVar));
                 //currentSb.append(", ");
                 //currentSb.append(varOccurrance);
@@ -298,7 +304,7 @@ public class RuleRhsWriter extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         start();
-        currentSb.append("m.InjectedKLabel{Label: m.");
+        currentSb.append("&m.InjectedKLabel{Label: m.");
         currentSb.append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append("}");
         end();

@@ -14,19 +14,19 @@ func convertParserModelToKModel(pk koreparser.K) m.K {
 		for _, le := range v.List {
 			convertedList = append(convertedList, convertParserModelToKModel(le))
 		}
-		return m.KApply{Label: m.ParseKLabel(v.Label), List: convertedList}
+		return &m.KApply{Label: m.ParseKLabel(v.Label), List: convertedList}
 	case koreparser.InjectedKLabel:
-		return m.InjectedKLabel{Label: m.ParseKLabel(v.Label)}
+		return &m.InjectedKLabel{Label: m.ParseKLabel(v.Label)}
 	case koreparser.KToken:
 		return convertKToken(m.ParseSort(v.Sort), v.Value)
 	case koreparser.KVariable:
-		return m.KVariable{Name: v.Name}
+		return &m.KVariable{Name: v.Name}
 	case koreparser.KSequence:
 		var convertedKs []m.K
 		for _, ksElem := range v {
 			convertedKs = append(convertedKs, convertParserModelToKModel(ksElem))
 		}
-		return m.KSequence{Ks: convertedKs}
+		return &m.KSequence{Ks: convertedKs}
 	default:
 		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
 	}
@@ -44,14 +44,14 @@ func convertKToken(sort m.Sort, value string) m.K {
 		panic("Float token parse not implemented.")
 	case m.SortString:
 		unescapedStr := value // TODO: unescape value, see Ocaml impl unescape_k_string
-		return m.String(unescapedStr)
+		return m.NewString(unescapedStr)
 	case m.SortBool:
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			panic("Could not parse bool token: " + value)
 		}
-		return m.Bool(b)
+		return m.ToBool(b)
 	default:
-		return m.KToken{Value: value, Sort: sort}
+		return &m.KToken{Value: value, Sort: sort}
 	}
 }

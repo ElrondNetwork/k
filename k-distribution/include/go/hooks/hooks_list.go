@@ -10,18 +10,18 @@ const listHooks listHooksType = 0
 
 func (listHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	data := make([]m.K, 0)
-	return m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
 }
 
 func (listHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	data := make([]m.K, 1)
 	data[0] = e
-	return m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
 }
 
 func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	l1, isList1 := klist1.(m.List)
-	l2, isList2 := klist2.(m.List)
+	l1, isList1 := klist1.(*m.List)
+	l2, isList2 := klist2.(*m.List)
 	if !isList1 || !isList2 {
 		return invalidArgsResult()
 	}
@@ -32,25 +32,25 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 	for _, x := range l2.Data {
 		data = append(data, x)
 	}
-	return m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
 }
 
 func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	l, isList := klist.(m.List)
+	l, isList := klist.(*m.List)
 	if !isList {
 		return invalidArgsResult()
 	}
 	for _, x := range l.Data {
 		if x == e {
-			return m.Bool(true), nil
+			return m.BoolTrue, nil
 		}
 	}
-	return m.Bool(false), nil
+	return m.BoolFalse, nil
 }
 
 func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	l, isList := klist.(m.List)
-	i, isInt := index.(m.Int)
+	l, isList := klist.(*m.List)
+	i, isInt := index.(*m.Int)
 	if !isList || !isInt {
 		return invalidArgsResult()
 	}
@@ -61,19 +61,19 @@ func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config
 }
 
 func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	l, isList := klist.(m.List)
-	si, isInt1 := start.(m.Int)
-	ei, isInt2 := end.(m.Int)
+	l, isList := klist.(*m.List)
+	si, isInt1 := start.(*m.Int)
+	ei, isInt2 := end.(*m.Int)
 	if !isList || !isInt1 || isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
 		return invalidArgsResult()
 	}
 	siUint := si.Value.Uint64()
 	eiUint := ei.Value.Uint64()
-	return m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[siUint:eiUint]}, nil
+	return &m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[siUint:eiUint]}, nil
 }
 
 func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	l, isList := klist.(m.List)
+	l, isList := klist.(*m.List)
 	if !isList {
 		return invalidArgsResult()
 	}
