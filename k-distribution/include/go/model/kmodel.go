@@ -46,21 +46,21 @@ type KVariable struct {
 	Name string
 }
 
-// Map ... K Map with K Item keys and values, keys must implement interface KUsableAsKey
+// Map ... a type of KItem, TODO: document
 type Map struct {
 	Sort  Sort
 	Label KLabel
 	Data  map[KMapKey]K
 }
 
-// Set ... K Set, elements must implement interface KUsableAsKey
+// Set ... a type of KItem, TODO: document
 type Set struct {
 	Sort  Sort
 	Label KLabel
 	Data  map[KMapKey]bool
 }
 
-// List ... K list of K items
+// List ... a type of KItem, TODO: document
 type List struct {
 	Sort  Sort
 	Label KLabel
@@ -89,12 +89,12 @@ type MInt struct {
 	Value int32
 }
 
-// Float ... K float type
+// Float ... a type of KItem, TODO: document
 type Float struct {
 	Value float32
 }
 
-// String ... K string type
+// String ... a type of KItem, TODO: document
 type String struct {
 	Value string
 }
