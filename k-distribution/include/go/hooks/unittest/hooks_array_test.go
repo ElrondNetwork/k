@@ -103,6 +103,39 @@ func TestArrayMakeUpdateRemoveLookup2(t *testing.T) {
 	assertIntOk(t, "20", elem, err)
 }
 
+func TestArrayIncreaseSize(t *testing.T) {
+	var arr m.K
+	var err error
+	var elem m.K
+	var defElem = m.NewIntFromInt(120)
+
+	// create
+	arr, err = arrayHooks.make(m.NewIntFromInt(20), defElem, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertArrayOk(t, defElem, []m.K{defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem}, arr, err)
+
+	// grow
+	_, err = arrayHooks.update(arr, m.NewIntFromInt(11), m.NewIntFromInt(500), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertArrayOk(t, defElem, []m.K{defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, m.NewIntFromInt(500)}, arr, err)
+
+	// remove
+	_, err = arrayHooks.remove(arr, m.NewIntFromInt(11), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertArrayOk(t, defElem, []m.K{defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem, defElem}, arr, err)
+
+	// test below the limit
+	_, err = arrayHooks.update(arr, m.NewIntFromInt(19), m.NewIntFromInt(700), m.LblDummy, m.SortInt, m.InternedBottom)
+	if err != nil {
+		t.Error(err)
+	}
+	elem, err = arrayHooks.lookup(arr, m.NewIntFromInt(19), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "700", elem, err)
+
+	// test above the limit
+	_, err = arrayHooks.update(arr, m.NewIntFromInt(20), m.NewIntFromInt(700), m.LblDummy, m.SortInt, m.InternedBottom)
+	if err == nil {
+		t.Error("ErrIndexOutOfBounds expected")
+	}
+}
+
 func TestArrayUpdateAll1(t *testing.T) {
 	var arr m.K
 	var err error
@@ -162,37 +195,48 @@ func TestArrayInKeys(t *testing.T) {
 
 	// test
 	result, err = arrayHooks.inKeys(m.IntZero, arr, m.LblDummy, m.SortInt, m.InternedBottom)
-	assertBoolOk(t, false, result, err)
+	assertBoolOk(t, true, result, err)
 
 	result, err = arrayHooks.inKeys(m.NewIntFromInt(1), arr, m.LblDummy, m.SortInt, m.InternedBottom)
-	assertBoolOk(t, true, result, err)
+	assertBoolOk(t, false, result, err)
 }
 
 func assertArrayOk(t *testing.T, expectedDefault m.K, expectedElems []m.K, a m.K, err error) {
 	if err != nil {
 		t.Error(err)
 	}
+	/*expectedData := m.MakeDynamicArray(expectedMaxSize, expectedDefault)
+	for i := 0; i < len(expectedElems); i++ {
+		expectedData.Set(uint64(i), expectedElems[i])
+	}
+	expectedArray := &m.Array{Sort: m.SortInt, Data: expectedData}
+
+	if !a.Equals(expectedArray) {
+
+	}*/
+
 	arr, isArray := a.(*m.Array)
 	if !isArray {
 		t.Error("Result is not an Array.")
 		return
 	}
-	if !expectedDefault.Equals(arr.Default) {
+	if !expectedDefault.Equals(arr.Data.Default) {
 		t.Errorf("Unexpected Array default. Got: %s Want: %s.",
-			arr.Default.PrettyTreePrint(0),
+			arr.Data.Default.PrettyTreePrint(0),
 			expectedDefault.PrettyTreePrint(0))
 	}
-	if len(expectedElems) != len(arr.Data) {
+	sliceCopy := arr.Data.ToSlice()
+	if len(expectedElems) != len(sliceCopy) {
 		t.Errorf("Unexpected Array length. Got: %d Want: %d.",
-			len(arr.Data),
+			len(sliceCopy),
 			len(expectedElems))
 		return
 	}
 	for i := 0; i < len(expectedElems); i++ {
-		if !arr.Data[i].Equals(expectedElems[i]) {
+		if !sliceCopy[i].Equals(expectedElems[i]) {
 			t.Errorf("Unexpected element at position %d. Got: %s Want: %s.",
 				i,
-				arr.Data[i].PrettyTreePrint(0),
+				sliceCopy[i].PrettyTreePrint(0),
 				expectedElems[i].PrettyTreePrint(0))
 		}
 	}

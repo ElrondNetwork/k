@@ -69,9 +69,8 @@ type List struct {
 
 // Array ... array of K Items of fixed size
 type Array struct {
-	Sort    Sort
-	Data    []K
-	Default K
+	Sort Sort
+	Data *DynamicArray
 }
 
 // Int ... integer type, implemented via a big int
@@ -342,15 +341,10 @@ func (k *Array) Equals(arg K) bool {
 	if !typeOk {
 		return false
 	}
-	if len(k.Data) != len(other.Data) {
+	if k.Sort != other.Sort {
 		return false
 	}
-	for i := 0; i < len(k.Data); i++ {
-		if !k.Data[i].Equals(other.Data[i]) {
-			return false
-		}
-	}
-	return true
+	return k.Data.Equals(other.Data)
 }
 
 // PrettyTreePrint ... A tree representation of a KApply object
@@ -489,10 +483,10 @@ func (k *Bytes) PrettyTreePrint(indent int) string {
 
 // ToBool ... Convert Go bool to K Bool
 func ToBool(b bool) *Bool {
-    if b {
-        return BoolTrue
-    }
-    return BoolFalse
+	if b {
+		return BoolTrue
+	}
+	return BoolFalse
 }
 
 // Equals ... Deep comparison

@@ -8,20 +8,16 @@ type arrayHooksType int
 
 const arrayHooks arrayHooksType = 0
 
-func (arrayHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	len, ok := c1.(*m.Int)
+func (arrayHooksType) make(maxSize m.K, defValue m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	maxSizeInt, ok := maxSize.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
 	}
-	if !len.Value.IsUint64() {
+	if !maxSizeInt.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	lenUint := len.Value.Uint64()
-	data := make([]m.K, lenUint)
-	for i := uint64(0); i < lenUint; i++ {
-		data[i] = c2
-	}
-	return &m.Array{Sort: sort, Data: data, Default: c2}, nil
+	maxSizeUint := maxSizeInt.Value.Uint64()
+	return &m.Array{Sort: sort, Data: m.MakeDynamicArray(maxSizeUint, defValue)}, nil
 }
 
 func (t arrayHooksType) makeEmpty(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -32,75 +28,79 @@ func (t arrayHooksType) ctor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	return t.makeEmpty(c2, lbl, sort, config)
 }
 
-func (arrayHooksType) lookup(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	arr, ok1 := c1.(*m.Array)
-	idx, ok2 := c2.(*m.Int)
+func (arrayHooksType) lookup(karr m.K, kidx m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	arr, ok1 := karr.(*m.Array)
+	idx, ok2 := kidx.(*m.Int)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	idxInt := idx.Value.Uint64()
-	if idxInt >= uint64(len(arr.Data)) {
-		return arr.Default, nil
-	}
-	return arr.Data[idxInt], nil
+	idxUint := idx.Value.Uint64()
+	return arr.Data.Get(idxUint)
 }
 
-func (arrayHooksType) remove(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	arr, ok1 := c1.(*m.Array)
-	idx, ok2 := c2.(*m.Int)
+func (arrayHooksType) remove(karr m.K, kidx m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	arr, ok1 := karr.(*m.Array)
+	idx, ok2 := kidx.(*m.Int)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	idxInt := idx.Value.Uint64()
-	if idxInt < uint64(len(arr.Data)) {
-		arr.Data[idxInt] = arr.Default
+	idxUint := idx.Value.Uint64()
+	err := arr.Data.Set(idxUint, arr.Data.Default)
+	if err != nil {
+		return m.NoResult, err
 	}
 	return arr, nil
 }
 
-func (arrayHooksType) update(c1 m.K, c2 m.K, newVal m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	arr, ok1 := c1.(*m.Array)
-	idx, ok2 := c2.(*m.Int)
+func (arrayHooksType) update(karr m.K, kidx m.K, newVal m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	arr, ok1 := karr.(*m.Array)
+	idx, ok2 := kidx.(*m.Int)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	idxInt := idx.Value.Uint64()
-	if idxInt >= 0 || idxInt < uint64(len(arr.Data)) {
-		arr.Data[idxInt] = newVal
+	idxUint := idx.Value.Uint64()
+	err := arr.Data.Set(idxUint, newVal)
+	if err != nil {
+		return m.NoResult, err
 	}
 	return arr, nil
 }
 
-func (arrayHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	arr, ok1 := c1.(*m.Array)
-	idx, ok2 := c2.(*m.Int)
-	list, ok3 := c3.(*m.List)
+func (arrayHooksType) updateAll(karr m.K, kidx m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	arr, ok1 := karr.(*m.Array)
+	idx, ok2 := kidx.(*m.Int)
+	list, ok3 := klist.(*m.List)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
 	if !idx.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	idxInt := idx.Value.Uint64()
-	for i := uint64(0); i < uint64(len(list.Data)) && idxInt+i < uint64(len(arr.Data)); i++ {
-		arr.Data[idxInt+i] = list.Data[i]
+	idxUint := idx.Value.Uint64()
+	listLen := uint64(len(list.Data))
+	arr.Data.UpgradeSize(idxUint + listLen - 1) // upgrade size all at once
+	for i := uint64(0); i < listLen && idxUint+i < arr.Data.MaxSize; i++ {
+		err := arr.Data.Set(idxUint+i, list.Data[i])
+		if err != nil {
+			return m.NoResult, err
+		}
 	}
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (arrayHooksType) fill(c1 m.K, c2 m.K, c3 m.K, elt m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	arr, ok1 := c1.(*m.Array)
-	from, ok2 := c2.(*m.Int)
-	to, ok3 := c3.(*m.Int)
+func (arrayHooksType) fill(karr m.K, kfrom m.K, kto m.K, elt m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	arr, ok1 := karr.(*m.Array)
+	from, ok2 := kfrom.(*m.Int)
+	to, ok3 := kto.(*m.Int)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -109,8 +109,8 @@ func (arrayHooksType) fill(c1 m.K, c2 m.K, c3 m.K, elt m.K, lbl m.KLabel, sort m
 	}
 	fromInt := from.Value.Uint64()
 	toInt := to.Value.Uint64()
-	for i := fromInt; i < toInt && i < uint64(len(arr.Data)); i++ {
-		arr.Data[i] = elt
+	for i := fromInt; i < toInt && i < arr.Data.MaxSize; i++ {
+		arr.Data.Set(i, elt)
 	}
 	return arr, nil
 }
@@ -124,12 +124,11 @@ func (arrayHooksType) inKeys(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m
 	if !idx.Value.IsUint64() {
 		return invalidArgsResult()
 	}
-	idxInt := idx.Value.Uint64()
-	if idxInt >= uint64(len(arr.Data)) {
-		return m.BoolFalse, nil
+	idxUint := idx.Value.Uint64()
+	val, err := arr.Data.Get(idxUint)
+	if err != nil {
+		return m.NoResult, err
 	}
-	if arr.Data[idxInt].Equals(arr.Default) {
-		return m.BoolTrue, nil
-	}
-	return m.BoolFalse, nil
+	hasValue := !val.Equals(arr.Data.Default)
+	return m.ToBool(hasValue), nil
 }

@@ -122,6 +122,9 @@ public class GoBackend implements Backend {
                     files.resolveKBase("include/go/model/kmapkey.go"),
                     packageManager.modelPackage, "kmapkey.go");
             packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/model/dynarray.go"),
+                    packageManager.modelPackage, "dynarray.go");
+            packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/model/error.go"),
                     packageManager.modelPackage, "error.go");
 
@@ -131,16 +134,16 @@ public class GoBackend implements Backend {
                     packageManager.interpreterPackage, "kmodelconvert.go");
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/interpreter/init.go"),
-                    packageManager.interpreterPackage,"init.go");
+                    packageManager.interpreterPackage, "init.go");
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/interpreter/error.go"),
-                    packageManager.interpreterPackage,"error.go");
+                    packageManager.interpreterPackage, "error.go");
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/interpreter/trace.go"),
-                    packageManager.interpreterPackage,"trace.go");
+                    packageManager.interpreterPackage, "trace.go");
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/interpreter/run.go"),
-                    packageManager.interpreterPackage,"run.go");
+                    packageManager.interpreterPackage, "run.go");
 
             // copy: builtin hook files
             for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {
