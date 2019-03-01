@@ -115,18 +115,13 @@ public class GoBackend implements Backend {
             FileUtils.copyFile(files.resolveKBase("include/go/koreparser/gen.go"), files.resolveKompiled("koreparser/gen.go"));
 
             // copy: model
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/model/kmodel.go"),
-                    packageManager.modelPackage, "kmodel.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/model/kmapkey.go"),
-                    packageManager.modelPackage, "kmapkey.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/model/dynarray.go"),
-                    packageManager.modelPackage, "dynarray.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/model/error.go"),
-                    packageManager.modelPackage, "error.go");
+            for (String fileName : Arrays.asList(
+                    "dynarray.go", "equals.go", "error.go", "kmapkey.go", "kmodel.go",
+                    "prettyprint.go", "structprint.go", "util.go")) {
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/model/" + fileName),
+                        packageManager.modelPackage, fileName);
+            }
 
             // copy: interpreter
             packageManager.copyFileToPackage(

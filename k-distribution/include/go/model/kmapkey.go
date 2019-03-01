@@ -20,7 +20,7 @@ type KUsableAsKey interface {
 
 // AsMapKey ... Convert KToken to map key
 func (k *KToken) AsMapKey() KMapKey {
-	typeName := fmt.Sprintf("KToken_%s", k.Sort.Name())
+	typeName := fmt.Sprintf("KToken(%s)", k.Sort.Name())
 	return KMapKey{TypeName: typeName, Value: k.Value}
 }
 
@@ -39,15 +39,16 @@ func (k *String) AsMapKey() KMapKey {
 	return KMapKey{TypeName: "String", Value: k.Value}
 }
 
-// ToKItem ... convert a map key back to a regular K item
+// String ... string representation of the key
 func (mapKey KMapKey) String() string {
 	return fmt.Sprintf("%s_%s", mapKey.TypeName, mapKey.Value)
 }
 
 // ToKItem ... convert a map key back to a regular K item
 func (mapKey KMapKey) ToKItem() (K, error) {
-	if strings.HasPrefix(mapKey.TypeName, "KToken_") {
-		sortName := strings.TrimPrefix(mapKey.TypeName, "KToken_")
+	if strings.HasPrefix(mapKey.TypeName, "KToken(") && strings.HasSuffix(mapKey.TypeName, ")") {
+		sortName := strings.TrimPrefix(mapKey.TypeName, "KToken(")
+		sortName = strings.TrimSuffix(sortName, ")")
 		return &KToken{Sort: ParseSort(sortName), Value: mapKey.Value}, nil
 	}
 	switch mapKey.TypeName {

@@ -31,7 +31,7 @@ func Execute(kdir string, execFile string, options ExecuteOptions) {
 	parserK := koreparser.Parse(kast)
 	kinput := convertParserModelToKModel(parserK)
 	fmt.Println("input:")
-	fmt.Println(kinput.PrettyTreePrint(0))
+	fmt.Println(m.PrettyPrint(kinput))
 
 	// top cell initialization
 	initMap := make(map[m.KMapKey]m.K)
@@ -45,7 +45,7 @@ func Execute(kdir string, execFile string, options ExecuteOptions) {
 		return
 	}
 	fmt.Println("\n\ntop level init:")
-	fmt.Println(kinit.PrettyTreePrint(0))
+	fmt.Println(m.PrettyPrint(kinit))
 
 	// prepare trace
 	if options.TraceToFile {
@@ -56,7 +56,7 @@ func Execute(kdir string, execFile string, options ExecuteOptions) {
 	// execute
 	final, stepsMade := takeStepsNoThread(kinit, 10000)
 	fmt.Println("\n\nresult:")
-	fmt.Println(final.PrettyTreePrint(0))
+	fmt.Println(m.PrettyPrint(final))
 
 	fmt.Printf("\n\nsteps made: %d\n", stepsMade)
 

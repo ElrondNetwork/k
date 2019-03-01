@@ -222,8 +222,8 @@ func assertArrayOk(t *testing.T, expectedDefault m.K, expectedElems []m.K, a m.K
 	}
 	if !expectedDefault.Equals(arr.Data.Default) {
 		t.Errorf("Unexpected Array default. Got: %s Want: %s.",
-			arr.Data.Default.PrettyTreePrint(0),
-			expectedDefault.PrettyTreePrint(0))
+			m.PrettyPrint(arr.Data.Default),
+			m.PrettyPrint(expectedDefault))
 	}
 	sliceCopy := arr.Data.ToSlice()
 	if len(expectedElems) != len(sliceCopy) {
@@ -236,8 +236,8 @@ func assertArrayOk(t *testing.T, expectedDefault m.K, expectedElems []m.K, a m.K
 		if !sliceCopy[i].Equals(expectedElems[i]) {
 			t.Errorf("Unexpected element at position %d. Got: %s Want: %s.",
 				i,
-				sliceCopy[i].PrettyTreePrint(0),
-				expectedElems[i].PrettyTreePrint(0))
+				m.PrettyPrint(sliceCopy[i]),
+				m.PrettyPrint(expectedElems[i]))
 		}
 	}
 }
@@ -248,7 +248,7 @@ func assertBottomOk(t *testing.T, actual m.K, err error) {
 	}
 	_, isBottom := actual.(*m.Bottom)
 	if !isBottom {
-		t.Errorf("Bottom expected. Got: %s", actual.PrettyTreePrint(0))
+		t.Errorf("Bottom expected. Got: %s", m.PrettyPrint(actual))
 		return
 	}
 }

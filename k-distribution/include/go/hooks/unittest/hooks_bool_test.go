@@ -113,19 +113,12 @@ func TestBoolHooks(t *testing.T) {
 
 }
 
-func assertBoolOk(t *testing.T, expected bool, i m.K, err error) {
+func assertBoolOk(t *testing.T, expected bool, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)
 	}
-	actual := i.PrettyTreePrint(0)
-	var expectedStr string
-	if expected {
-		expectedStr = "Bool (true)"
-	} else {
-		expectedStr = "Bool (false)"
-	}
-
-	if actual != expectedStr {
-		t.Errorf("Unexpected result. Got:%s Want:%s", actual, expectedStr)
-	}
+    expectedK := m.ToBool(expected)
+    if !actual.Equals(expectedK) {
+        t.Errorf("Unexpected result. Got:%s Want:%s", m.PrettyPrint(actual), m.PrettyPrint(expectedK))
+    }
 }

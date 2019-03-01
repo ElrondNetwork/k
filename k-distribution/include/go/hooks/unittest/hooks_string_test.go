@@ -111,8 +111,8 @@ func TestString2Token(t *testing.T) {
 	expected := &m.KToken{Sort: m.SortString, Value: "abc"}
 	if !result.Equals(expected) {
 		t.Errorf("Wrong KToken. Got: %s Want: %s.",
-			result.PrettyTreePrint(0),
-			expected.PrettyTreePrint(0))
+			m.PrettyPrint(result),
+			m.PrettyPrint(expected))
 	}
 }
 

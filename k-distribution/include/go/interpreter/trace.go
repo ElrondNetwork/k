@@ -42,8 +42,8 @@ func traceInitialState(state m.K) {
 	if !traceEnabled {
 		return
 	}
-    traceWriter.WriteString("initial state:\n\n")
-	traceWriter.WriteString(state.PrettyTreePrint(0))
+	traceWriter.WriteString("initial state:\n\n")
+	traceWriter.WriteString(m.PrettyPrint(state))
 }
 
 func traceStepStart(stepNr int, currentState m.K) {
@@ -58,7 +58,7 @@ func traceStepEnd(stepNr int, currentState m.K) {
 		return
 	}
 	traceWriter.WriteString(fmt.Sprintf("\nstep #%d end; current state:\n\n", stepNr))
-	traceWriter.WriteString(currentState.PrettyTreePrint(0))
+	traceWriter.WriteString(m.PrettyPrint(currentState))
 }
 
 func traceNoStep(stepNr int, currentState m.K) {

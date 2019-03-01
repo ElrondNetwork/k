@@ -192,13 +192,12 @@ func TestIntHooksPow(t *testing.T) {
 	assertIntOk(t, "24", z, err)
 }
 
-func assertIntOk(t *testing.T, expected string, i m.K, err error) {
+func assertIntOk(t *testing.T, expectedAsStr string, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)
 	}
-	actual := i.PrettyTreePrint(0)
-	expectedPrint := "Int (" + expected + ")"
-	if actual != expectedPrint {
-		t.Errorf("Unexpected result. Got:%s Want:%s", actual, expectedPrint)
+	expectedK := m.NewIntFromString(expectedAsStr)
+	if !actual.Equals(expectedK) {
+		t.Errorf("Unexpected result. Got:%s Want:%s", m.PrettyPrint(actual), m.PrettyPrint(expectedK))
 	}
 }

@@ -26,7 +26,7 @@ func (e *stuckError) Error() string {
 	}
 	s := "Stuck! Function name: " + e.funcName + ". Args:"
 	for i, arg := range e.args {
-		s += fmt.Sprintf("\n\t%d: %s", i, arg.PrettyTreePrint(1))
+		s += fmt.Sprintf("\n%d: %s", i, m.PrettyPrint(arg))
 	}
 	return s
 }
