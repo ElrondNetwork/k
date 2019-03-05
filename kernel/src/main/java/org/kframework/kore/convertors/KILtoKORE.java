@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 
 package org.kframework.kore.convertors;
 
@@ -47,6 +47,7 @@ public class KILtoKORE extends KILTransformation<Object> {
     private org.kframework.kil.loader.Context context;
     private final boolean syntactic;
     private final boolean kore;
+    private String moduleName;
 
     public KILtoKORE(org.kframework.kil.loader.Context context, boolean syntactic, boolean kore) {
         this.context = context;
@@ -93,6 +94,9 @@ public class KILtoKORE extends KILTransformation<Object> {
     private org.kframework.definition.Module apply(Module mainModule, Set<Module> allKilModules,
                                                   Map<String, org.kframework.definition.Module> koreModules,
                                                   scala.collection.Seq<Module> visitedModules) {
+        // Record the current module name for constructing the label attribute.
+        moduleName = mainModule.getName();
+
         checkCircularModuleImports(mainModule, visitedModules);
         CheckListDecl.check(mainModule);
         Set<org.kframework.definition.Sentence> items = mainModule.getItems().stream()
@@ -178,9 +182,17 @@ public class KILtoKORE extends KILTransformation<Object> {
     }
 
     public org.kframework.definition.Bubble apply(StringSentence sentence) {
-        return Bubble(sentence.getType(), sentence.getContent(), convertAttributes(sentence)
-                .add("contentStartLine", Integer.class, sentence.getContentStartLine())
-                .add("contentStartColumn", Integer.class, sentence.getContentStartColumn()));
+        org.kframework.attributes.Att attrs =
+            convertAttributes(sentence)
+            .add("contentStartLine", Integer.class, sentence.getContentStartLine())
+            .add("contentStartColumn", Integer.class, sentence.getContentStartColumn());
+
+        String label = sentence.getLabel();
+        if (!label.isEmpty()) {
+            attrs = attrs.add("label", moduleName + "." + label);
+        }
+
+        return Bubble(sentence.getType(), sentence.getContent(), attrs);
     }
 
 

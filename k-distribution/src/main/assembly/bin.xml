@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Copyright (c) 2014-2018 K Team. All Rights Reserved. -->
+<!-- Copyright (c) 2014-2019 K Team. All Rights Reserved. -->
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
@@ -57,6 +57,26 @@
     <fileSet>
       <directory>${project.build.directory}/lib</directory>
       <outputDirectory>/lib</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../llvm-backend/target/build/install/bin</directory>
+      <outputDirectory>/bin</outputDirectory>
+      <fileMode>775</fileMode>
+      <directoryMode>775</directoryMode>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../llvm-backend/target/build/install/lib</directory>
+      <outputDirectory>/lib</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../llvm-backend/target/build/install/include</directory>
+      <outputDirectory>/include</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../haskell-backend/target/stack-install</directory>
+      <outputDirectory>/bin</outputDirectory>
+      <fileMode>775</fileMode>
+      <directoryMode>775</directoryMode>
     </fileSet>
   </fileSets>
 </assembly>

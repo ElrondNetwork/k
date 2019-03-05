@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 K Team. All Rights Reserved.
+// Copyright (c) 2013-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -19,7 +19,6 @@ import org.kframework.builtin.Sorts;
 import org.kframework.definition.Module;
 import org.kframework.kil.Attribute;
 import org.kframework.kil.loader.Context;
-import org.kframework.kompile.CompiledDefinition;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;

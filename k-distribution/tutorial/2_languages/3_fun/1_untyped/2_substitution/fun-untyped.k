@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 K Team. All Rights Reserved.
+// Copyright (c) 2013-2019 K Team. All Rights Reserved.
 require "substitution.k"
 //require "modules/pattern-matching.k"
 
@@ -218,7 +218,7 @@ module FUN-UNTYPED
   syntax Val ::= ConstructorName
 
   rule isVal(fun _) => true
-  syntax KVariable ::= Name
+  syntax KVar ::= Name
   syntax Name ::= freshName(Int)    [freshGenerator, function]
   rule freshName(I:Int) => {#parseToken("Name", "#" +String Int2String(I))}:>Name
 

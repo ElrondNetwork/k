@@ -1,20 +1,23 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 
 package org.kframework.backend.java.kil;
 
-import com.google.inject.Inject;
 import org.kframework.backend.java.kil.KItem.KItemOperations;
 import org.kframework.backend.java.symbolic.BuiltinFunction;
 import org.kframework.backend.java.symbolic.Equality.EqualityOperations;
 import org.kframework.backend.java.symbolic.JavaExecutionOptions;
 import org.kframework.backend.java.symbolic.SMTOperations;
 import org.kframework.backend.java.symbolic.Stage;
+import org.kframework.backend.java.util.FormulaSimplificationCache;
 import org.kframework.backend.java.util.Profiler2;
 import org.kframework.backend.java.util.StateLog;
+import org.kframework.backend.java.util.ToStringCache;
 import org.kframework.backend.java.util.Z3Wrapper;
 import org.kframework.krun.KRunOptions;
 import org.kframework.krun.api.io.FileSystem;
 import org.kframework.main.GlobalOptions;
+import org.kframework.unparser.KPrint;
+import org.kframework.backend.java.util.PrettyPrinter;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.options.SMTOptions;
@@ -38,6 +41,12 @@ public class GlobalContext implements Serializable {
     public final transient GlobalOptions globalOptions;
     public final transient Profiler2 profiler;
     public final StateLog stateLog;
+    public final PrettyPrinter prettyPrinter;
+    public final transient FunctionCache functionCache = new FunctionCache();
+    public final transient FormulaSimplificationCache formulaCache = new FormulaSimplificationCache();
+    public final transient ToStringCache toStringCache = new ToStringCache();
+
+    private boolean isExecutionPhase = true;
 
     public GlobalContext(
             FileSystem fs,
@@ -49,7 +58,9 @@ public class GlobalContext implements Serializable {
             Map<String, MethodHandle> hookProvider,
             FileUtil files,
             Stage stage,
-            Profiler2 profiler) {
+            Profiler2 profiler,
+            KPrint kprint,
+            org.kframework.definition.Definition coreDefinition) {
         this.fs = fs;
         this.globalOptions = globalOptions;
         this.krunOptions = krunOptions;
@@ -59,25 +70,12 @@ public class GlobalContext implements Serializable {
         this.files = files;
         this.equalityOps = new EqualityOperations(() -> def);
         this.stateLog = new StateLog(javaExecutionOptions, files);
-        this.constraintOps = new SMTOperations(() -> def, smtOptions, new Z3Wrapper(smtOptions, kem, globalOptions, files, stateLog), kem, globalOptions);
+        this.constraintOps = new SMTOperations(() -> def, smtOptions,
+                new Z3Wrapper(smtOptions, kem, javaExecutionOptions, files, stateLog), kem, javaExecutionOptions);
         this.kItemOps = new KItemOperations(stage, javaExecutionOptions.deterministicFunctions, kem, this::builtins, globalOptions);
         this.stage = stage;
         this.profiler = profiler;
-    }
-
-    @Inject
-    public GlobalContext(
-            GlobalOptions globalOptions,
-            SMTOptions smtOptions,
-            KExceptionManager kem,
-            KRunOptions krunOptions,
-            JavaExecutionOptions javaExecutionOptions,
-            FileSystem fs,
-            FileUtil files,
-            Map<String, MethodHandle> hookProvider,
-            Stage stage,
-            Profiler2 profiler) {
-        this(fs, globalOptions, krunOptions, javaExecutionOptions, kem, smtOptions, hookProvider, files, stage, profiler);
+        prettyPrinter = new PrettyPrinter(kprint, coreDefinition);
     }
 
     private transient BuiltinFunction builtinFunction;
@@ -98,4 +96,11 @@ public class GlobalContext implements Serializable {
         return def;
     }
 
+    public boolean isExecutionPhase() {
+        return isExecutionPhase;
+    }
+
+    public void setExecutionPhase(boolean executionPhase) {
+        isExecutionPhase = executionPhase;
+    }
 }

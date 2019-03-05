@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 
 package org.kframework.backend.java.kil;
 
@@ -27,10 +27,6 @@ public class BuiltinListTest {
 
     @Before
     public void setUp() {
-        when(globalContext.getDefinition()).thenReturn(definition);
-        when(definition.subsorts()).thenReturn(subsorts);
-        when(subsorts.isSubsortedEq(Sort.LIST, Sort.LIST)).thenReturn(true);
-        when(subsorts.isSubsortedEq(Sort.LIST, Sort.INT)).thenReturn(true);
     }
 
     @Test

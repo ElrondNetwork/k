@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 package org.kframework.main;
 
 import java.util.EnumSet;
@@ -89,4 +89,11 @@ public final class GlobalOptions {
 
     @Parameter(names={"--warnings-to-errors", "-w2e"}, description="Convert warnings to errors.")
     public boolean warnings2errors = false;
+
+    @Parameter(names={"--shutdown-wait-time"}, description="If the option is set, a shutdown hook will be registered " +
+            "that, once invoked, interrupts the main thread and waits its termination. The wait time is the argument " +
+            "of this option, in ms. Useful if K is interrupted by Ctrl+C, because it allows the backend to detect " +
+            "interruption and print diagnostics information. Currently interruption detection is implemented in " +
+            "Java Backend. If K is invoked from KServer (e.g. Nailgun), the option is ignored.")
+    public int shutdownWaitTime = 0;
 }

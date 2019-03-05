@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.util;
 
 import com.google.common.collect.Sets;
@@ -144,7 +144,8 @@ public class RewriteEngineUtils {
                 if (!evaluatedReq.equals(BoolToken.TRUE)) {
                     if (!evaluatedReq.isGround()
                             && context.getTopConstraint() != null
-                            && context.getTopConstraint().implies(ConjunctiveFormula.of(context.global()).add(evaluatedReq, BoolToken.TRUE), Collections.emptySet())) {
+                            && context.getTopConstraint().implies(ConjunctiveFormula.of(context.global()).add(evaluatedReq, BoolToken.TRUE), Collections.emptySet(),
+                            new FormulaContext(FormulaContext.Kind.FunctionRule, rule))) {
                         i++;
                         continue;
                     }

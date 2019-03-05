@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 
 package org.kframework.backend.java.symbolic;
 
@@ -112,7 +112,6 @@ public class Equality implements Serializable {
     public boolean isSimplifiableByCurrentAlgorithm() {
         return !leftHandSide.isSymbolic() && !rightHandSide.isSymbolic()
                 && (!(leftHandSide instanceof BuiltinMap) && !(rightHandSide instanceof BuiltinMap))
-                && !(leftHandSide instanceof BuiltinList) && !(rightHandSide instanceof BuiltinList)
                 && !(leftHandSide instanceof BuiltinSet) && !(rightHandSide instanceof BuiltinSet)
                 || BuiltinMap.isMapUnifiableByCurrentAlgorithm(leftHandSide, rightHandSide)
                 || BuiltinSet.isSetUnifiableByCurrentAlgorithm(leftHandSide, rightHandSide);

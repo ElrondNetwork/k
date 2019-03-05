@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 package org.kframework.unparser;
 
 import com.beust.jcommander.Parameter;
@@ -91,4 +91,10 @@ public class PrintOptions {
 
     @Parameter(names={"--output-tokast"}, listConverter=StringListConverter.class, description="KLabels to output as KAST tokens.")
     public List<String> tokastKLabels = new ArrayList<String>();
+
+    @Parameter(names={"--no-alpha-renaming"}, listConverter=StringListConverter.class, description="KLabels to output as KAST tokens.")
+    public boolean noAlphaRenaming = false;
+
+    @Parameter(names={"--no-sort-collections"}, listConverter=StringListConverter.class, description="Do not sort collections before printing (for speed).")
+    public boolean noSortCollections = false;
 }

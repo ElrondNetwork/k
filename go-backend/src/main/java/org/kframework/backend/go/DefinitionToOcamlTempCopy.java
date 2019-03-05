@@ -32,7 +32,6 @@ import org.kframework.compile.FloatBuiltin;
 import org.kframework.compile.GenerateSortPredicateRules;
 import org.kframework.compile.IncompleteCellUtils;
 import org.kframework.compile.LiftToKSequence;
-import org.kframework.compile.MIntBuiltin;
 import org.kframework.compile.NormalizeVariables;
 import org.kframework.compile.RewriteToTop;
 import org.kframework.definition.Module;
@@ -150,10 +149,6 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         static {
             ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
             builder.put("BOOL.Bool", s -> "(Bool " + s + ")");
-            builder.put("MINT.MInt", s -> {
-                MIntBuiltin m = MIntBuiltin.of(s);
-                return "(MInt (" + m.precision() + ", Z.of_string \"" + m.value() + "))";
-            });
             builder.put("INT.Int", s -> "(Int (Z.of_string \"" +  s + "\"))");
             builder.put("FLOAT.Float", s -> {
                 FloatBuiltin f = FloatBuiltin.of(s);
@@ -166,10 +161,6 @@ public class DefinitionToOcamlTempCopy implements Serializable {
 
         builder = ImmutableMap.builder();
         builder.put("BOOL.Bool", s -> "(Bool " + s + ")");
-        builder.put("MINT.MInt", s -> {
-            MIntBuiltin m = MIntBuiltin.of(s);
-            return "(MInt (" + m.precision() + ", Z.of_string \"" + m.value() + "))";
-        });
         builder.put("INT.Int", s -> "(Lazy.force " + encodeStringToIntConst(s) + ")");
         builder.put("FLOAT.Float", s -> {
             FloatBuiltin f = FloatBuiltin.of(s);

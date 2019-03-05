@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 K Team. All Rights Reserved.
+// Copyright (c) 2016-2019 K Team. All Rights Reserved.
 package org.kframework.compile.checks;
 
 import com.google.common.collect.ImmutableSet;
@@ -81,7 +81,7 @@ public class CheckKLabels {
         }
     }
 
-    private final ImmutableSet<String> internalNames = ImmutableSet.of("#cells", "#dots", "#noDots", "#fun2", "#fun3");
+    private final ImmutableSet<String> internalNames = ImmutableSet.of("#cells", "#dots", "#noDots", "#Or", "#fun2", "#fun3");
 
     private boolean isInternalKLabel(String name, Module m) {
         return name.startsWith("#SemanticCastTo") || internalNames.contains(name) || (name.startsWith("is") && m.definedSorts().apply(Outer.parseSort(name.substring(2))));

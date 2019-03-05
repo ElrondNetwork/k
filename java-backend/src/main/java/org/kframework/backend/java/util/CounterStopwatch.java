@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2018 K Team. All Rights Reserved.
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.util;
 
 /**
@@ -17,7 +17,7 @@ public class CounterStopwatch implements Comparable<CounterStopwatch> {
     private int level = 0;
     private int count;
 
-    CounterStopwatch(String name) {
+    public CounterStopwatch(String name) {
         this.name = name;
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 K Team. All Rights Reserved.
+// Copyright (c) 2018-2019 K Team. All Rights Reserved.
 package org.kframework.backend.kore;
 
 import com.google.inject.Inject;
@@ -10,6 +10,7 @@ import org.kframework.compile.Backend;
 import org.kframework.compile.ConcretizeCells;
 import org.kframework.compile.ConfigurationInfoFromModule;
 import org.kframework.compile.ExpandMacros;
+import org.kframework.compile.GeneratedTopFormat;
 import org.kframework.compile.GenerateSortPredicateRules;
 import org.kframework.compile.GenerateSortPredicateSyntax;
 import org.kframework.compile.LabelInfo;
@@ -116,17 +117,17 @@ public class KoreBackend implements Backend {
         DefinitionTransformer generateSortPredicateSyntax = DefinitionTransformer.from(new GenerateSortPredicateSyntax()::gen, "adding sort predicate productions");
         DefinitionTransformer subsortKItem = DefinitionTransformer.from(Kompile::subsortKItem, "subsort all sorts to KItem");
         DefinitionTransformer expandMacros = DefinitionTransformer.fromSentenceTransformer((m, s) -> new ExpandMacros(m, files, kompileOptions, false).expand(s), "expand macros");
-        Function1<Definition, Definition> resolveFreshConstants = d -> DefinitionTransformer.from(new ResolveFreshConstants(d, true)::resolve, "resolving !Var variables").apply(d);
+        Function1<Definition, Definition> resolveFreshConstants = d -> DefinitionTransformer.from(m -> GeneratedTopFormat.resolve(new ResolveFreshConstants(d, true).resolve(m)), "resolving !Var variables").apply(d);
         Function1<Definition, Definition> resolveIO = (d -> Kompile.resolveIOStreams(kem, d));
 
         return def -> resolveIO
                 .andThen(resolveFun)
                 .andThen(resolveStrict)
-                .andThen(expandMacros)
                 .andThen(resolveAnonVars)
                 .andThen(d -> new ResolveContexts(kompileOptions).resolve(d))
                 .andThen(resolveHeatCoolAttribute)
                 .andThen(resolveSemanticCasts)
+                .andThen(expandMacros)
                 .andThen(generateSortPredicateSyntax)
                 .andThen(AddImplicitComputationCell::transformDefinition)
                 .andThen(resolveFreshConstants)

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import org.kframework.builtin.Sorts;
@@ -7,7 +7,6 @@ import org.kframework.utils.errorsystem.KEMException;
 
 import java.io.ObjectStreamException;
 import java.io.Serializable;
-import java.util.List;
 import org.kframework.kore.KORE;
 import scala.collection.Seq;
 
@@ -48,7 +47,7 @@ public final class Sort implements org.kframework.kore.Sort, Serializable {
     public static final Sort STRING         =   Sort.of(Sorts.String());
     public static final Sort BIT_VECTOR     =   Sort.of(Sorts.MInt());
 
-    public static final Sort KVARIABLE      =   Sort.of(KORE.Sort("KVariable"));
+    public static final Sort KVARIABLE      =   Sort.of(KORE.Sort("KVar"));
 
     public static final Sort META_VARIABLE  =   Sort.of(KORE.Sort("MetaVariable"));
     public static final Sort BOTTOM         =   Sort.of(KORE.Sort("Bottom"));

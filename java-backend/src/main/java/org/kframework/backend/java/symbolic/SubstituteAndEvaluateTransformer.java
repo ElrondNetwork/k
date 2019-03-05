@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.symbolic;
 
 import org.kframework.backend.java.builtins.BitVector;
@@ -36,8 +36,8 @@ public class SubstituteAndEvaluateTransformer extends CopyOnWriteTransformer {
         this.substitution = substitution;
     }
 
-    protected boolean proceed(JavaSymbolicObject object) {
-        return object.canSubstituteAndEvaluate(substitution, context.getTopConstraint());
+    protected boolean proceed(Term term) {
+        return term.canSubstituteAndEvaluate(substitution, context);
     }
 
     @Override

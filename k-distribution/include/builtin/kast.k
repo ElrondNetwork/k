@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2018 K Team. All Rights Reserved.
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 
 // Module defining only the sorts K and KString, useful for modularity
 module SORT-K
@@ -73,15 +73,17 @@ module KSEQ-SYMBOLIC
   syntax KBott      ::= KConfigVar
   syntax KLabel     ::= #KVariable
 
-  syntax #Pattern ::= "#True" [klabel(#True), symbol]
-  syntax #Pattern ::= "#False" [klabel(#False), symbol]
-  syntax #Pattern ::= K
-                    | "(" #Pattern ")" [bracket]
-                    | "#Not" "(" #Pattern ")" [klabel(#Not), symbol, mlOp]
-                    | "#Ceil" "(" #Pattern ")" [klabel(#Ceil), symbol, mlOp]
-                    > #Pattern "#Equals" #Pattern [klabel(#Equals), symbol, mlOp, format(%i%1%d%n%2%n%i%3%d)]
-                    > #Pattern "#And" #Pattern [klabel(#And), symbol, assoc, comm, unit(#True), mlOp, format(%i%1%d%n%2%n%i%3%d)]
-                    > #Pattern "#Or" #Pattern [klabel(#Or), symbol, assoc, comm, unit(#False), mlOp, format(%i%1%d%n%2%n%i%3%d)]
+  syntax KBott ::= "#True" [klabel(#True), symbol, poly(0)]
+  syntax KBott ::= "#False" [klabel(#False), symbol, poly(0)]
+  syntax KBott ::= "#Not" "(" K ")" [klabel(#Not), symbol, mlOp, poly(0, 1)]
+                 | "#Ceil" "(" K ")" [klabel(#Ceil), symbol, mlOp, poly(0; 1)]
+                 | "#Floor" "(" K ")" [klabel(#Floor), symbol, mlOp, poly(0; 1)]
+                 > K "#Equals" K [klabel(#Equals), symbol, mlOp, format(%i%1%d%n%2%n%i%3%d), poly(0; 1, 2)]
+                 > K "#And" K [klabel(#And), symbol, assoc, left, comm, unit(#True), mlOp, poly(0, 1, 2), format(%i%1%d%n%2%n%i%3%d)]
+                 > K "#Or" K [klabel(#Or), symbol, assoc, left, comm, unit(#False), mlOp, poly(0, 1, 2), format(%i%1%d%n%2%n%i%3%d)]
+                 > K "#Implies" K [klabel(#Implies), symbol, mlOp, poly(0, 1, 2), format(%i%1%d%n%2%n%i%3%d)]
+                 > "#Exists" #KVariable "." K [klabel(#Exists), symbol, mlOp, poly(0, 2)]
+                 | "#Forall" #KVariable "." K [klabel(#Forall), symbol, mlOp, poly(0, 2)]
 endmodule
 
 module KCELLS

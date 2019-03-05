@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 K Team. All Rights Reserved.
+// Copyright (c) 2013-2019 K Team. All Rights Reserved.
 package org.kframework.backend.java.kil;
 
 import java.util.Iterator;
@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.kframework.backend.java.symbolic.Transformer;
 import org.kframework.backend.java.symbolic.Visitor;
 import org.kframework.backend.java.util.Constants;
-import org.kframework.kil.ASTNode;
 
 import com.google.common.base.Joiner;
 import org.kframework.kore.K;

@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 K Team. All Rights Reserved.
+// Copyright (c) 2013-2019 K Team. All Rights Reserved.
 
 require "substitution.k"
 
@@ -6,12 +6,11 @@ module LAMBDA
   imports DOMAINS
   imports SUBSTITUTION
 
-  syntax Val ::= Id
-               | "lambda" Id "." Exp  [binder]
+  syntax Val ::= KVar
+               | "lambda" KVar "." Exp  [binder]
   syntax Exp ::= Val
                | Exp Exp              [left]
                | "(" Exp ")"          [bracket]
-  syntax KVariable ::= Id
 
-  rule (lambda X:Id . E:Exp) V:Val => E[V / X]   [anywhere]
+  rule (lambda X:KVar . E:Exp) V:Val => E[V / X]   [anywhere]
 endmodule

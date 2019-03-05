@@ -1,14 +1,15 @@
-// Copyright (c) 2014-2018 K Team. All Rights Reserved.
+// Copyright (c) 2014-2019 K Team. All Rights Reserved.
 
 package org.kframework.parser
 
 import org.kframework.attributes.{Source, Location}
 import org.kframework.definition.Production
+import org.kframework.kore.KORE.Sort
 import java.util._
 import java.lang.Iterable
 import org.pcollections.{ConsPStack, PStack}
 import collection.JavaConverters._
-import org.apache.commons.lang3.StringEscapeUtils
+import org.kframework.utils.StringUtil
 
 import scala.collection.mutable;
 
@@ -27,7 +28,7 @@ trait HasChildren {
 }
 
 case class Constant private(value: String, production: Production) extends ProductionReference {
-  override def toString = "#token(" + production.sort + ",\"" + StringEscapeUtils.escapeJava(value) + "\")"
+  override def toString = "#token(" + production.sort + "," + StringUtil.enquoteKString(value) + ")"
   override lazy val hashCode: Int = scala.runtime.ScalaRunTime._hashCode(Constant.this);
 }
 
@@ -38,7 +39,7 @@ case class TermCons private(items: PStack[Term], production: Production)
   def `with`(i: Int, e: Term) = TermCons(items.`with`(items.size() - 1 - i, e), production, location, source)
 
   def replaceChildren(newChildren: Collection[Term]) = TermCons(ConsPStack.from(newChildren), production, location, source)
-  override def toString() = production.klabel.getOrElse("NOKLABEL") + "(...)"
+  override def toString() = new TreeNodesToKORE(s => Sort(s), false).apply(this).toString()
 
   override lazy val hashCode: Int = scala.runtime.ScalaRunTime._hashCode(TermCons.this);
 }
