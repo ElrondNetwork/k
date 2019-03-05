@@ -1,3 +1,4 @@
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.gopackage;
 
 import org.apache.commons.io.FileUtils;

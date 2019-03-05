@@ -1,3 +1,4 @@
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.Sets;

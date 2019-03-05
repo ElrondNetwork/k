@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2018 Runtime Verification, Inc. (RV-Match team). All Rights Reserved.
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go;
 
 import com.google.common.base.Joiner;

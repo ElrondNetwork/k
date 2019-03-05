@@ -1,3 +1,4 @@
+// Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go;
 
 import edu.uci.ics.jung.graph.DirectedGraph;
