@@ -9,7 +9,7 @@ import (
 )
 
 func callKast(kdir string, programPath string) []byte {
-	cmd := exec.Command("/home/andrei/elrond/k/k-distribution/target/release/k/bin/kast", programPath)
+	cmd := exec.Command("kast", programPath)
 	cmd.Dir = kdir
 	out, err := cmd.Output()
 	if err != nil {
