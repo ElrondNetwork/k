@@ -43,7 +43,7 @@ func convertKToken(sort m.Sort, value string) m.K {
 	case m.SortFloat:
 		panic("Float token parse not implemented.")
 	case m.SortString:
-		unescapedStr := value // TODO: unescape value, see Ocaml impl unescape_k_string
+		unescapedStr := string(koreparser.UnescapeKString([]byte(value)))
 		return m.NewString(unescapedStr)
 	case m.SortBool:
 		b, err := strconv.ParseBool(value)

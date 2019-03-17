@@ -43,8 +43,8 @@ func init() {
 		createRegexRule("#klabel", KLABELLABEL, nil),
 		createRegexRule("[#a-z]([a-zA-Z0-9])*", KLABEL, nil),
 		createRegexRule("[A-Z]([a-zA-Z0-9'_])*", KVARIABLE, nil),
-		createRegexRule("\"([^\"\\\\]|(\\\\.))*\"", STRING, unescapeKString), // matches any string enclosed in ", allowing \"
-		createRegexRule("`([^`\\\\]|(\\\\.))*`", KLABEL, unescapeKLabel),     // matches any string enclosed in `, allowing \`
+		createRegexRule("\"([^\"\\\\]|(\\\\.))*\"", STRING, UnescapeKString), // matches any string enclosed in ", allowing \"
+		createRegexRule("`([^`\\\\]|(\\\\.))*`", KLABEL, UnescapeKLabel),     // matches any string enclosed in `, allowing \`
 	}
 }
 
