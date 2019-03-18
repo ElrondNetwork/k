@@ -17,5 +17,5 @@ func main() {
 		}
 	}
 
-	interpreter.Execute("../", execFileName, options)
+	interpreter.ExecuteSimple("../", execFileName, options)
 }

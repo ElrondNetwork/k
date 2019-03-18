@@ -23,21 +23,30 @@ type ExecuteOptions struct {
 	TraceToFile bool
 }
 
-// Execute ... interprets the program in the file given at input
-func Execute(kdir string, execFile string, options ExecuteOptions) {
+// ExecuteSimple ... interprets the program in the file given at input
+func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 	kast := callKast(kdir, execFile)
 	fmt.Printf("Kast: %s\n\n", kast)
 
-	parserK := koreparser.Parse(kast)
-	kinput := convertParserModelToKModel(parserK)
-	fmt.Println("input:")
-	fmt.Println(m.PrettyPrint(kinput))
+	data := make(map[string][]byte)
+	data["PGM"] = kast
+	Execute(&data, options)
+}
+
+// Execute ... interprets the program with the structure
+func Execute(kastMap *map[string][]byte, options ExecuteOptions) {
+
+	kConfigMap := make(map[m.KMapKey]m.K)
+	for key, kastValue := range *kastMap {
+		ktoken := &m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
+		ktokenAsKey, _ := m.MapKey(ktoken)
+		parsedValue := koreparser.Parse(kastValue)
+		kValue := convertParserModelToKModel(parsedValue)
+		kConfigMap[ktokenAsKey] = kValue
+	}
 
 	// top cell initialization
-	initMap := make(map[m.KMapKey]m.K)
-    var pgmToken = &m.KToken{Sort: m.SortKConfigVar, Value: "$PGM"}
-    initMap[pgmToken.AsMapKey()] = kinput
-	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: initMap}
+	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: kConfigMap}
 	evalK := &m.KApply{Label: topCellInitializer, List: []m.K{kmap}}
 	kinit, err := eval(evalK, m.InternedBottom)
 	if err != nil {

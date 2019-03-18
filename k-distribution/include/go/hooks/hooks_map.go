@@ -10,12 +10,12 @@ const mapHooks mapHooksType = 0
 
 // returns a map with 1 key to value mapping
 func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	kkey, keyTypeOk := key.(m.KUsableAsKey)
-	if !keyTypeOk {
+	kkey, keyOk := m.MapKey(key)
+	if !keyOk {
 		return m.NoResult, errInvalidMapKey
 	}
 	mp := make(map[m.KMapKey]m.K)
-	mp[kkey.AsMapKey()] = val
+	mp[kkey] = val
 	return &m.Map{Sort: sort, Label: lbl.CollectionFor(), Data: mp}, nil
 }
 
@@ -31,11 +31,11 @@ func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, conf
 
 func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	if mp, isMap := kmap.(*m.Map); isMap {
-		kkey, keyTypeOk := key.(m.KUsableAsKey)
-		if !keyTypeOk {
+		kkey, keyOk := m.MapKey(key)
+		if !keyOk {
 			return defaultRes, nil
 		}
-		elem, found := mp.Data[kkey.AsMapKey()]
+		elem, found := mp.Data[kkey]
 		if found {
 			return elem, nil
 		}
@@ -54,8 +54,8 @@ func (mapHooksType) update(kmap m.K, key m.K, newValue m.K, lbl m.KLabel, sort m
 	if !isMap {
 		return invalidArgsResult()
 	}
-	kkey, keyTypeOk := key.(m.KUsableAsKey)
-	if !keyTypeOk {
+	kkey, keyOk := m.MapKey(key)
+	if !keyOk {
 		return m.NoResult, errInvalidMapKey
 	}
 	// implementing it as an "immutable" map
@@ -65,7 +65,7 @@ func (mapHooksType) update(kmap m.K, key m.K, newValue m.K, lbl m.KLabel, sort m
 	for oldKey, oldValue := range mp.Data {
 		newData[oldKey] = oldValue
 	}
-	newData[kkey.AsMapKey()] = newValue
+	newData[kkey] = newValue
 	return &m.Map{Sort: mp.Sort, Label: mp.Label, Data: newData}, nil
 }
 
@@ -74,14 +74,14 @@ func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config 
 	if !isMap {
 		return invalidArgsResult()
 	}
-	kkey, keyTypeOk := key.(m.KUsableAsKey)
-	if !keyTypeOk {
+	kkey, keyOk := m.MapKey(key)
+	if !keyOk {
 		return m.NoResult, errInvalidMapKey
 	}
 	// no updating of input map
 	newData := make(map[m.KMapKey]m.K)
 	for oldKey, oldValue := range mp.Data {
-		if oldKey != kkey.AsMapKey() {
+		if oldKey != kkey {
 			newData[oldKey] = oldValue
 		}
 	}
@@ -167,11 +167,11 @@ func (mapHooksType) inKeys(key m.K, kmap m.K, lbl m.KLabel, sort m.Sort, config 
 	if !isMap {
 		return invalidArgsResult()
 	}
-	kkey, keyTypeOk := key.(m.KUsableAsKey)
-	if !keyTypeOk {
+	kkey, keyOk := m.MapKey(key)
+	if !keyOk {
 		return m.NoResult, errInvalidMapKey
 	}
-	_, keyExists := mp.Data[kkey.AsMapKey()]
+	_, keyExists := mp.Data[kkey]
 	return m.ToBool(keyExists), nil
 }
 

@@ -13,11 +13,11 @@ func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if !isSet {
 		return invalidArgsResult()
 	}
-	setElem, setElemTypeOk := e.(m.KUsableAsKey)
-	if !setElemTypeOk {
+	setElem, setElemOk := m.MapKey(e)
+	if !setElemOk {
 		return m.NoResult, errBadSetElement
 	}
-	_, exists := s.Data[setElem.AsMapKey()]
+	_, exists := s.Data[setElem]
 	return m.ToBool(exists), nil
 }
 
@@ -28,12 +28,12 @@ func (setHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 
 // returns a set with 1 element
 func (setHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	setElem, setElemTypeOk := e.(m.KUsableAsKey)
-	if !setElemTypeOk {
+	setElem, setElemOk := m.MapKey(e)
+	if !setElemOk {
 		return m.NoResult, errBadSetElement
 	}
 	data := make(map[m.KMapKey]bool)
-	data[setElem.AsMapKey()] = true
+	data[setElem] = true
 	return &m.Set{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
 }
 
@@ -143,11 +143,11 @@ func (setHooksType) list2set(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	}
 	data := make(map[m.KMapKey]bool)
 	for _, e := range l.Data {
-		setElem, setElemTypeOk := e.(m.KUsableAsKey)
-		if !setElemTypeOk {
+		setElem, setElemOk := m.MapKey(e)
+		if !setElemOk {
 			return m.NoResult, errBadSetElement
 		}
-		data[setElem.AsMapKey()] = true
+		data[setElem] = true
 	}
 	return &m.Set{Sort: m.SortSet, Label: m.KLabelForSet, Data: data}, nil
 }

@@ -12,9 +12,7 @@ func addIndent(sb *strings.Builder, indent int) {
 }
 
 func printMapKey(sb *strings.Builder, kmk KMapKey) {
-	sb.WriteString(kmk.TypeName)
-	sb.WriteString(": ")
-	sb.WriteString(kmk.Value)
+	sb.WriteString(kmk.String())
 }
 
 // PrettyPrint ... returns a representation of a K item that tries to be as readable as possible
