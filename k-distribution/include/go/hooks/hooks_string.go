@@ -2,6 +2,7 @@ package %PACKAGE_INTERPRETER%
 
 import (
 	m "%INCLUDE_MODEL%"
+	"math/big"
     "strconv"
     "strings"
 )
@@ -20,19 +21,39 @@ func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config 
 }
 
 func (stringHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	return m.ToBool(k1.String() < k2.String()), nil
 }
 
 func (stringHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	return m.ToBool(k1.String() <= k2.String()), nil
 }
 
 func (stringHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	return m.ToBool(k1.String() > k2.String()), nil
 }
 
 func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	k1, ok1 := c1.(*m.String)
+	k2, ok2 := c2.(*m.String)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	return m.ToBool(k1.String() >= k2.String()), nil
 }
 
 func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -147,12 +168,43 @@ func (stringHooksType) string2int(c m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2base(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) string2base(kstr m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	str, ok1 := kstr.(*m.String)
+	base, ok2 := kbase.(*m.Int)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	if !base.Value.IsUint64() {
+		return invalidArgsResult()
+	}
+	baseVal := base.Value.Uint64()
+	if baseVal < 2 || baseVal > 16 {
+		return invalidArgsResult()
+	}
+	i := new(big.Int)
+	var parseOk bool
+	i, parseOk = i.SetString(str.Value, int(baseVal))
+	if !parseOk {
+		return invalidArgsResult()
+	}
+	return m.NewInt(i), nil
 }
 
-func (stringHooksType) base2string(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) base2string(kint m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	i, ok1 := kint.(*m.Int)
+	base, ok2 := kbase.(*m.Int)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	if !base.Value.IsUint64() {
+		return invalidArgsResult()
+	}
+	baseVal := base.Value.Uint64()
+	if baseVal < 2 || baseVal > 16 {
+		return invalidArgsResult()
+	}
+	str := i.Value.Text(int(baseVal))
+	return m.NewString(str), nil
 }
 
 func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

@@ -103,6 +103,37 @@ func TestStringSubstr(t *testing.T) {
 	assertStringOk(t, "", result, err)
 }
 
+func TestString2Base2String(t *testing.T) {
+	var i m.K
+	var str m.K
+	var err error
+	i, err = stringHooks.string2base(m.NewString("5"), m.NewIntFromInt(8), m.LblDummy, m.SortString, m.InternedBottom)
+	assertIntOk(t, "5", i, err)
+
+	str, err = stringHooks.base2string(i, m.NewIntFromInt(8), m.LblDummy, m.SortString, m.InternedBottom)
+	assertStringOk(t, "5", str, err)
+
+	i, err = stringHooks.string2base(m.NewString("123abcdef123abcdef"), m.NewIntFromInt(16), m.LblDummy, m.SortString, m.InternedBottom)
+	str, err = stringHooks.base2string(i, m.NewIntFromInt(16), m.LblDummy, m.SortString, m.InternedBottom)
+	assertStringOk(t, "123abcdef123abcdef", str, err)
+}
+
+func TestBase2String2Base(t *testing.T) {
+	var i m.K
+	var str m.K
+	var err error
+
+	str, err = stringHooks.base2string(m.NewIntFromInt(10), m.NewIntFromInt(2), m.LblDummy, m.SortString, m.InternedBottom)
+	assertStringOk(t, "1010", str, err)
+
+	i, err = stringHooks.string2base(str, m.NewIntFromInt(2), m.LblDummy, m.SortString, m.InternedBottom)
+	assertIntOk(t, "10", i, err)
+
+	str, err = stringHooks.base2string(m.NewIntFromInt(123456789123456789), m.NewIntFromInt(16), m.LblDummy, m.SortString, m.InternedBottom)
+	i, err = stringHooks.string2base(str, m.NewIntFromInt(16), m.LblDummy, m.SortString, m.InternedBottom)
+	assertIntOk(t, "123456789123456789", i, err)
+}
+
 func TestString2Token(t *testing.T) {
 	result, err := stringHooks.string2token(m.NewString("abc"), m.LblDummy, m.SortString, m.InternedBottom)
 	if err != nil {
