@@ -1,4 +1,4 @@
-package ieletestinginterpreter
+package %PACKAGE_INTERPRETER%
 
 import (
 	m "%INCLUDE_MODEL%"
