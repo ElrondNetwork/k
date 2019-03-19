@@ -2,6 +2,7 @@ package %PACKAGE_MODEL%
 
 import (
 	"math/big"
+	"strings"
 )
 
 // K ... Defines a K entity
@@ -82,18 +83,19 @@ type MInt struct {
 	Value int32
 }
 
-// Float ... a type of KItem, TODO: document
+// Float ... float type
 type Float struct {
 	Value float32
 }
 
-// String ... a type of KItem, TODO: document
+// String ... string type
 type String struct {
 	Value string
 }
 
-// StringBuffer ... a type of KItem, TODO: document
+// StringBuffer ... a string builder, in which strings can be appended
 type StringBuffer struct {
+	Value strings.Builder
 }
 
 // Bytes ... a type of KItem, TODO: document

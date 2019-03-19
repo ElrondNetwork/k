@@ -166,9 +166,9 @@ func (k *String) Equals(arg K) bool {
 	return k.Value == other.Value
 }
 
-// Equals ... Deep comparison
+// Equals ... Pointer comparison only for StringBuffer
 func (k *StringBuffer) Equals(arg K) bool {
-	panic("StringBuffer not yet implemented.")
+	return k == arg
 }
 
 // Equals ... Deep comparison

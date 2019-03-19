@@ -197,7 +197,7 @@ func (k *String) prettyPrint(indent int) string {
 }
 
 func (k *StringBuffer) prettyPrint(indent int) string {
-	return "StringBuffer [not yet implemented]"
+	return fmt.Sprintf("StringBuffer (%s)", k.Value.String())
 }
 
 func (k *Bytes) prettyPrint(indent int) string {

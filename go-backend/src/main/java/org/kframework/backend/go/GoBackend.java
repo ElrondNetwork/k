@@ -162,6 +162,9 @@ public class GoBackend implements Backend {
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/hooks/unittest/hooks_string_test.go"),
                         packageManager.interpreterPackage, "hooks_string_test.go");
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/hooks/unittest/hooks_buffer_test.go"),
+                        packageManager.interpreterPackage, "hooks_buffer_test.go");
             }
 
             // main

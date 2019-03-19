@@ -109,7 +109,7 @@ func (k *String) structPrint(indent int) string {
 }
 
 func (k *StringBuffer) structPrint(indent int) string {
-	return simplePrint(indent, "StringBuffer [not yet implemented]")
+	return fmt.Sprintf("StringBuffer (%s)", k.Value.String())
 }
 
 func (k *Bytes) structPrint(indent int) string {
