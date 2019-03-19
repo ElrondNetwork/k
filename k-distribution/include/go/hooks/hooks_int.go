@@ -263,8 +263,22 @@ func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return c1, nil
 }
 
-func (intHooksType) log2(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	bigi, ok := karg.(*m.Int)
+	if !ok {
+		return invalidArgsResult()
+	}
+	if bigi.Value.Sign() <= 0 {
+		return invalidArgsResult()
+	}
+	bytes := bigi.Value.Bytes()
+	leadingByte := bytes[0]
+	nrBytes := 0
+	for leadingByte > 0 {
+		leadingByte = leadingByte >> 1
+		nrBytes++
+	}
+	return m.NewIntFromInt(nrBytes + (len(bytes)-1)*8 - 1), nil
 }
 
 func (intHooksType) bitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

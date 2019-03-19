@@ -1,7 +1,8 @@
 package %PACKAGE_INTERPRETER%
 
 import (
-	m "%INCLUDE_MODEL%"
+	"fmt"
+    m "%INCLUDE_MODEL%"
 	"testing"
 )
 
@@ -190,6 +191,39 @@ func TestIntHooksPow(t *testing.T) {
 
 	z, err = intHooks.powmod(a, b, c, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "24", z, err)
+}
+
+func TestIntLog2(t *testing.T) {
+	var log m.K
+	var err error
+
+	log, err = intHooks.log2(m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+
+	log, err = intHooks.log2(m.NewIntFromInt(2), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "1", log, err)
+
+	log, err = intHooks.log2(m.NewIntFromInt(3), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "1", log, err)
+
+	log, err = intHooks.log2(m.NewIntFromInt(4), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "2", log, err)
+
+	log, err = intHooks.log2(m.NewIntFromInt(255), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "7", log, err)
+
+	log, err = intHooks.log2(m.NewIntFromInt(256), m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "8", log, err)
+
+	for i := 1000; i < 1009; i++ {
+		big, _ := intHooks.shl(m.NewIntFromInt(1), m.NewIntFromInt(i), m.LblDummy, m.SortInt, m.InternedBottom)
+		log, err = intHooks.log2(big, m.LblDummy, m.SortInt, m.InternedBottom)
+		assertIntOk(t, fmt.Sprintf("%d", i), log, err)
+
+		big, _ = intHooks.sub(big, m.IntOne, m.LblDummy, m.SortInt, m.InternedBottom)
+		log, err = intHooks.log2(big, m.LblDummy, m.SortInt, m.InternedBottom)
+		assertIntOk(t, fmt.Sprintf("%d", i-1), log, err)
+	}
 }
 
 func assertIntOk(t *testing.T, expectedAsStr string, actual m.K, err error) {

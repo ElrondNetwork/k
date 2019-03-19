@@ -7,6 +7,9 @@ import (
 // IntZero ... K Int with value zero
 var IntZero = &Int{Value: big.NewInt(0)}
 
+// IntOne ... K Int with value 1
+var IntOne = &Int{Value: big.NewInt(1)}
+
 // IntMinusOne ... K Int with value -1
 var IntMinusOne = &Int{Value: big.NewInt(-1)}
 
