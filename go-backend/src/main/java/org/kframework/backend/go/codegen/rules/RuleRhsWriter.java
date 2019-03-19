@@ -259,7 +259,7 @@ public class RuleRhsWriter extends VisitK {
     @Override
     public void apply(KSequence k) {
         int size = k.items().size();
-        switch (k.items().size()) {
+        switch (size) {
         case 0:
             start();
             currentSb.append("m.EmptyKSequence");
@@ -269,9 +269,9 @@ public class RuleRhsWriter extends VisitK {
             currentSb.append("/* rhs KSequence size=1 */ ");
             apply(k.items().get(0));
             return;
-        case 2:
+        default:
             start();
-            currentSb.append("assembleFromHeadAndTail(");
+            currentSb.append("assembleKSequence(");
             currentSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;
@@ -282,23 +282,6 @@ public class RuleRhsWriter extends VisitK {
             currentSb.newLine().writeIndent().append(")");
             end();
             return;
-        default:
-            start();
-            currentSb.append("assembleFromHeadSliceAndTail([]m.K{");
-            currentSb.increaseIndent();
-            // head slice
-            for (int i = 0; i < k.items().size() - 1; i++) {
-                newlineNext = true;
-                apply(k.items().get(i));
-                currentSb.append(",");
-            }
-            // tail
-            currentSb.decreaseIndent();
-            currentSb.newLine().writeIndent().append("}, ");
-            K tail = k.items().get(k.items().size() - 1);
-            apply(tail);
-            currentSb.append(")");
-            end();
         }
     }
 

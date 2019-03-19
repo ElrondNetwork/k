@@ -22,30 +22,25 @@ func trySplitToHeadTail(k m.K) (ok bool, head m.K, tail m.K) {
 	return true, k, m.EmptyKSequence
 }
 
-func assembleFromHeadAndTail(head m.K, tail m.K) m.K {
-	if kseqTail, isKseq := tail.(*m.KSequence); isKseq {
-		if kseqTail.IsEmpty() {
-			// output the head itself instead of a KSequence with 1 element
-			return head
+// appends all elements to a KSequence
+// flattens if there are any KSequences among the elements (but only on 1 level, does not handle multiple nesting)
+// never returns KSequence of 1 element, it returns the element directly instead
+func assembleKSequence(elements ...m.K) m.K {
+	var newKs []m.K
+	for _, element := range elements {
+		if kseqElem, isKseq := element.(*m.KSequence); isKseq {
+			newKs = append(newKs, kseqElem.Ks...)
+		} else {
+			newKs = append(newKs, element)
 		}
-		return &m.KSequence{Ks: append([]m.K{head}, kseqTail.Ks...)}
 	}
-
-	// tail is not KSequence, so we end up with a KSequence of 2 elements: head and tail
-	return &m.KSequence{Ks: []m.K{head, tail}}
-}
-
-func assembleFromHeadSliceAndTail(headSlice []m.K, tail m.K) m.K {
-	if kseqTail, isKseq := tail.(*m.KSequence); isKseq {
-		if kseqTail.IsEmpty() {
-			// output the head itself instead of a KSequence with 1 element
-			return &m.KSequence{Ks: headSlice}
-		}
-		return &m.KSequence{Ks: append(headSlice, kseqTail.Ks...)}
+	if len(newKs) == 0 {
+		return m.EmptyKSequence
 	}
-
-	// tail is not KSequence, so we end up with a KSequence of 2 elements: head and tail
-	return &m.KSequence{Ks: append(headSlice, tail)}
+	if len(newKs) == 1 {
+		return newKs[0]
+	}
+	return &m.KSequence{Ks: newKs}
 }
 
 var freshCounter int

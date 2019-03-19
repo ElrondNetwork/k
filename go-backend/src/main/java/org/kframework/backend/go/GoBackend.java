@@ -148,8 +148,11 @@ public class GoBackend implements Backend {
                         packageManager.interpreterPackage, fileName);
             }
 
-            // copy: hook unit tests
+            // copy: unit tests
             if (options.unitTests) {
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/hooks/unittest/util_test.go"),
+                        packageManager.interpreterPackage, "util_test.go");
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/hooks/unittest/hooks_int_test.go"),
                         packageManager.interpreterPackage, "hooks_int_test.go");
@@ -198,6 +201,14 @@ public class GoBackend implements Backend {
                 exit = pb.command("go", "build").directory(files.resolveKompiled(".")).inheritIO().start().waitFor();
                 if (exit != 0) {
                     throw KEMException.criticalError("go build returned nonzero exit code: " + exit + "\nExamine output to see errors.");
+                }
+
+                System.out.println("Running go unit tests.");
+                exit = pb.command("go", "test")
+                        .directory(files.resolveKompiled(packageManager.interpreterPackage.getRelativePath()))
+                        .inheritIO().start().waitFor();
+                if (exit != 0) {
+                    throw KEMException.criticalError("go test returned nonzero exit code: " + exit + "\nExamine output to see errors.");
                 }
 
                 if (options.quickTest != null) {
