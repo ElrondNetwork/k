@@ -193,7 +193,9 @@ func (k *Float) prettyPrint(indent int) string {
 }
 
 func (k *String) prettyPrint(indent int) string {
-	return fmt.Sprintf("String (%s)", k)
+	r := strings.NewReplacer("\n", "\\n",
+		"\t", "\\t")
+	return fmt.Sprintf("String (\"%s\")", r.Replace(k.Value))
 }
 
 func (k *StringBuffer) prettyPrint(indent int) string {
