@@ -47,6 +47,7 @@ public class RuleWriter {
                               String functionName, FunctionParams functionVars) {
         try {
             sb.appendIndentedLine("// rule #" + ruleNum);
+            appendSourceComment(sb, r);
             sb.append("\t// ");
             GoStringUtil.appendRuleComment(sb, r);
             sb.newLine();
@@ -344,6 +345,25 @@ public class RuleWriter {
 
     public static boolean hasLookups(Rule r) {
         return numLookups(r) > 0;
+    }
+
+    private static void appendSourceComment(GoStringBuilder sb, Rule r) {
+        String source;
+        if (r.source().isPresent()) {
+            source = r.source().get().source();
+            if (source.contains("/")) {
+                source = source.substring(source.lastIndexOf("/") + 1);
+            }
+        } else {
+            source = "?";
+        }
+        String startLine;
+        if (r.location().isPresent()) {
+            startLine = Integer.toString(r.location().get().startLine());
+        } else {
+            startLine = "?";
+        }
+        sb.appendIndentedLine("// source: ", source, " @", startLine);
     }
 
 }
