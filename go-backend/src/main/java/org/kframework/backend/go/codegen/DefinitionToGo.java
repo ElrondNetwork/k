@@ -286,7 +286,7 @@ public class DefinitionToGo {
                             .filter(sort -> mainModule.sortAttributesFor().contains(sort))
                             .collect(Collectors.toList());
 
-                    for(Sort sort : sorts) {
+                    for (Sort sort : sorts) {
                         String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
                         if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
                             String sortName = "m." + nameProvider.sortVariableName(sort);
@@ -306,7 +306,7 @@ public class DefinitionToGo {
                                 }
                             }
                         }
-                    };
+                    }
                 }
 
                 // main!
@@ -393,33 +393,51 @@ public class DefinitionToGo {
     private void writeMemoTableAndEval(GoStringBuilder sb, KLabel functionLabel, FunctionParams functionArgs) {
         // table declaration
         String tableName = nameProvider.memoTableName(functionLabel);
+        int arity = functionArgs.arity();
+        String evalFunctionName = nameProvider.evalFunctionName(functionLabel);
         sb.writeIndent().append("var ").append(tableName).append(" map[");
-        switch (functionArgs.arity()) {
+        switch (arity) {
         case 0:
         case 1:
-            sb.append("m.K");
+            sb.append("m.KMapKey");
             break;
         default:
-            sb.append("[").append(functionArgs.arity()).append("]m.K");
+            sb.append("[").append(arity).append("]m.KMapKey");
         }
         sb.append("]m.K").newLine().newLine();
 
         // eval function
         sb.append("func ");
-        sb.append(nameProvider.evalFunctionName(functionLabel));
+        sb.append(evalFunctionName);
         sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
         sb.beginBlock();
 
-        sb.writeIndent().append("memoKey := ");
-        switch (functionArgs.arity()) {
+        switch (arity) {
         case 0:
-            sb.append("m.InternedBottom");
+            sb.appendIndentedLine("memoKey, _ := m.MapKey(m.InternedBottom)");
             break;
         case 1:
-            sb.append(functionArgs.varName(0));
+            sb.appendIndentedLine("memoKey, _ := m.MapKey(", functionArgs.varName(0), ")");
             break;
         default:
-            sb.append("[").append(functionArgs.arity()).append("]m.K{").append(functionArgs.paramNamesSeparatedByComma()).append("}");
+            for (int i = 1; i <= arity; i++) {
+                // launch a warning, compute, return result without memoization
+                sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.MapKey(c" + i + ")");
+                sb.writeIndent().append("if !ok" + i).beginBlock();
+                sb.appendIndentedLine("fmt.Println(\"Warning! Memo keys unsuitable in ", evalFunctionName, "\")");
+                sb.writeIndent().append("return ");
+                sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
+                sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
+                sb.endOneBlock();
+            }
+            sb.writeIndent().append("memoKey :=[").append(arity).append("]m.KMapKey{");
+            for (int i = 1; i <= arity; i++) {
+                sb.append("c" + i + "AsKey");
+                if (i < arity) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("}");
             break;
         }
         sb.newLine();

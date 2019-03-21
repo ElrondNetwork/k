@@ -28,7 +28,7 @@ type kmapKeyKApply1 struct {
 	arg1      KMapKey
 }
 
-type kmapNoResult struct {
+type kmapBottom struct {
 }
 
 // KUsableAsKey ... A K Item that can be used as key in a map
@@ -40,7 +40,7 @@ type usableAsKey interface {
 func MapKey(k K) (KMapKey, bool) {
 	uak, implementsInterface := k.(usableAsKey)
 	if !implementsInterface {
-		return kmapNoResult{}, false
+		return kmapBottom{}, false
 	}
 	return uak.convertToMapKey()
 }
@@ -51,11 +51,11 @@ func (k *KToken) convertToMapKey() (KMapKey, bool) {
 
 func (k *KApply) convertToMapKey() (KMapKey, bool) {
 	if len(k.List) != 1 {
-		return kmapNoResult{}, false
+		return kmapBottom{}, false
 	}
 	argAsKey, argOk := MapKey(k.List[0])
 	if !argOk {
-		return kmapNoResult{}, false
+		return kmapBottom{}, false
 	}
 	return kmapKeyKApply1{labelName: k.Label.Name(), arg1: argAsKey}, true
 }
@@ -70,6 +70,10 @@ func (k *Bool) convertToMapKey() (KMapKey, bool) {
 
 func (k *String) convertToMapKey() (KMapKey, bool) {
 	return kmapKeyBasic{typeName: "String", value: k.Value}, true
+}
+
+func (k *Bottom) convertToMapKey() (KMapKey, bool) {
+	return kmapBottom{}, true
 }
 
 // String ... string representation of the key
@@ -121,11 +125,11 @@ func (mapKey kmapKeyKApply1) ToKItem() (K, error) {
 }
 
 // String ... string representation of the key
-func (mapKey kmapNoResult) String() string {
-	panic("Should never be called")
+func (mapKey kmapBottom) String() string {
+	return "Bottom"
 }
 
 // ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapNoResult) ToKItem() (K, error) {
-	panic("Should never be called")
+func (mapKey kmapBottom) ToKItem() (K, error) {
+	return InternedBottom, nil
 }
