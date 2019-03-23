@@ -103,12 +103,14 @@ public class DefinitionToGo {
 
     private Module mainModule;
     private KLabel topCellInitializer;
+    private Map<KLabel, KLabel> collectionFor;
 
     public DefinitionData definitionData() {
         return new DefinitionData(mainModule,
                 functions, anywhereKLabels,
                 functionRules, anywhereRules,
-                functionParams, topCellInitializer);
+                functionParams, topCellInitializer,
+                collectionFor);
     }
 
     RuleWriter ruleWriter;
@@ -130,6 +132,7 @@ public class DefinitionToGo {
                 .andThen(generatePredicates);
         mainModule = pipeline.apply(def.executionModule());
         topCellInitializer = def.topCellInitializer;
+        collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
 
         //TODO: warning! duplicate code with DefinitionToOcaml
         functionRules = HashMultimap.create();

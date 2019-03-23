@@ -19,6 +19,7 @@ public class DefinitionData {
     public final ListMultimap<KLabel, Rule> anywhereRules;
     public final Map<KLabel, FunctionParams> functionParams;
     public final KLabel topCellInitializer;
+    public final Map<KLabel, KLabel> collectionFor;
 
     public DefinitionData(
             Module mainModule,
@@ -27,7 +28,8 @@ public class DefinitionData {
             SetMultimap<KLabel, Rule> functionRules,
             ListMultimap<KLabel, Rule> anywhereRules,
             Map<KLabel, FunctionParams> functionParams,
-            KLabel topCellInitializer) {
+            KLabel topCellInitializer,
+            Map<KLabel, KLabel> collectionFor) {
         this.mainModule = mainModule;
         this.functions = functions;
         this.anywhereKLabels = anywhereKLabels;
@@ -35,6 +37,7 @@ public class DefinitionData {
         this.anywhereRules = anywhereRules;
         this.functionParams = functionParams;
         this.topCellInitializer = topCellInitializer;
+        this.collectionFor = collectionFor;
     }
 
     public boolean isFunctionOrAnywhere(KLabel klabel) {

@@ -1,16 +1,19 @@
 // Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.codegen.rules;
 
+import org.kframework.attributes.Att;
 import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
+import org.kframework.kil.Attribute;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KAs;
+import org.kframework.kore.KLabel;
 import org.kframework.kore.KORE;
 import org.kframework.kore.KRewrite;
 import org.kframework.kore.KSequence;
@@ -20,6 +23,7 @@ import org.kframework.kore.Sort;
 import org.kframework.kore.VisitK;
 import org.kframework.parser.outer.Outer;
 import org.kframework.unparser.ToKast;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.List;
 import java.util.Set;
@@ -142,6 +146,28 @@ public class RuleLhsWriter extends VisitK {
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             lhsTypeIf("_", consumeSubject(), "Bottom");
+        } else if (data.functions.contains(k.klabel())) {
+            if (data.collectionFor.containsKey(k.klabel())) {
+                KLabel collectionLabel = data.collectionFor.get(k.klabel());
+                Att attr = data.mainModule.attributesFor().apply(collectionLabel);
+                if (attr.contains(Attribute.ASSOCIATIVE_KEY)
+                        && !attr.contains(Attribute.COMMUTATIVE_KEY)
+                        && !attr.contains(Attribute.IDEMPOTENT_KEY)) {
+
+                    // list
+                    String listVar = "list" + kitemIndex;
+                    kitemIndex++;
+                    lhsTypeIf(listVar, consumeSubject(), "List");
+                    Sort sort = data.mainModule.sortFor().apply(collectionLabel);
+
+                    sb.append(" && ").append(listVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
+                    sb.append(" && ").append(listVar).append(".Label == m.").append(nameProvider.klabelVariableName(collectionLabel));
+                    sb.beginBlock();
+                    applyListContents(k, listVar + ".Data", listVar, attr);
+                }
+            } else {
+                throw new RuntimeException("Unexpected function on LHS.");
+            }
         } else {
             KVariable alias  = consumeAlias();
             String kappVar;
@@ -163,6 +189,59 @@ public class RuleLhsWriter extends VisitK {
                 nextSubject = kappVar + ".List[" + i + "]";
                 apply(item);
                 i++;
+            }
+        }
+    }
+
+    /**
+     * Writes LHS for list contents, by recursively splitting it into head and tail
+     */
+    private void applyListContents(KApply k, String dataVarName, String originalListVar, Att attr) {
+        if (k.items().size() == 0) {
+            // empty list
+            sb.writeIndent().append("if len(").append(dataVarName).append(") == 0");
+            sb.beginBlock("empty list ", ToKast.apply(k));
+        } else if (k.items().size() == 2) {
+            // head
+            sb.writeIndent().append("if len(").append(dataVarName).append(") >= 1");
+            sb.beginBlock("list ", ToKast.apply(k));
+
+            if (!(k.items().get(0) instanceof KApply)) {
+                throw KEMException.internalError("First argument of list cons should be a KApply, representing the element");
+            }
+            KApply head = (KApply) k.items().get(0);
+            boolean isElement = attr.contains("element") && head.klabel().equals(KORE.KLabel(attr.get("element")));
+            // boolean isWrapElement = !isElement && attr.contains("wrapElement") && kapp.klabel().equals(KORE.KLabel(attr.get("wrapElement")));
+            if (!isElement) {
+                throw KEMException.internalError("First argument of list cons a list element type");
+            }
+            if (head.klist().size() != 1) {
+                throw KEMException.internalError("List element should only have 1 argument");
+            }
+            sb.appendIndentedLine("// list head: ", ToKast.apply(head));
+            nextSubject = dataVarName + "[0]";
+            apply(head.klist().items().get(0));
+
+            // tail
+            if (k.items().get(1) instanceof KApply) {
+                KApply tail = (KApply) k.items().get(1);
+                String tailVar = "listDataTail" + kitemIndex;
+                kitemIndex++;
+                sb.appendIndentedLine(tailVar, " := ", dataVarName, "[1:] // list tail: ", ToKast.apply(tail));
+                nextSubject = tailVar;
+                applyListContents(tail, tailVar, originalListVar, attr);
+            } else if (k.items().get(1) instanceof KVariable) {
+                KVariable tail = (KVariable) k.items().get(1);
+                String tailVar = "lisTail" + kitemIndex;
+                kitemIndex++;
+                sb.appendIndentedLine("var ", tailVar, " m.K");
+                sb.appendIndentedLine(tailVar, " = &m.List { Sort: ", originalListVar, ".Sort, Label: ", originalListVar, ".Label, Data: ", originalListVar, ".Data[1:] }");
+                // TODO: signal that nextSubject is already defined as list via a type enum (values: K, List, etc.)
+                // and suppress type checking if type is already known
+                nextSubject = tailVar;
+                apply(tail);
+            } else {
+                throw KEMException.internalError("Second argument of list cons should be either a KApply of a KVariable, representing the tail");
             }
         }
     }
