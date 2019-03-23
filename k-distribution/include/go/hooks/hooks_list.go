@@ -25,13 +25,13 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 	if !isList1 || !isList2 {
 		return invalidArgsResult()
 	}
-	data := make([]m.K, len(l1.Data)+len(l2.Data))
-	for _, x := range l1.Data {
-		data = append(data, x)
+	if len(l1.Data) == 0 {
+		return l2, nil
 	}
-	for _, x := range l2.Data {
-		data = append(data, x)
+	if len(l2.Data) == 0 {
+		return l1, nil
 	}
+	data := append(l1.Data, l2.Data...)
 	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
 }
 
@@ -48,23 +48,30 @@ func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.BoolFalse, nil
 }
 
-func (listHooksType) get(klist m.K, index m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) get(klist m.K, kindex m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(*m.List)
-	i, isInt := index.(*m.Int)
+	i, isInt := kindex.(*m.Int)
 	if !isList || !isInt {
 		return invalidArgsResult()
 	}
-	if !i.Value.IsUint64() {
+	if !i.Value.IsInt64() {
 		return invalidArgsResult()
 	}
-	return l.Data[i.Value.Uint64()], nil
+	index := int(i.Value.Int64())
+	if index < 0 {
+		index = len(l.Data) + index // count from the end, e.g. -1 is the last element
+	}
+	if index < 0 || index >= len(l.Data) {
+		return m.InternedBottom, nil
+	}
+	return l.Data[index], nil
 }
 
 func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	l, isList := klist.(*m.List)
 	si, isInt1 := start.(*m.Int)
 	ei, isInt2 := end.(*m.Int)
-	if !isList || !isInt1 || isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
+	if !isList || !isInt1 || !isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
 		return invalidArgsResult()
 	}
 	siUint := si.Value.Uint64()
