@@ -2,6 +2,7 @@ package %PACKAGE_MODEL%
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -9,10 +10,6 @@ func addIndent(sb *strings.Builder, indent int) {
 	for i := 0; i < indent; i++ {
 		sb.WriteString("    ")
 	}
-}
-
-func printMapKey(sb *strings.Builder, kmk KMapKey) {
-	sb.WriteString(kmk.String())
 }
 
 // PrettyPrint ... returns a representation of a K item that tries to be as readable as possible
@@ -96,11 +93,20 @@ func (k *Map) prettyPrint(indent int) string {
 		sb.WriteString(" <empty>")
 	} else {
 		sb.WriteString(", Data: (")
+		var keysAsString []string
+		keysAsStringToValue := make(map[string]K)
 		for k, v := range k.Data {
+			keyAsString := k.String()
+			keysAsString = append(keysAsString, keyAsString)
+			keysAsStringToValue[keyAsString] = v
+		}
+		sort.Strings(keysAsString)
+		for _, keyAsString := range keysAsString {
 			sb.WriteString("\n")
 			addIndent(&sb, indent+1)
-			printMapKey(&sb, k)
+			sb.WriteString(keyAsString)
 			sb.WriteString(" => ")
+			v, _ := keysAsStringToValue[keyAsString]
 			sb.WriteString(v.prettyPrint(indent + 1))
 		}
 		sb.WriteRune('\n')
@@ -124,7 +130,11 @@ func (k *List) prettyPrint(indent int) string {
 		for _, item := range k.Data {
 			sb.WriteString("\n")
 			addIndent(&sb, indent+1)
-			sb.WriteString(item.prettyPrint(indent + 1))
+			if item == nil {
+				sb.WriteString("nil")
+			} else {
+				sb.WriteString(item.prettyPrint(indent + 1))
+			}
 		}
 		sb.WriteRune('\n')
 		addIndent(&sb, indent)
@@ -144,10 +154,15 @@ func (k *Set) prettyPrint(indent int) string {
 		sb.WriteString(" <empty>")
 	} else {
 		sb.WriteString(", Data: {")
+		var keysAsString []string
 		for k := range k.Data {
+			keysAsString = append(keysAsString, k.String())
+		}
+		sort.Strings(keysAsString)
+		for _, keyAsString := range keysAsString {
 			sb.WriteString("\n")
 			addIndent(&sb, indent+1)
-			printMapKey(&sb, k)
+			sb.WriteString(keyAsString)
 		}
 		sb.WriteRune('\n')
 		addIndent(&sb, indent)
@@ -193,9 +208,24 @@ func (k *Float) prettyPrint(indent int) string {
 }
 
 func (k *String) prettyPrint(indent int) string {
-	r := strings.NewReplacer("\n", "\\n",
-		"\t", "\\t")
-	return fmt.Sprintf("String (\"%s\")", r.Replace(k.Value))
+	var sb strings.Builder
+	addIndent(&sb, indent)
+	sb.WriteString("String(")
+	for _, c := range []byte(k.Value) {
+		if c == '\n' {
+			sb.WriteString("\\n")
+		} else if c == '\t' {
+			sb.WriteString("\\t")
+		} else if c == '"' {
+			sb.WriteString("\\\"")
+		} else if c < ' ' || c >= 0x7f {
+			sb.WriteString(fmt.Sprintf("\\x%02x", c))
+		} else {
+			sb.WriteByte(c)
+		}
+	}
+	sb.WriteString(")")
+	return sb.String()
 }
 
 func (k *StringBuffer) prettyPrint(indent int) string {
