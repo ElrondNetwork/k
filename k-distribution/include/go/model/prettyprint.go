@@ -209,7 +209,6 @@ func (k *Float) prettyPrint(indent int) string {
 
 func (k *String) prettyPrint(indent int) string {
 	var sb strings.Builder
-	addIndent(&sb, indent)
 	sb.WriteString("String(")
 	for _, c := range []byte(k.Value) {
 		if c == '\n' {

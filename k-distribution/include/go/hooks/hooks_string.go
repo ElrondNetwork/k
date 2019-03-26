@@ -79,8 +79,10 @@ func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, e
 	if !ok {
 		return invalidArgsResult()
 	}
-	r := rune(i.Value.Uint64())
-	return m.NewString(string(r)), nil
+
+	b := byte(i.Value.Uint64())
+	bytes := []byte{b}
+	return m.NewString(string(bytes)), nil
 }
 
 func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

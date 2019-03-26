@@ -36,6 +36,9 @@ func TestStringChr(t *testing.T) {
 
 	result, err = stringHooks.chr(m.NewIntFromInt(32), m.LblDummy, m.SortString, m.InternedBottom)
 	assertStringOk(t, " ", result, err)
+
+	result, err = stringHooks.chr(m.NewIntFromInt(192), m.LblDummy, m.SortString, m.InternedBottom)
+	assertStringOk(t, "\xc0", result, err)
 }
 
 func TestStringFind(t *testing.T) {
@@ -175,9 +178,10 @@ func assertStringOk(t *testing.T, expectedStr string, actual m.K, err error) {
 		t.Error("Result is not a String.")
 		return
 	}
-	if expectedStr != k.String() {
+	expected := m.NewString(expectedStr)
+	if !expected.Equals(actual) {
 		t.Errorf("Unexpected String. Got: %s Want: %s.",
-			k.String(),
-			expectedStr)
+			m.PrettyPrint(k),
+			m.PrettyPrint(expected))
 	}
 }
