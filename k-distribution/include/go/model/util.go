@@ -86,6 +86,14 @@ func ToBool(b bool) *Bool {
 	return BoolFalse
 }
 
+// IsTrue ... Checks if argument is identical to the K Bool with the value true
+func IsTrue(c K) bool {
+	if b, typeOk := c.(*Bool); typeOk {
+		return b.Value
+	}
+	return false
+}
+
 // IsEmpty ... returns true if KSequence has no elements
 func (k *KSequence) IsEmpty() bool {
 	return len(k.Ks) == 0

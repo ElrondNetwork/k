@@ -31,7 +31,7 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
     protected void start() {
         super.start();
         if (expectedExprType == ExpressionType.BOOLEAN) {
-            currentSb.append("isTrue(");
+            currentSb.append("m.IsTrue(");
             expectedExprType = ExpressionType.K; // entering K territory
             depthFromFuncIsTrue = 0;
         } else {

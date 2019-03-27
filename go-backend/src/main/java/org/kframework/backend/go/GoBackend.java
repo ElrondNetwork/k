@@ -73,6 +73,12 @@ public class GoBackend implements Backend {
         try {
             DefinitionData data = def.definitionData();
 
+            // temporary, for convenience and comparison
+            files.saveToKompiled("constants.ml", ocamlDef.constants());
+            files.saveToKompiled("realdef.ml", ocamlDef.definition());
+            String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
+            files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
+
             // generate: model
             packageManager.saveToPackage(packageManager.modelPackage, "klabel.go",
                     new KLabelsGen(data, packageManager, nameProvider).klabels());
@@ -93,12 +99,6 @@ public class GoBackend implements Backend {
                     stepFunctionGen.generateStepRules());
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
-
-            // temporary, for convenience and comparison
-            files.saveToKompiled("constants.ml", ocamlDef.constants());
-            files.saveToKompiled("realdef.ml", ocamlDef.definition());
-            String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
-            files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
 
         } catch (Exception e) {
@@ -128,8 +128,11 @@ public class GoBackend implements Backend {
                     files.resolveKBase("include/go/interpreter/kmodelconvert.go"),
                     packageManager.interpreterPackage, "kmodelconvert.go");
             packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/util.go"),
-                    packageManager.interpreterPackage, "util.go");
+                    files.resolveKBase("include/go/interpreter/ksequenceutil.go"),
+                    packageManager.interpreterPackage, "ksequenceutil.go");
+            packageManager.copyFileToPackage(
+                    files.resolveKBase("include/go/interpreter/global.go"),
+                    packageManager.interpreterPackage, "global.go");
             packageManager.copyFileToPackage(
                     files.resolveKBase("include/go/interpreter/error.go"),
                     packageManager.interpreterPackage, "error.go");
@@ -151,8 +154,8 @@ public class GoBackend implements Backend {
             // copy: unit tests
             if (options.unitTests) {
                 packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/util_test.go"),
-                        packageManager.interpreterPackage, "util_test.go");
+                        files.resolveKBase("include/go/hooks/unittest/ksequenceutil_test.go"),
+                        packageManager.interpreterPackage, "ksequenceutil_test.go");
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/hooks/unittest/hooks_int_test.go"),
                         packageManager.interpreterPackage, "hooks_int_test.go");
