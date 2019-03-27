@@ -42,6 +42,8 @@ func (kreflectionHooksType) configuration(lbl m.KLabel, sort m.Sort, config m.K)
 	return config, nil
 }
 
+var freshCounter int
+
 func (kreflectionHooksType) fresh(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	if k, t := c.(*m.String); t {
 		sort := m.ParseSort(k.Value)

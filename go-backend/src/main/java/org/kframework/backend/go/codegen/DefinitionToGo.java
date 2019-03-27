@@ -190,7 +190,6 @@ public class DefinitionToGo {
 
         // generating imports
         Set<GoPackage> importsSorted = new TreeSet<>(Comparator.comparing(GoPackage::getName));
-        importsSorted.add(new GoPackage("fmt", null, null));
         importsSorted.add(packageManager.modelPackage);
         for (KLabel functionLabel : functions) {
             Option<String> hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).getOption(Attribute.HOOK_KEY);
@@ -273,7 +272,7 @@ public class DefinitionToGo {
                     sb.writeIndent().append("return hookRes, nil").newLine();
 
                     sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
-                    sb.writeIndent().append("fmt.Println(\"Warning! Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
+                    sb.writeIndent().append("warn(\" Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
                     sb.writeIndent().append("return m.NoResult, hookErr").newLine();
                     sb.endOneBlock().newLine();
@@ -427,7 +426,7 @@ public class DefinitionToGo {
                 // launch a warning, compute, return result without memoization
                 sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.MapKey(c" + i + ")");
                 sb.writeIndent().append("if !ok" + i).beginBlock();
-                sb.appendIndentedLine("fmt.Println(\"Warning! Memo keys unsuitable in ", evalFunctionName, "\")");
+                sb.appendIndentedLine("warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
                 sb.writeIndent().append("return ");
                 sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
                 sb.append(functionArgs.callParameters()).append("config, guard)").newLine();

@@ -71,3 +71,5 @@ func (e *hookDivisionByZeroError) Error() string {
 var errInvalidMapKey = errors.New("invalid map key")
 
 var errBadSetElement = errors.New("type cannot be used as a set element")
+
+var errMaxStepsReached = errors.New("Maximum number of steps reached")

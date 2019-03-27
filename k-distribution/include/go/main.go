@@ -16,6 +16,7 @@ func main() {
 			options.TraceToFile = true
 		}
 	}
+	options.Verbose = true
 
 	interpreter.ExecuteSimple("../", execFileName, options)
 }

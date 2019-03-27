@@ -21,20 +21,36 @@ func callKast(kdir string, programPath string) []byte {
 // ExecuteOptions ... options for executing programs
 type ExecuteOptions struct {
 	TraceToFile bool
+	Verbose bool
 }
 
 // ExecuteSimple ... interprets the program in the file given at input
 func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
+	verbose = options.Verbose
+
 	kast := callKast(kdir, execFile)
-	fmt.Printf("Kast: %s\n\n", kast)
+	if verbose {
+	    fmt.Printf("Kast: %s\n\n", kast)
+	}
 
 	data := make(map[string][]byte)
 	data["PGM"] = kast
-	Execute(&data, options)
+	final, stepsMade, err := Execute(&data, options)
+
+	if err != nil {
+		panic(err)
+	}
+
+    if verbose {
+        fmt.Println("\n\nresult:")
+        fmt.Println(m.PrettyPrint(final))
+        fmt.Printf("\n\nsteps made: %d\n", stepsMade)
+	}
 }
 
 // Execute ... interprets the program with the structure
-func Execute(kastMap *map[string][]byte, options ExecuteOptions) {
+func Execute(kastMap *map[string][]byte, options ExecuteOptions) (finalState m.K, stepsMade int, err error) {
+	verbose = options.Verbose
 
 	kConfigMap := make(map[m.KMapKey]m.K)
 	for key, kastValue := range *kastMap {
@@ -51,10 +67,13 @@ func Execute(kastMap *map[string][]byte, options ExecuteOptions) {
 	kinit, err := eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		return kinit, 0, err
 	}
-	fmt.Println("\n\ntop level init:")
-	fmt.Println(m.PrettyPrint(kinit))
+
+	if verbose {
+        fmt.Println("\n\ntop level init:")
+        fmt.Println(m.PrettyPrint(kinit))
+	}
 
 	// prepare trace
 	if options.TraceToFile {
@@ -63,34 +82,30 @@ func Execute(kastMap *map[string][]byte, options ExecuteOptions) {
 	}
 
 	// execute
-	final, stepsMade := takeStepsNoThread(kinit, 10000)
-	fmt.Println("\n\nresult:")
-	fmt.Println(m.PrettyPrint(final))
-
-	fmt.Printf("\n\nsteps made: %d\n", stepsMade)
-
+	return takeStepsNoThread(kinit, 10000)
 }
 
-func takeStepsNoThread(k m.K, maxSteps int) (m.K, int) {
-	n := 1
-	current := k
+func takeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err error) {
+	stepsMade = 0
 	traceInitialState(k)
 
-	var err error
-	for n < maxSteps {
-		traceStepStart(n, current)
-		current, err = step(current)
+	finalState = k
+	err = nil
+
+	for stepsMade < maxSteps {
+		traceStepStart(stepsMade, finalState)
+		finalState, err = step(finalState)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
-				traceNoStep(n, current)
-				return current, n
+				traceNoStep(stepsMade, finalState)
+				err = nil
 			}
-			panic(err.Error())
+			return
 		}
 
-		traceStepEnd(n, current)
-
-		n++
+		traceStepEnd(stepsMade, finalState)
+		stepsMade++
 	}
-	return current, n
+	err = errMaxStepsReached
+	return
 }

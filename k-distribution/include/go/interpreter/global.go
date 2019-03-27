@@ -5,7 +5,13 @@ import (
 	m "%INCLUDE_MODEL%"
 )
 
-var freshCounter int
+var verbose bool = true
+
+func warn(message string) {
+    if verbose {
+        fmt.Printf("Warning: %s\n", message)
+    }
+}
 
 // helps us deal with unused variables in some situations
 func doNothing(c m.K) {
