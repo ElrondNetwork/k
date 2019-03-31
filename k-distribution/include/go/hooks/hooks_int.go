@@ -281,8 +281,47 @@ func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return m.NewIntFromInt(nrBytes + (len(bytes)-1)*8 - 1), nil
 }
 
-func (intHooksType) bitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	ki, ok1 := argI.(*m.Int)
+	koff, ok2 := argOffset.(*m.Int)
+	klen, ok3 := argLen.(*m.Int)
+	if !ok1 || !ok2 || !ok3 {
+		return invalidArgsResult()
+	}
+	if klen.IsZero() {
+		return m.IntZero, nil
+	}
+	if ki.IsZero() {
+		return m.IntZero, nil
+	}
+
+	offset, offsetOk := koff.ToUint32()
+	length, lengthOk := koff.ToUint32()
+	if !offsetOk || !lengthOk {
+		return invalidArgsResult()
+	}
+	if length == 0 {
+		return m.IntZero, nil
+	}
+
+	result := new(big.Int)
+	if ki.IsNegative() {
+		// 2's complement
+		result.Add(ki.Value, m.IntOne.Value)
+		result.Not(result)
+	} else {
+		result.Set(ki.Value)
+	}
+
+	result.Rsh(result, offset) // cut bits below
+
+	mask := big.NewInt(1)
+	mask.Lsh(mask, length)         // 00001000
+	mask.Sub(mask, m.IntOne.Value) // 00000111
+
+	result.And(result, mask) // cut bits above, final length should be equal to arg len
+
+	return &m.Int{Value: result}, nil
 }
 
 func (intHooksType) signExtendBitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

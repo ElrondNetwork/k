@@ -1,5 +1,9 @@
 package %PACKAGE_MODEL%
 
+import (
+	"bytes"
+)
+
 // Equals ... Deep comparison
 func (k *KApply) Equals(arg K) bool {
 	other, typeOk := arg.(*KApply)
@@ -173,7 +177,11 @@ func (k *StringBuffer) Equals(arg K) bool {
 
 // Equals ... Deep comparison
 func (k *Bytes) Equals(arg K) bool {
-	panic("Bytes not yet implemented.")
+	other, typeOk := arg.(*Bytes)
+	if !typeOk {
+		return false
+	}
+	return bytes.Equal(k.Value, other.Value)
 }
 
 // Equals ... Deep comparison
