@@ -1,6 +1,7 @@
 package %PACKAGE_MODEL%
 
 import (
+    "math"
 	"math/big"
 )
 
@@ -12,6 +13,9 @@ var IntOne = &Int{Value: big.NewInt(1)}
 
 // IntMinusOne ... K Int with value -1
 var IntMinusOne = &Int{Value: big.NewInt(-1)}
+
+// BytesEmpty ... Bytes item with no bytes (length 0)
+var BytesEmpty = &Bytes{Value: nil}
 
 // BoolTrue ... K boolean value with value true
 var BoolTrue = &Bool{Value: true}
@@ -66,6 +70,78 @@ func NewIntFromString(s string) *Int {
 		panic(err)
 	}
 	return i
+}
+
+// IsZero ... true if item represents number 0
+func (k *Int) IsZero() bool {
+	return k.Value.Sign() == 0
+}
+
+// IsNegative ... true if represented number is < 0
+func (k *Int) IsNegative() bool {
+	return k.Value.Sign() < 0
+}
+
+// ToUint32 ... converts to uint if possible, returns (0, false) if not
+func (k *Int) ToUint32() (uint, bool) {
+	if !k.Value.IsUint64() {
+		return 0, false
+	}
+
+	u64 := k.Value.Uint64()
+	if u64 > math.MaxUint32 {
+		return 0, false
+	}
+
+	return uint(u64), true
+}
+
+// ToInt32 ... converts to int if possible, returns (0, false) if not
+func (k *Int) ToInt32() (int, bool) {
+	if !k.Value.IsInt64() {
+		return 0, false
+	}
+
+	i64 := k.Value.Int64()
+	if i64 < math.MinInt32 || i64 > math.MaxInt32 {
+		return 0, false
+	}
+
+	return int(i64), true
+}
+
+// ToPositiveInt32 ... converts to int32 if possible, returns (0, false) if not
+// also rejects negative numbers, so we don't have to test for that again
+func (k *Int) ToPositiveInt32() (int, bool) {
+	if !k.Value.IsInt64() {
+		return 0, false
+	}
+
+	i64 := k.Value.Int64()
+	if i64 < 0 || i64 > math.MaxInt32 {
+		return 0, false
+	}
+
+	return int(i64), true
+}
+
+// ToByte ... converts to 1 byte if possible, returns (0, false) if not
+func (k *Int) ToByte() (byte, bool) {
+	if !k.Value.IsUint64() {
+		return 0, false
+	}
+
+	u64 := k.Value.Uint64()
+	if u64 > 255 {
+		return 0, false
+	}
+
+	return byte(u64), true
+}
+
+// IsEmpty ... returns true if Bytes is the empty byte slice
+func (k *Bytes) IsEmpty() bool {
+	return len(k.Value) == 0
 }
 
 // NewString ... Creates a new K string object from a Go string
