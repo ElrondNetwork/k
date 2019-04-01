@@ -34,72 +34,114 @@ func TestIntHooks1(t *testing.T) {
 	var z m.K
 	var err error
 
+	backupInput(a, b)
 	z, err = intHooks.eq(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.ne(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.le(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.lt(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.ge(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.gt(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.add(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "3", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.sub(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "-1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.mul(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.tdiv(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.ediv(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.emod(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
 	z, err = intHooks.shl(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "4", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.shr(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.and(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.or(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "3", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.xor(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "3", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.not(b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "-3", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.abs(b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.max(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.min(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
-
+	checkImmutable(t, a, b)
 }
 
 func TestIntHooks2(t *testing.T) {
@@ -109,71 +151,116 @@ func TestIntHooks2(t *testing.T) {
 	var z m.K
 	var err error
 
-	z, err = intHooks.eq(m.NewIntFromInt(1), m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
+	backupInput(a, b)
+	z, err = intHooks.eq(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
-	z, err = intHooks.ne(m.NewIntFromInt(1), m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
+	backupInput(a, b)
+	z, err = intHooks.ne(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.le(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.lt(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.ge(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, true, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.gt(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertBoolOk(t, false, z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.add(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.sub(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.mul(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.tdiv(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.ediv(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.emod(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.shl(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.shr(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.and(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.or(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.xor(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.not(a, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "-2", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.abs(a, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.max(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(a, b)
 	z, err = intHooks.min(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", z, err)
+	checkImmutable(t, a, b)
+
 }
 
 func TestIntHooksPow(t *testing.T) {
@@ -183,46 +270,84 @@ func TestIntHooksPow(t *testing.T) {
 	var z m.K
 	var err error
 
+	backupInput(a, b)
 	z, err = intHooks.pow(a, b, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1024", z, err)
+	checkImmutable(t, a, b)
 
+	backupInput(b, a)
 	z, err = intHooks.pow(b, a, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "100", z, err)
+	checkImmutable(t, b, a)
 
+	backupInput(a, b, c)
 	z, err = intHooks.powmod(a, b, c, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "24", z, err)
+	checkImmutable(t, a, b, c)
+
 }
 
 func TestIntLog2(t *testing.T) {
 	var log m.K
 	var err error
+	var arg m.K
 
-	log, err = intHooks.log2(m.NewIntFromInt(1), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(1)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "0", log, err)
+	checkImmutable(t, arg)
 
-	log, err = intHooks.log2(m.NewIntFromInt(2), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(2)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", log, err)
+	checkImmutable(t, arg)
 
-	log, err = intHooks.log2(m.NewIntFromInt(3), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(3)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "1", log, err)
+	checkImmutable(t, arg)
 
-	log, err = intHooks.log2(m.NewIntFromInt(4), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(4)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "2", log, err)
+	checkImmutable(t, arg)
 
-	log, err = intHooks.log2(m.NewIntFromInt(255), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(255)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "7", log, err)
+	checkImmutable(t, arg)
 
-	log, err = intHooks.log2(m.NewIntFromInt(256), m.LblDummy, m.SortInt, m.InternedBottom)
+	arg = m.NewIntFromInt(256)
+	backupInput(arg)
+	log, err = intHooks.log2(arg, m.LblDummy, m.SortInt, m.InternedBottom)
 	assertIntOk(t, "8", log, err)
+	checkImmutable(t, arg)
 
 	for i := 1000; i < 1009; i++ {
-		big, _ := intHooks.shl(m.NewIntFromInt(1), m.NewIntFromInt(i), m.LblDummy, m.SortInt, m.InternedBottom)
+		// 1 << i
+		arg1, arg2 := m.NewIntFromInt(1), m.NewIntFromInt(i)
+		backupInput(arg1, arg2)
+		big, _ := intHooks.shl(arg1, arg2, m.LblDummy, m.SortInt, m.InternedBottom)
+		checkImmutable(t, arg1, arg2)
+
+		backupInput(big)
 		log, err = intHooks.log2(big, m.LblDummy, m.SortInt, m.InternedBottom)
 		assertIntOk(t, fmt.Sprintf("%d", i), log, err)
+		checkImmutable(t, big)
 
+		// (1 << i) - 1
 		big, _ = intHooks.sub(big, m.IntOne, m.LblDummy, m.SortInt, m.InternedBottom)
+
+		backupInput(big)
 		log, err = intHooks.log2(big, m.LblDummy, m.SortInt, m.InternedBottom)
 		assertIntOk(t, fmt.Sprintf("%d", i-1), log, err)
+		checkImmutable(t, big)
+
 	}
 }
 

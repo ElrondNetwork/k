@@ -8,6 +8,7 @@ import (
 // K ... Defines a K entity
 type K interface {
 	Equals(K) bool
+	DeepCopy() K
 	structPrint(indent int) string
 	prettyPrint(indent int) string
 }

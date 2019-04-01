@@ -116,7 +116,7 @@ public class GoBackend implements Backend {
 
             // copy: model
             for (String fileName : Arrays.asList(
-                    "dynarray.go", "equals.go", "error.go", "kmapkey.go", "kmodel.go",
+                    "deepcopy.go", "dynarray.go", "equals.go", "error.go", "kmapkey.go", "kmodel.go",
                     "prettyprint.go", "structprint.go", "util.go")) {
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/model/" + fileName),
@@ -153,24 +153,18 @@ public class GoBackend implements Backend {
 
             // copy: unit tests
             if (options.unitTests) {
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/ksequenceutil_test.go"),
-                        packageManager.interpreterPackage, "ksequenceutil_test.go");
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/hooks_int_test.go"),
-                        packageManager.interpreterPackage, "hooks_int_test.go");
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/hooks_bool_test.go"),
-                        packageManager.interpreterPackage, "hooks_bool_test.go");
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/hooks_array_test.go"),
-                        packageManager.interpreterPackage, "hooks_array_test.go");
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/hooks_string_test.go"),
-                        packageManager.interpreterPackage, "hooks_string_test.go");
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/hooks/unittest/hooks_buffer_test.go"),
-                        packageManager.interpreterPackage, "hooks_buffer_test.go");
+                for (String fileName : Arrays.asList(
+                        "hooks_array_test.go",
+                        "hooks_bool_test.go",
+                        "hooks_buffer_test.go",
+                        "hooks_int_test.go",
+                        "hooks_string_test.go",
+                        "ksequenceutil_test.go",
+                        "testutil.go")) {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/hooks/unittest/" + fileName),
+                            packageManager.interpreterPackage, fileName);
+                }
             }
 
             // main
