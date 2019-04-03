@@ -64,6 +64,25 @@ rustup default 1.28.0
 To install, go to <https://docs.haskellstack.org/en/stable/README/> and follow the instructions.
 You may need to do `stack upgrade` to ensure the latest version of Haskell Stack.
 
+## Go backend
+
+The Go backend is still work in progress. However, if you want to play with it, follow these steps.
+
+Install Go and goyacc
+```
+sudo snap install go --classic
+go get github.com/golang/tools/cmd/goyacc
+```
+
+Configure GOPATH, GOROOT and add them to PATH.
+```
+export GOROOT=/snap/local/go
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+```
+The code generator additionally needs to know the path to $GOPATH/src to correctly generate import statements. Add Java environment variable `GOSRC=[full path to $GOPATH/src]`
+
+
 ## Miscellaneous
 
 Also required:
