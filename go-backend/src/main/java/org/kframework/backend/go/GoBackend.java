@@ -151,6 +151,7 @@ public class GoBackend implements Backend {
                         "hooks_array_test.go",
                         "hooks_bool_test.go",
                         "hooks_buffer_test.go",
+                        "hooks_bytes_test.go",
                         "hooks_int_test.go",
                         "hooks_string_test.go",
                         "ksequenceutil_test.go",
