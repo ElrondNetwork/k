@@ -7,19 +7,18 @@ import (
 
 // StructPrint ... returns a representation of a K item that somewhat resembles a Go declaration
 func StructPrint(k K) string {
-	return k.structPrint(0)
-}
-
-func simplePrint(indent int, str string) string {
 	var sb strings.Builder
-	addIndent(&sb, indent)
-	sb.WriteString(str)
+	k.structPrint(&sb, 0)
 	return sb.String()
 }
 
-func (k *KApply) structPrint(indent int) string {
-	var sb strings.Builder
-	addIndent(&sb, indent)
+func simplePrint(sb *strings.Builder, indent int, str string) {
+	addIndent(sb, indent)
+	sb.WriteString(str)
+}
+
+func (k *KApply) structPrint(sb *strings.Builder, indent int) {
+	addIndent(sb, indent)
 	sb.WriteString("KApply {Label:")
 	sb.WriteString(k.Label.Name())
 	sb.WriteString(", List:")
@@ -28,31 +27,28 @@ func (k *KApply) structPrint(indent int) string {
 	} else {
 		for _, childk := range k.List {
 			sb.WriteRune('\n')
-			sb.WriteString(childk.structPrint(indent + 1))
+			childk.structPrint(sb, indent+1)
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune('}')
 	}
-
-	return sb.String()
 }
 
-func (k *InjectedKLabel) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("InjectedKLabel {Label:%s}", k.Label.Name()))
+func (k *InjectedKLabel) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("InjectedKLabel {Label:%s}", k.Label.Name()))
 }
 
-func (k *KToken) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("KToken {Sort:%s, Value:%s}", k.Sort.Name(), k.Value))
+func (k *KToken) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("KToken {Sort:%s, Value:%s}", k.Sort.Name(), k.Value))
 }
 
-func (k *KVariable) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("KVariable {Name:%s}", k.Name))
+func (k *KVariable) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("KVariable {Name:%s}", k.Name))
 }
 
-func (k *Map) structPrint(indent int) string {
-	var sb strings.Builder
-	addIndent(&sb, indent)
+func (k *Map) structPrint(sb *strings.Builder, indent int) {
+	addIndent(sb, indent)
 	sb.WriteString("Map {Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -63,85 +59,80 @@ func (k *Map) structPrint(indent int) string {
 	} else {
 		for k, v := range k.Data {
 			sb.WriteString("\n")
-			addIndent(&sb, indent+1)
+			addIndent(sb, indent+1)
 			sb.WriteString("key: ")
 			sb.WriteString(k.String())
 			sb.WriteString("  value: ")
-			sb.WriteString(v.structPrint(0))
+			v.structPrint(sb, 0)
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune('}')
 	}
-
-	return sb.String()
 }
 
-func (k *List) structPrint(indent int) string {
+func (k *List) structPrint(sb *strings.Builder, indent int) {
 	// TODO: print data
-	return simplePrint(indent, fmt.Sprintf("List {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
+	simplePrint(sb, indent, fmt.Sprintf("List {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
-func (k *Set) structPrint(indent int) string {
+func (k *Set) structPrint(sb *strings.Builder, indent int) {
 	// TODO: print data
-	return simplePrint(indent, fmt.Sprintf("Set {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
+	simplePrint(sb, indent, fmt.Sprintf("Set {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
-func (k *Array) structPrint(indent int) string {
+func (k *Array) structPrint(sb *strings.Builder, indent int) {
 	// TODO: print data
-	return simplePrint(indent, fmt.Sprintf("Array {Sort:%s}", k.Sort.Name()))
+	simplePrint(sb, indent, fmt.Sprintf("Array {Sort:%s}", k.Sort.Name()))
 }
 
-func (k *Int) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Int (%s)", k.Value.String()))
+func (k *Int) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("Int (%s)", k.Value.String()))
 }
 
-func (k *MInt) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("MInt (%d)", k.Value))
+func (k *MInt) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("MInt (%d)", k.Value))
 }
 
-func (k *Float) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Float (%f)", k.Value))
+func (k *Float) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("Float (%f)", k.Value))
 }
 
-func (k *String) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("String (%s)", k))
+func (k *String) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("String (%s)", k))
 }
 
-func (k *StringBuffer) structPrint(indent int) string {
-	return fmt.Sprintf("StringBuffer (%s)", k.Value.String())
+func (k *StringBuffer) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("StringBuffer (%s)", k.Value.String()))
 }
 
-func (k *Bytes) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Bytes (%b)", k))
+func (k *Bytes) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("Bytes (%b)", k))
 }
 
-func (k *Bool) structPrint(indent int) string {
-	return simplePrint(indent, fmt.Sprintf("Bool (%t)", k.Value))
+func (k *Bool) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, fmt.Sprintf("Bool (%t)", k.Value))
 }
 
-func (k *Bottom) structPrint(indent int) string {
-	return simplePrint(indent, "Bottom")
+func (k *Bottom) structPrint(sb *strings.Builder, indent int) {
+	simplePrint(sb, indent, "Bottom")
 }
 
-func (k *KSequence) structPrint(indent int) string {
-	var sb strings.Builder
-	addIndent(&sb, indent)
+func (k *KSequence) structPrint(sb *strings.Builder, indent int) {
+	addIndent(sb, indent)
 	sb.WriteString("KSequence {")
 	if len(k.Ks) == 0 {
 		sb.WriteString(" <empty> }")
 	} else {
 		for i, childk := range k.Ks {
 			sb.WriteString("\n")
-			sb.WriteString(childk.structPrint(indent + 1))
+			childk.structPrint(sb, indent+1)
 			if i < len(k.Ks)-1 {
 				sb.WriteString(" ~>")
 			}
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune('}')
 	}
-
-	return sb.String()
 }

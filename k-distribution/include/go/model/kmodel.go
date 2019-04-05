@@ -9,8 +9,10 @@ import (
 type K interface {
 	Equals(K) bool
 	DeepCopy() K
-	structPrint(indent int) string
-	prettyPrint(indent int) string
+	structPrint(sb *strings.Builder, indent int)
+	prettyPrint(sb *strings.Builder, indent int)
+	kprint(sb *strings.Builder)
+	collectionsToK() K
 }
 
 // KSequence ... a sequence of K items

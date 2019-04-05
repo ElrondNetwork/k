@@ -6,19 +6,15 @@ import (
 	"strings"
 )
 
-func addIndent(sb *strings.Builder, indent int) {
-	for i := 0; i < indent; i++ {
-		sb.WriteString("    ")
-	}
-}
-
 // PrettyPrint ... returns a representation of a K item that tries to be as readable as possible
+// designed for debugging purposes only
 func PrettyPrint(k K) string {
-	return k.prettyPrint(0)
+	var sb strings.Builder
+	k.prettyPrint(&sb, 0)
+	return sb.String()
 }
 
-func (k *KApply) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *KApply) prettyPrint(sb *strings.Builder, indent int) {
 	lblName := k.Label.Name()
 	isKCell := strings.HasPrefix(lblName, "<") && strings.HasSuffix(lblName, ">")
 
@@ -34,7 +30,9 @@ func (k *KApply) prettyPrint(indent int) string {
 		done = true
 	}
 	if !done && len(k.List) == 1 {
-		childStr := k.List[0].prettyPrint(0)
+		var tempSb strings.Builder
+		k.List[0].prettyPrint(&tempSb, 0)
+		childStr := tempSb.String()
 		if !strings.Contains(childStr, "\n") {
 			// if only one child and its representation not too big, just put everything in one row
 			if isKCell {
@@ -50,14 +48,14 @@ func (k *KApply) prettyPrint(indent int) string {
 	if !done {
 		for i, childk := range k.List {
 			sb.WriteRune('\n')
-			addIndent(&sb, indent+1)
-			sb.WriteString(childk.prettyPrint(indent + 1))
+			addIndent(sb, indent+1)
+			childk.prettyPrint(sb, indent+1)
 			if !isKCell && i < len(k.List)-1 {
 				sb.WriteString(",")
 			}
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 	}
 
 	// end
@@ -67,24 +65,21 @@ func (k *KApply) prettyPrint(indent int) string {
 	} else {
 		sb.WriteString(")")
 	}
-
-	return sb.String()
 }
 
-func (k *InjectedKLabel) prettyPrint(indent int) string {
-	return fmt.Sprintf("InjectedKLabel(%s)", k.Label.Name())
+func (k *InjectedKLabel) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("InjectedKLabel(%s)", k.Label.Name()))
 }
 
-func (k *KToken) prettyPrint(indent int) string {
-	return fmt.Sprintf("%s: %s", k.Sort.Name(), k.Value)
+func (k *KToken) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("%s: %s", k.Sort.Name(), k.Value))
 }
 
-func (k *KVariable) prettyPrint(indent int) string {
-	return fmt.Sprintf("var %s", k.Name)
+func (k *KVariable) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("var %s", k.Name))
 }
 
-func (k *Map) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *Map) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString("Map Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -93,32 +88,21 @@ func (k *Map) prettyPrint(indent int) string {
 		sb.WriteString(" <empty>")
 	} else {
 		sb.WriteString(", Data: (")
-		var keysAsString []string
-		keysAsStringToValue := make(map[string]K)
-		for k, v := range k.Data {
-			keyAsString := k.String()
-			keysAsString = append(keysAsString, keyAsString)
-			keysAsStringToValue[keyAsString] = v
-		}
-		sort.Strings(keysAsString)
-		for _, keyAsString := range keysAsString {
+		orderedKVPairs := k.ToOrderedKeyValuePairs()
+		for _, pair := range orderedKVPairs {
 			sb.WriteString("\n")
-			addIndent(&sb, indent+1)
-			sb.WriteString(keyAsString)
+			addIndent(sb, indent+1)
+			sb.WriteString(pair.KeyAsString)
 			sb.WriteString(" => ")
-			v, _ := keysAsStringToValue[keyAsString]
-			sb.WriteString(v.prettyPrint(indent + 1))
+			pair.Value.prettyPrint(sb, indent+1)
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune(')')
 	}
-
-	return sb.String()
 }
 
-func (k *List) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *List) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString("List Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -129,23 +113,20 @@ func (k *List) prettyPrint(indent int) string {
 		sb.WriteString(", Data: [")
 		for _, item := range k.Data {
 			sb.WriteString("\n")
-			addIndent(&sb, indent+1)
+			addIndent(sb, indent+1)
 			if item == nil {
 				sb.WriteString("nil")
 			} else {
-				sb.WriteString(item.prettyPrint(indent + 1))
+				item.prettyPrint(sb, indent+1)
 			}
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune(']')
 	}
-
-	return sb.String()
 }
 
-func (k *Set) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *Set) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString("Set Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -161,19 +142,16 @@ func (k *Set) prettyPrint(indent int) string {
 		sort.Strings(keysAsString)
 		for _, keyAsString := range keysAsString {
 			sb.WriteString("\n")
-			addIndent(&sb, indent+1)
+			addIndent(sb, indent+1)
 			sb.WriteString(keyAsString)
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune('}')
 	}
-
-	return sb.String()
 }
 
-func (k *Array) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *Array) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString("Array Sort:")
 	sb.WriteString(k.Sort.Name())
 	slice := k.Data.ToSlice()
@@ -183,81 +161,77 @@ func (k *Array) prettyPrint(indent int) string {
 		sb.WriteString(", Data: [")
 		for i, item := range slice {
 			sb.WriteString("\n")
-			addIndent(&sb, indent+1)
+			addIndent(sb, indent+1)
 			sb.WriteString(fmt.Sprintf("[%d] => ", i))
-			sb.WriteString(item.prettyPrint(indent + 1))
+			item.prettyPrint(sb, indent+1)
 		}
 		sb.WriteRune('\n')
-		addIndent(&sb, indent)
+		addIndent(sb, indent)
 		sb.WriteRune(']')
 	}
-
-	return sb.String()
 }
 
-func (k *Int) prettyPrint(indent int) string {
-	return fmt.Sprintf("Int (%s)", k.Value.String())
+func (k *Int) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("Int (%s)", k.Value.String()))
 }
 
-func (k *MInt) prettyPrint(indent int) string {
-	return fmt.Sprintf("MInt (%d)", k.Value)
+func (k *MInt) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("MInt (%d)", k.Value))
 }
 
-func (k *Float) prettyPrint(indent int) string {
-	return fmt.Sprintf("Float (%f)", k.Value)
+func (k *Float) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("Float (%f)", k.Value))
 }
 
-func (k *String) prettyPrint(indent int) string {
-	var sb strings.Builder
-	sb.WriteString("String(")
-	for _, c := range []byte(k.Value) {
-		if c == '\n' {
-			sb.WriteString("\\n")
-		} else if c == '\t' {
-			sb.WriteString("\\t")
-		} else if c == '"' {
-			sb.WriteString("\\\"")
-		} else if c < ' ' || c >= 0x7f {
-			sb.WriteString(fmt.Sprintf("\\x%02x", c))
-		} else {
-			sb.WriteByte(c)
+func (k *String) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString("String(\"")
+	writeEscapedString(sb, k.Value)
+	sb.WriteString("\")")
+}
+
+func (k *StringBuffer) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString("StringBuffer(\"")
+	writeEscapedString(sb, k.Value.String())
+	sb.WriteString("\")")
+}
+
+func (k *Bytes) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString("Bytes(")
+	if len(k.Value) == 0 {
+		sb.WriteString("empty")
+	} else {
+		for i, b := range k.Value {
+			sb.WriteString(fmt.Sprintf("%02x", b))
+			if i < len(k.Value)-1 {
+				sb.WriteByte(' ')
+			}
 		}
 	}
 	sb.WriteString(")")
-	return sb.String()
 }
 
-func (k *StringBuffer) prettyPrint(indent int) string {
-	return fmt.Sprintf("StringBuffer (%s)", k.Value.String())
+func (k *Bool) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("Bool (%t)", k.Value))
 }
 
-func (k *Bytes) prettyPrint(indent int) string {
-	return fmt.Sprintf("Bytes (%b)", k)
+func (k *Bottom) prettyPrint(sb *strings.Builder, indent int) {
+	sb.WriteString("Bottom")
 }
 
-func (k *Bool) prettyPrint(indent int) string {
-	return fmt.Sprintf("Bool (%t)", k.Value)
-}
-
-func (k *Bottom) prettyPrint(indent int) string {
-	return "Bottom"
-}
-
-func (k *KSequence) prettyPrint(indent int) string {
-	var sb strings.Builder
+func (k *KSequence) prettyPrint(sb *strings.Builder, indent int) {
 	if len(k.Ks) == 0 {
-		sb.WriteString(".Kseq")
+		sb.WriteString(" .K ")
 	} else {
 		for i, childk := range k.Ks {
 			if i > 0 {
-				addIndent(&sb, indent)
+				addIndent(sb, indent)
 			}
-			sb.WriteString(childk.prettyPrint(indent))
+			childk.prettyPrint(sb, indent)
 			if i < len(k.Ks)-1 {
 				sb.WriteString(" ~>\n")
+			} else {
+				sb.WriteString(" ~> . ")
 			}
 		}
 	}
-
-	return sb.String()
 }
