@@ -16,13 +16,13 @@ func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config 
 	}
 	mp := make(map[m.KMapKey]m.K)
 	mp[kkey] = val
-	return &m.Map{Sort: sort, Label: lbl.CollectionFor(), Data: mp}, nil
+	return &m.Map{Sort: sort, Label: m.CollectionFor(lbl), Data: mp}, nil
 }
 
 // returns an empty map
 func (mapHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	var mp map[m.KMapKey]m.K
-	return &m.Map{Sort: sort, Label: lbl.CollectionFor(), Data: mp}, nil
+	return &m.Map{Sort: sort, Label: m.CollectionFor(lbl), Data: mp}, nil
 }
 
 func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

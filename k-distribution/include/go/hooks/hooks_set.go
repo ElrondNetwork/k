@@ -23,7 +23,7 @@ func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 
 func (setHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	var data map[m.KMapKey]bool
-	return &m.Set{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.Set{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 // returns a set with 1 element
@@ -34,7 +34,7 @@ func (setHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	}
 	data := make(map[m.KMapKey]bool)
 	data[setElem] = true
-	return &m.Set{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.Set{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 func (setHooksType) concat(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

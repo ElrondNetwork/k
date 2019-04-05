@@ -10,12 +10,14 @@ import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.KORE;
+import org.kframework.kore.Sort;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.*;
+import static org.kframework.kore.KORE.*;
 
 public class KLabelsGen {
 
@@ -72,7 +74,7 @@ public class KLabelsGen {
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
             sb.append(GoStringUtil.enquoteString(klabel.name()));
-            sb.append("\n");
+            sb.newLine();
         }
         sb.writeIndent().append("default:\n");
         sb.writeIndent().append("\tpanic(\"Unexpected KLabel.\")\n");
@@ -97,7 +99,7 @@ public class KLabelsGen {
 
         // collection for
         sb.append("// CollectionFor ... TODO: document").newLine();
-        sb.append("func (kl KLabel) CollectionFor() KLabel").beginBlock();
+        sb.append("func CollectionFor(kl KLabel) KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (Map.Entry<KLabel, KLabel> entry : collectionFor.entrySet()) {
             sb.writeIndent().append("case ");
@@ -105,7 +107,7 @@ public class KLabelsGen {
             sb.append(":\n");
             sb.writeIndent().append("\treturn ");
             sb.append(nameProvider.klabelVariableName(entry.getValue()));
-            sb.append("\n");
+            sb.newLine();
         }
         sb.writeIndent().append("default:\n");
         sb.writeIndent().append("\tpanic(\"Cannot call method collectionFor for KLabel \" + kl.Name())\n");
@@ -114,7 +116,7 @@ public class KLabelsGen {
 
         // unit for
         sb.append("// UnitFor ... TODO: document").newLine();
-        sb.append("func (kl KLabel) UnitFor() KLabel").beginBlock();
+        sb.append("func UnitFor(kl KLabel) KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
             sb.writeIndent().append("case ");
@@ -123,16 +125,16 @@ public class KLabelsGen {
             sb.writeIndent().append("\treturn ");
             KLabel unitLabel = KORE.KLabel(data.mainModule.attributesFor().apply(label).get(Attribute.UNIT_KEY));
             sb.append(nameProvider.klabelVariableName(unitLabel));
-            sb.append("\n");
+            sb.newLine();
         }
         sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method unitFor for KLabel \" + kl.Name())\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method UnitFor for KLabel \" + kl.Name())\n");
         sb.endOneBlock();
         sb.endOneBlock().newLine();
 
-        // el for
-        sb.append("// ElFor ... TODO: document").newLine();
-        sb.append("func (kl KLabel) ElFor() KLabel").beginBlock();
+        // element for
+        sb.append("// ElementFor ... TODO: document").newLine();
+        sb.append("func ElementFor(kl KLabel) KLabel").beginBlock();
         sb.append("\tswitch kl").beginBlock();
         for (KLabel label : collectionFor.values().stream().collect(Collectors.toSet())) {
             sb.writeIndent().append("case ").append(nameProvider.klabelVariableName(label));
@@ -140,10 +142,47 @@ public class KLabelsGen {
             sb.writeIndent().append("\treturn ");
             KLabel elLabel = KORE.KLabel(data.mainModule.attributesFor().apply(label).get("element"));
             sb.append(nameProvider.klabelVariableName(elLabel));
-            sb.append("\n");
+            sb.newLine();
         }
         sb.writeIndent().append("default:\n");
-        sb.writeIndent().append("\tpanic(\"Cannot call method elFor for KLabel \" + kl.Name())\n");
+        sb.writeIndent().append("\tpanic(\"Cannot call method ElementFor for KLabel \" + kl.Name())\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
+
+        // unit for array
+        Set<Sort> sorts = mutable(data.mainModule.definedSorts());
+        Set<Sort> arraySorts = sorts.stream().filter(s -> data.mainModule.sortAttributesFor().get(s).getOrElse(() -> Att()).<String>getOptional("hook")
+                .orElse(".").equals("ARRAY.Array")).collect(Collectors.toSet());
+        sb.append("// UnitForArray ... TODO: document").newLine();
+        sb.append("func UnitForArray(s Sort) KLabel").beginBlock();
+        sb.append("\tswitch s").beginBlock();
+        for (Sort sort : arraySorts) {
+            sb.writeIndent().append("case ").append(nameProvider.sortVariableName(sort));
+            sb.append(":\n");
+            sb.writeIndent().append("\treturn ");
+            KLabel elLabel = KLabel(data.mainModule.sortAttributesFor().apply(sort).get("unit"));
+            sb.append(nameProvider.klabelVariableName(elLabel));
+            sb.newLine();
+        }
+        sb.append("\t\tdefault:\n");
+        sb.append("\t\t\tpanic(\"Unexpected Sort in method UnitForArray.\")\n");
+        sb.endOneBlock();
+        sb.endOneBlock().newLine();
+
+        // element for array
+        sb.append("// ElementForArray ... TODO: document").newLine();
+        sb.append("func ElementForArray(s Sort) KLabel").beginBlock();
+        sb.append("\tswitch s").beginBlock();
+        for (Sort sort : arraySorts) {
+            sb.writeIndent().append("case ").append(nameProvider.sortVariableName(sort));
+            sb.append(":\n");
+            sb.writeIndent().append("\treturn ");
+            KLabel elLabel = KLabel(data.mainModule.sortAttributesFor().apply(sort).get("element"));
+            sb.append(nameProvider.klabelVariableName(elLabel));
+            sb.newLine();
+        }
+        sb.append("\t\tdefault:\n");
+        sb.append("\t\t\tpanic(\"Unexpected Sort in method ElementForArray.\")\n");
         sb.endOneBlock();
         sb.endOneBlock().newLine();
 

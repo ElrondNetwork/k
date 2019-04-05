@@ -10,13 +10,13 @@ const listHooks listHooksType = 0
 
 func (listHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	data := make([]m.K, 0)
-	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 func (listHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	data := make([]m.K, 1)
 	data[0] = e
-	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
@@ -32,7 +32,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 		return l1, nil
 	}
 	data := append(l1.Data, l2.Data...)
-	return &m.List{Sort: sort, Label: lbl.CollectionFor(), Data: data}, nil
+	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
