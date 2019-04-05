@@ -20,8 +20,9 @@ func callKast(kdir string, programPath string) []byte {
 
 // ExecuteOptions ... options for executing programs
 type ExecuteOptions struct {
-	TraceToFile bool
-	Verbose bool
+	TracePretty bool
+	TraceKPrint bool
+	Verbose     bool
 }
 
 // ExecuteSimple ... interprets the program in the file given at input
@@ -30,7 +31,7 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 
 	kast := callKast(kdir, execFile)
 	if verbose {
-	    fmt.Printf("Kast: %s\n\n", kast)
+		fmt.Printf("Kast: %s\n\n", kast)
 	}
 
 	data := make(map[string][]byte)
@@ -41,10 +42,12 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 		panic(err)
 	}
 
-    if verbose {
-        fmt.Println("\n\nresult:")
-        fmt.Println(m.PrettyPrint(final))
-        fmt.Printf("\n\nsteps made: %d\n", stepsMade)
+	if verbose {
+		fmt.Println("\n\npretty print:")
+		fmt.Println(m.PrettyPrint(final))
+		fmt.Println("\n\nk print:")
+        fmt.Println(m.KPrint(final))
+		fmt.Printf("\n\nsteps made: %d\n", stepsMade)
 	}
 }
 
@@ -71,15 +74,19 @@ func Execute(kastMap *map[string][]byte, options ExecuteOptions) (finalState m.K
 	}
 
 	if verbose {
-        fmt.Println("\n\ntop level init:")
-        fmt.Println(m.PrettyPrint(kinit))
+		fmt.Println("\n\ntop level init:")
+		fmt.Println(m.PrettyPrint(kinit))
 	}
 
 	// prepare trace
-	if options.TraceToFile {
-		initializeTrace()
-		defer closeTrace()
+	if options.TracePretty {
+		traceHandlers = append(traceHandlers, &tracePrettyDebug{})
 	}
+	if options.TraceKPrint {
+		traceHandlers = append(traceHandlers, &traceKPrint{})
+	}
+	initializeTrace()
+	defer closeTrace()
 
 	// execute
 	return takeStepsNoThread(kinit, 10000)

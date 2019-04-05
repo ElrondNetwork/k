@@ -127,24 +127,15 @@ public class GoBackend implements Backend {
             }
 
             // copy: interpreter
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/kmodelconvert.go"),
-                    packageManager.interpreterPackage, "kmodelconvert.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/ksequenceutil.go"),
-                    packageManager.interpreterPackage, "ksequenceutil.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/global.go"),
-                    packageManager.interpreterPackage, "global.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/error.go"),
-                    packageManager.interpreterPackage, "error.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/trace.go"),
-                    packageManager.interpreterPackage, "trace.go");
-            packageManager.copyFileToPackage(
-                    files.resolveKBase("include/go/interpreter/run.go"),
-                    packageManager.interpreterPackage, "run.go");
+            for (String fileName : Arrays.asList(
+                    "error.go", "global.go",
+                    "kmodelconvert.go", "ksequenceutil.go",
+                    "run.go",
+                    "trace.go", "tracepretty.go", "tracekprint.go", "tracecompare.go")) {
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/interpreter/" + fileName),
+                        packageManager.interpreterPackage, fileName);
+            }
 
             // copy: builtin hook files
             for (String hookNamespace : GoBuiltin.HOOK_NAMESPACES) {

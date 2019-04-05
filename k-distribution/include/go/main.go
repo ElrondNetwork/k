@@ -10,13 +10,12 @@ func main() {
 		panic("Argument expected. First argument should be the program to execute.")
 	}
 	execFileName := os.Args[1]
-    options := interpreter.ExecuteOptions{TraceToFile: false}
+    options := interpreter.ExecuteOptions{TracePretty: false, Verbose: true}
 	for _, flag := range os.Args[2:] {
 		if flag == "--trace" {
-			options.TraceToFile = true
+			options.TracePretty = true
 		}
 	}
-	options.Verbose = true
 
 	interpreter.ExecuteSimple("../", execFileName, options)
 }

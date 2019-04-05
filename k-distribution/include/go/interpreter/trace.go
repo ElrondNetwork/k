@@ -1,96 +1,65 @@
 // Handles generation of traces
 // (what rules were applied, in what order, what were the intermediate states).
-// Generates a file and dumps trace there.
+// Multiple trace handlers supported.
 
 package %PACKAGE_INTERPRETER%
 
 import (
-	"bufio"
-	"fmt"
 	m "%INCLUDE_MODEL%"
-	"os"
-	filepath "path/filepath"
-	"time"
 )
 
-var traceEnabled = false
-var traceName string
-var traceFile *os.File
-var traceWriter *bufio.Writer
+var traceHandlers []traceHandler
 
-func initializeTrace() {
-	traceEnabled = true
-	formattedNow := time.Now().Format("20060102150405")
-	traceName = "trace_" + formattedNow
-	var err error
-	err = os.Mkdir(traceName, os.ModePerm)
-	if err != nil {
-		fmt.Println("Error while creating trace directory:" + err.Error())
-	}
-	newTraceFile(traceName + "_init.log")
+// we can have multiple writers to write program execution traces in various formats
+// they are all intended for easier debugging
+type traceHandler interface {
+	initialize()
+	closeTrace()
+	traceInitialState(state m.K)
+	traceStepStart(stepNr int, currentState m.K)
+	traceStepEnd(stepNr int, currentState m.K)
+	traceNoStep(stepNr int, currentState m.K)
+	traceRuleApply(ruleType string, stepNr int, ruleInfo string)
 }
 
-func newTraceFile(fileName string) {
-	if traceFile != nil {
-		traceWriter.Flush()
-		traceFile.Close()
+func initializeTrace() {
+	for _, t := range traceHandlers {
+		t.initialize()
 	}
-	var err error
-	traceFile, err = os.OpenFile(filepath.Join(traceName, fileName),
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Error while creating trace file:" + err.Error())
-	}
-
-	traceWriter = bufio.NewWriter(traceFile)
 }
 
 func closeTrace() {
-	if !traceEnabled {
-		return
+	for _, t := range traceHandlers {
+		t.closeTrace()
 	}
-	traceEnabled = false
-	traceWriter.Flush()
-	traceFile.Close()
 }
 
 func traceInitialState(state m.K) {
-	if !traceEnabled {
-		return
+	for _, t := range traceHandlers {
+		t.traceInitialState(state)
 	}
-	traceWriter.WriteString("initial state:\n\n")
-	traceWriter.WriteString(m.PrettyPrint(state))
 }
 
 func traceStepStart(stepNr int, currentState m.K) {
-	if !traceEnabled {
-		return
+	for _, t := range traceHandlers {
+		t.traceStepStart(stepNr, currentState)
 	}
-	newTraceFile(fmt.Sprintf("%s_step%d.log", traceName, stepNr))
-	traceWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
 }
 
 func traceStepEnd(stepNr int, currentState m.K) {
-	if !traceEnabled {
-		return
+	for _, t := range traceHandlers {
+		t.traceStepEnd(stepNr, currentState)
 	}
-	traceWriter.WriteString(fmt.Sprintf("\nstep #%d end; current state:\n\n", stepNr))
-	traceWriter.WriteString(m.PrettyPrint(currentState))
 }
 
 func traceNoStep(stepNr int, currentState m.K) {
-	if !traceEnabled {
-		return
+	for _, t := range traceHandlers {
+		t.traceNoStep(stepNr, currentState)
 	}
-	traceWriter.WriteString(fmt.Sprintf("\nstep #%d end, no more steps\n\n", stepNr))
-	traceWriter.WriteString(m.PrettyPrint(currentState))
 }
 
 func traceRuleApply(ruleType string, stepNr int, ruleInfo string) {
-	if !traceEnabled {
-		return
-	}
-	if ruleType == "STEP" {
-		traceWriter.WriteString(fmt.Sprintf("rule %s #%-3d %s\n", ruleType, stepNr, ruleInfo))
+	for _, t := range traceHandlers {
+		t.traceRuleApply(ruleType, stepNr, ruleInfo)
 	}
 }
