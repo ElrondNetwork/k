@@ -288,39 +288,34 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	if klen.IsZero() {
-		return m.IntZero, nil
-	}
 	if ki.IsZero() {
-		return m.IntZero, nil
+		return m.IntZero, nil // any operation on zero will result in zero
 	}
 
-	offset, offsetOk := koff.ToUint32()
-	length, lengthOk := koff.ToUint32()
+	offset, offsetOk := koff.ToPositiveInt32()
+	length, lengthOk := klen.ToPositiveInt32()
 	if !offsetOk || !lengthOk {
 		return invalidArgsResult()
 	}
 	if length == 0 {
 		return m.IntZero, nil
 	}
+	if offset&7 != 0 || length&7 != 0 {
+		// this is a quick check that they are both divisible by 8
+		// as long as they are divisible by 8, we can operate on whole bytes
+		// if they are not, things get more complicated, will only implement when necessary
+		return m.NoResult, &hookNotImplementedError{}
+	}
+	offsetBytes := offset >> 3 // divide by 8 to get number of bytes
+	lengthBytes := length >> 3 // divide by 8 to get number of bytes
 
-	result := new(big.Int)
-	if ki.IsNegative() {
-		// 2's complement
-		result.Add(ki.Value, m.IntOne.Value)
-		result.Not(result)
-	} else {
-		result.Set(ki.Value)
+	resBytes := ki.ToTwosComplementBytes(lengthBytes + offsetBytes)
+	if offsetBytes != 0 {
+		resBytes = resBytes[0:lengthBytes]
 	}
 
-	result.Rsh(result, offset) // cut bits below
-
-	mask := big.NewInt(1)
-	mask.Lsh(mask, length)         // 00001000
-	mask.Sub(mask, m.IntOne.Value) // 00000111
-
-	result.And(result, mask) // cut bits above, final length should be equal to arg len
-
+	result := new(big.Int)
+	result.SetBytes(resBytes)
 	return &m.Int{Value: result}, nil
 }
 

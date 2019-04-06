@@ -351,6 +351,160 @@ func TestIntLog2(t *testing.T) {
 	}
 }
 
+func TestIntBitRangeZero(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(8), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(8), m.NewIntFromInt(254)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(12345), m.NewIntFromInt(8), m.NewIntFromInt(0)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+}
+
+func TestIntBitRangePositive(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen = m.NewIntFromInt(5), m.NewIntFromInt(0), m.NewIntFromInt(32)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "5", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(255), m.NewIntFromInt(0), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "255", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(256), m.NewIntFromInt(0), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(256), m.NewIntFromInt(8), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "1", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+}
+
+func TestIntBitRangeNegative(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen = m.NewIntFromInt(-1), m.NewIntFromInt(0), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "255", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(-2), m.NewIntFromInt(0), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "254", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	// TODO: add cases with offset
+}
+
+func TestIntBitRangeExamplesFromCode(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen = m.NewIntFromInt(-2), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "115792089237316195423570985008687907853269984665640564039457584007913129639934", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(-6), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "115792089237316195423570985008687907853269984665640564039457584007913129639930", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(-5), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "115792089237316195423570985008687907853269984665640564039457584007913129639931", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(-70), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "115792089237316195423570985008687907853269984665640564039457584007913129639866", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("-57896044618658097711785492504343953926634992332820282019728792003956564819968"),
+		m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "57896044618658097711785492504343953926634992332820282019728792003956564819968", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("-57896044618658097711785492504343953926634992332820282019728792003956564819967"),
+		m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "57896044618658097711785492504343953926634992332820282019728792003956564819969", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("839073110415334749446166558033970346762825975837975101735199884115312533623"),
+		m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "839073110415334749446166558033970346762825975837975101735199884115312533623", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639936"),
+		m.NewIntFromInt(0), m.NewIntFromInt(64)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(-1), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "115792089237316195423570985008687907853269984665640564039457584007913129639935", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(1), m.NewIntFromInt(0), m.NewIntFromInt(264)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.bitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "1", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+}
+
 func assertIntOk(t *testing.T, expectedAsStr string, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)

@@ -117,10 +117,11 @@ public class GoBackend implements Backend {
             // copy: model
             for (String fileName : Arrays.asList(
                     "kmodel.go",
-                    "util.go", "error.go",
+                    "error.go",
                     "deepcopy.go", "equals.go",
                     "dynarray.go", "kmapkey.go", "collectionstok.go",
-                    "kprint.go", "prettyprint.go", "structprint.go", "printutil.go")) {
+                    "kprint.go", "prettyprint.go", "structprint.go", "printutil.go",
+                    "util.go", "util_bool.go", "util_collections.go", "util_int.go")) {
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/model/" + fileName),
                         packageManager.modelPackage, fileName);
