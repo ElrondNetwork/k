@@ -36,6 +36,13 @@ func NewIntFromUint64(x uint64) *Int {
 	return &Int{Value: &z}
 }
 
+// NewIntFromByte ... provides new Int instance
+func NewIntFromByte(x byte) *Int {
+	var z big.Int
+	z.SetUint64(uint64(x))
+	return &Int{Value: &z}
+}
+
 // ParseInt ... creates K int from string representation
 func ParseInt(s string) (*Int, error) {
 	b := big.NewInt(0)
