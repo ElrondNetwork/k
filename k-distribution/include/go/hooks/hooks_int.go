@@ -336,9 +336,23 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 		return m.IntZero, nil // any operation on zero will result in zero
 	}
 
-	offset, offsetOk := koff.ToPositiveInt32()
+	if koff.IsNegative() {
+		return invalidArgsResult()
+	}
+	offset, offsetOk := koff.ToInt32()
+	if !offsetOk {
+		if ki.IsPositive() {
+			// means it doesn't fit in an int32, so a huge number
+			// huge offset means that certainly no 1 bits will be caught
+			// scenario occurs in tests/VMTests/vmIOandFlowOperations/byte1/byte1.iele.json
+			// but only if the number is positive, otherwise the result would be a ridiculously large number of 1's
+			return m.IntZero, nil
+		}
+		return invalidArgsResult()
+	}
+
 	length, lengthOk := klen.ToPositiveInt32()
-	if !offsetOk || !lengthOk {
+	if !lengthOk {
 		return invalidArgsResult()
 	}
 	if length == 0 {
@@ -353,13 +367,13 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 	offsetBytes := offset >> 3 // divide by 8 to get number of bytes
 	lengthBytes := length >> 3 // divide by 8 to get number of bytes
 
-	resBytes := ki.ToTwosComplementBytes(lengthBytes + offsetBytes)
+	resultBytes := ki.ToTwosComplementBytes(lengthBytes + offsetBytes)
 	if offsetBytes != 0 {
-		resBytes = resBytes[0:lengthBytes]
+		resultBytes = resultBytes[0:lengthBytes]
 	}
 
 	result := new(big.Int)
-	result.SetBytes(resBytes)
+	result.SetBytes(resultBytes)
 	return &m.Int{Value: result}, nil
 }
 

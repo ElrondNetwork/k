@@ -69,6 +69,11 @@ func (k *Int) IsZero() bool {
 	return k.Value.Sign() == 0
 }
 
+// IsPositive ... true if represented number is >= 0
+func (k *Int) IsPositive() bool {
+	return k.Value.Sign() >= 0
+}
+
 // IsNegative ... true if represented number is < 0
 func (k *Int) IsNegative() bool {
 	return k.Value.Sign() < 0
