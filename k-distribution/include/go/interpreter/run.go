@@ -5,6 +5,7 @@ import (
 	koreparser "%INCLUDE_PARSER%"
 	"log"
 	m "%INCLUDE_MODEL%"
+	"math"
 	"os/exec"
 )
 
@@ -23,6 +24,7 @@ type ExecuteOptions struct {
 	TracePretty bool
 	TraceKPrint bool
 	Verbose     bool
+	MaxSteps    int
 }
 
 // ExecuteSimple ... interprets the program in the file given at input
@@ -46,7 +48,7 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 		fmt.Println("\n\npretty print:")
 		fmt.Println(m.PrettyPrint(final))
 		fmt.Println("\n\nk print:")
-        fmt.Println(m.KPrint(final))
+		fmt.Println(m.KPrint(final))
 		fmt.Printf("\n\nsteps made: %d\n", stepsMade)
 	}
 }
@@ -89,7 +91,7 @@ func Execute(kastMap *map[string][]byte, options ExecuteOptions) (finalState m.K
 	defer closeTrace()
 
 	// execute
-	return takeStepsNoThread(kinit, 10000)
+	return takeStepsNoThread(kinit, options.MaxSteps)
 }
 
 func takeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err error) {
@@ -98,6 +100,12 @@ func takeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err 
 
 	finalState = k
 	err = nil
+
+	if maxSteps == 0 {
+		// not set, it means we don't limit the number of steps
+		// except when it overflows an int ... not yet sure if we need uint64, might be overkill
+		maxSteps = math.MaxInt32
+	}
 
 	for stepsMade < maxSteps {
 		traceStepStart(stepsMade, finalState)
