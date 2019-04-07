@@ -158,8 +158,19 @@ func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort,
 	return m.NewString(str.String()[fromInt:toInt]), nil
 }
 
-func (stringHooksType) ord(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) ord(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	str, ok := arg.(*m.String)
+	if !ok {
+		return invalidArgsResult()
+	}
+	asBytes := []byte(str.Value)
+	if len(asBytes) == 0 {
+		// TODO: HACK!!!!
+		// correct implementation should throw invalidArgsResult()
+		// fix after implementing lazy evaluation of && in 'requires' part of rule
+		return m.IntZero, nil
+	}
+	return m.NewIntFromByte(asBytes[0]), nil
 }
 
 func (stringHooksType) int2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
