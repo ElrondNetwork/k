@@ -152,12 +152,20 @@ func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabe
 	return &m.Bytes{Value: resultBytes}, nil
 }
 
-func (bytesHooksType) bytes2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (bytesHooksType) bytes2string(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	kbytes, ok := arg.(*m.Bytes)
+	if !ok {
+		return invalidArgsResult()
+	}
+	return m.NewString(string(kbytes.Value)), nil
 }
 
-func (bytesHooksType) string2bytes(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (bytesHooksType) string2bytes(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	kstr, ok := arg.(*m.String)
+	if !ok {
+		return invalidArgsResult()
+	}
+	return &m.Bytes{Value: []byte(kstr.Value)}, nil
 }
 
 func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
