@@ -96,24 +96,64 @@ func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
+// Integer division. The result is truncated towards zero and obeys the rule of signs.
 func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	// TODO: investigate if we need another implementation here
-	return t.ediv(c1, c2, lbl, sort, config)
+	i1, ok1 := c1.(*m.Int)
+	i2, ok2 := c2.(*m.Int)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	if i2.IsZero() {
+		return m.NoResult, &hookDivisionByZeroError{}
+	}
+	resultPositive := true
+	if i1.IsNegative() {
+		resultPositive = !resultPositive
+	}
+	if i2.IsNegative() {
+		resultPositive = !resultPositive
+	}
+	var i1Abs, i2Abs, z big.Int
+	i1Abs.Abs(i1.Value)
+	i2Abs.Abs(i2.Value)
+
+	z.Div(&i1Abs, &i2Abs)
+	if !resultPositive {
+		z.Neg(&z)
+	}
+	return m.NewInt(&z), nil
 }
 
+// Integer remainder. The result of rem a b has the sign of a, and its absolute value is strictly smaller than the absolute value of b.
+// The result satisfies the equality a = b * div a b + rem a b.
 func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	// TODO: investigate if we need another implementation here
-	return t.emod(c1, c2, lbl, sort, config)
+	i1, ok1 := c1.(*m.Int)
+	i2, ok2 := c2.(*m.Int)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+	if i2.IsZero() {
+		return m.NoResult, &hookDivisionByZeroError{}
+	}
+	var i1Abs, i2Abs, z big.Int
+	i1Abs.Abs(i1.Value)
+	i2Abs.Abs(i2.Value)
+
+	z.Mod(&i1Abs, &i2Abs)
+	if i1.IsNegative() {
+		z.Neg(&z)
+	}
+	return m.NewInt(&z), nil
 }
 
-// euclidian division
+// Euclidian division
 func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	if i2.Value.Cmp(m.IntZero.Value) == 0 {
+	if i2.IsZero() {
 		return m.NoResult, &hookDivisionByZeroError{}
 	}
 	var z big.Int
@@ -121,6 +161,7 @@ func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	return m.NewInt(&z), nil
 }
 
+// Euclidian remainder
 func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
