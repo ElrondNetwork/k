@@ -205,11 +205,12 @@ func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	if !i2.Value.IsUint64() {
+	arg2, arg2Ok := i2.ToUint32()
+	if !arg2Ok {
 		return invalidArgsResult()
 	}
 	var z big.Int
-	z.Lsh(i1.Value, uint(i2.Value.Uint64()))
+	z.Lsh(i1.Value, arg2)
 	return m.NewInt(&z), nil
 }
 
@@ -219,11 +220,12 @@ func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	if !i2.Value.IsUint64() {
+	arg2, arg2Ok := i2.ToUint32()
+	if !arg2Ok {
 		return invalidArgsResult()
 	}
 	var z big.Int
-	z.Rsh(i1.Value, uint(i2.Value.Uint64()))
+	z.Rsh(i1.Value, arg2)
 	return m.NewInt(&z), nil
 }
 
@@ -323,6 +325,7 @@ func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 }
 
 func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	// rule bitRangeInt(I::Int, IDX::Int, LEN::Int) => (I >>Int IDX) modInt (1 <<Int LEN)
 	ki, ok1 := argI.(*m.Int)
 	koff, ok2 := argOffset.(*m.Int)
 	klen, ok3 := argLen.(*m.Int)
@@ -361,6 +364,7 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 }
 
 func (intHooksType) signExtendBitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	// rule signExtendBitRangeInt(I::Int, IDX::Int, LEN::Int) => (bitRangeInt(I, IDX, LEN) +Int (1 <<Int (LEN -Int 1))) modInt (1 <<Int LEN) -Int (1 <<Int (LEN -Int 1))
 	return m.NoResult, &hookNotImplementedError{}
 }
 
