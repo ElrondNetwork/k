@@ -163,7 +163,11 @@ func (stringHooksType) ord(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, e
 }
 
 func (stringHooksType) int2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	i, ok := c.(*m.Int)
+	if !ok {
+		return invalidArgsResult()
+	}
+	return m.NewString(i.Value.String()), nil
 }
 
 func (stringHooksType) string2int(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
