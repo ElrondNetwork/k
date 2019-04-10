@@ -505,6 +505,91 @@ func TestIntBitRangeExamplesFromCode(t *testing.T) {
 	checkImmutable(t, argI, argOff, argLen)
 }
 
+func TestIntSignExtendBitRangeZero(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(8), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(0), m.NewIntFromInt(8), m.NewIntFromInt(254)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen = m.NewIntFromInt(12345), m.NewIntFromInt(8), m.NewIntFromInt(0)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "0", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+}
+
+func TestIntSignExtendBitRangeMinusOne(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	for len := 8; len <= 256; len += 8 {
+		argI, argOff, argLen =
+			m.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+			m.NewIntFromInt(0), m.NewIntFromInt(len)
+		backupInput(argI, argOff, argLen)
+		log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+		assertIntOk(t, "-1", log, err)
+		checkImmutable(t, argI, argOff, argLen)
+	}
+}
+
+func TestIntSignExtendBitRangeExamplesFromCode(t *testing.T) {
+	var log m.K
+	var err error
+	var argI, argOff, argLen m.K
+
+	argI, argOff, argLen =
+		m.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934"),
+		m.NewIntFromInt(0), m.NewIntFromInt(256)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "-2", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("1243892"),
+		m.NewIntFromInt(0), m.NewIntFromInt(16)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "-1292", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("128"),
+		m.NewIntFromInt(0), m.NewIntFromInt(8)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "-128", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+	argI, argOff, argLen =
+		m.NewIntFromString("65407"),
+		m.NewIntFromInt(0), m.NewIntFromInt(16)
+	backupInput(argI, argOff, argLen)
+	log, err = intHooks.signExtendBitRange(argI, argOff, argLen, m.LblDummy, m.SortInt, m.InternedBottom)
+	assertIntOk(t, "-129", log, err)
+	checkImmutable(t, argI, argOff, argLen)
+
+}
+
 func assertIntOk(t *testing.T, expectedAsStr string, actual m.K, err error) {
 	if err != nil {
 		t.Error(err)

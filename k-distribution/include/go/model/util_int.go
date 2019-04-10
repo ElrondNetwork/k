@@ -136,15 +136,15 @@ func (k *Int) ToByte() (byte, bool) {
 	return byte(u64), true
 }
 
-// ToTwosComplementBytes ... returns a byte array representation, 2's complement if number is negative
+// BigIntToTwosComplementBytes ... returns a byte array representation, 2's complement if number is negative
 // big endian
-func (k *Int) ToTwosComplementBytes(bytesLength int) []byte {
+func BigIntToTwosComplementBytes(i *big.Int, bytesLength int) []byte {
 	var resultBytes []byte
-	switch k.Value.Sign() {
+	switch i.Sign() {
 	case -1:
 		// compute 2's complement
 		plus1 := big.NewInt(0)
-		plus1.Add(k.Value, IntOne.Value) // add 1
+		plus1.Add(i, IntOne.Value) // add 1
 		plus1Bytes := plus1.Bytes()
 		offset := len(plus1Bytes) - bytesLength
 		resultBytes = make([]byte, bytesLength)
@@ -162,7 +162,7 @@ func (k *Int) ToTwosComplementBytes(bytesLength int) []byte {
 		resultBytes = make([]byte, bytesLength)
 		break
 	case 1:
-		originalBytes := k.Value.Bytes()
+		originalBytes := i.Bytes()
 		resultBytes = make([]byte, bytesLength)
 		offset := len(originalBytes) - bytesLength
 		for i := 0; i < bytesLength; i++ {
@@ -177,4 +177,28 @@ func (k *Int) ToTwosComplementBytes(bytesLength int) []byte {
 	}
 
 	return resultBytes
+}
+
+// TwosComplementBytesToBigInt ... convert a byte array to a number
+// interprets input as a 2's complement representation if the first bit (most significant) is 1
+// big endian
+func TwosComplementBytesToBigInt(twosBytes []byte) *big.Int {
+
+	testBit := twosBytes[0] >> 7
+	result := new(big.Int)
+	if testBit == 0 {
+		// positive number, no further processing required
+		result.SetBytes(twosBytes)
+	} else {
+		// convert to negative number
+		notBytes := make([]byte, len(twosBytes))
+		for i, b := range twosBytes {
+			notBytes[i] = ^b // negate every bit
+		}
+		result.SetBytes(notBytes)
+		result.Neg(result)
+		result.Sub(result, IntOne.Value) // -1
+	}
+
+	return result
 }

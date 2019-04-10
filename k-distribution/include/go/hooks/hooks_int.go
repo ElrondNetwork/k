@@ -367,7 +367,7 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 	offsetBytes := offset >> 3 // divide by 8 to get number of bytes
 	lengthBytes := length >> 3 // divide by 8 to get number of bytes
 
-	resultBytes := ki.ToTwosComplementBytes(lengthBytes + offsetBytes)
+	resultBytes := m.BigIntToTwosComplementBytes(ki.Value, lengthBytes+offsetBytes)
 	if offsetBytes != 0 {
 		resultBytes = resultBytes[0:lengthBytes]
 	}
@@ -377,9 +377,56 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 	return &m.Int{Value: result}, nil
 }
 
-func (intHooksType) signExtendBitRange(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	// rule signExtendBitRangeInt(I::Int, IDX::Int, LEN::Int) => (bitRangeInt(I, IDX, LEN) +Int (1 <<Int (LEN -Int 1))) modInt (1 <<Int LEN) -Int (1 <<Int (LEN -Int 1))
-	return m.NoResult, &hookNotImplementedError{}
+	ki, ok1 := argI.(*m.Int)
+	koff, ok2 := argOffset.(*m.Int)
+	klen, ok3 := argLen.(*m.Int)
+	if !ok1 || !ok2 || !ok3 {
+		return invalidArgsResult()
+	}
+	if ki.IsZero() {
+		return m.IntZero, nil // any operation on zero will result in zero
+	}
+
+	if koff.IsNegative() {
+		return invalidArgsResult()
+	}
+	offset, offsetOk := koff.ToInt32()
+	if !offsetOk {
+		if ki.IsPositive() {
+			// means it doesn't fit in an int32, so a huge number
+			// huge offset means that certainly no 1 bits will be caught
+			// scenario occurs in tests/VMTests/vmIOandFlowOperations/byte1/byte1.iele.json
+			// but only if the number is positive, otherwise the result would be a ridiculously large number of 1's
+			return m.IntZero, nil
+		}
+		return invalidArgsResult()
+	}
+
+	length, lengthOk := klen.ToPositiveInt32()
+	if !lengthOk {
+		return invalidArgsResult()
+	}
+	if length == 0 {
+		return m.IntZero, nil
+	}
+	if offset&7 != 0 || length&7 != 0 {
+		// this is a quick check that they are both divisible by 8
+		// as long as they are divisible by 8, we can operate on whole bytes
+		// if they are not, things get more complicated, will only implement when necessary
+		return m.NoResult, &hookNotImplementedError{}
+	}
+	offsetBytes := offset >> 3 // divide by 8 to get number of bytes
+	lengthBytes := length >> 3 // divide by 8 to get number of bytes
+
+	resultBytes := m.BigIntToTwosComplementBytes(ki.Value, lengthBytes+offsetBytes)
+	if offsetBytes != 0 {
+		resultBytes = resultBytes[0:lengthBytes]
+	}
+
+	result := m.TwosComplementBytesToBigInt(resultBytes)
+	return &m.Int{Value: result}, nil
 }
 
 func (intHooksType) rand(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
