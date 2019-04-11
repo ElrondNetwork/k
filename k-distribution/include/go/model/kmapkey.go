@@ -18,14 +18,13 @@ type kmapKeyBasic struct {
 	value    string
 }
 
-type kmapKeyToken struct {
-	sortName string
-	value    string
+type kmapKeyKApply0 struct {
+	label KLabel
 }
 
 type kmapKeyKApply1 struct {
-	labelName string
-	arg1      KMapKey
+	label KLabel
+	arg1  KMapKey
 }
 
 type kmapBottom struct {
@@ -46,18 +45,22 @@ func MapKey(k K) (KMapKey, bool) {
 }
 
 func (k *KToken) convertToMapKey() (KMapKey, bool) {
-	return kmapKeyToken{sortName: k.Sort.Name(), value: k.Value}, true
+	return *k, true
 }
 
 func (k *KApply) convertToMapKey() (KMapKey, bool) {
-	if len(k.List) != 1 {
+	switch len(k.List) {
+	case 0:
+		return kmapKeyKApply0{label: k.Label}, true
+	case 1:
+		argAsKey, argOk := MapKey(k.List[0])
+		if !argOk {
+			return kmapBottom{}, false
+		}
+		return kmapKeyKApply1{label: k.Label, arg1: argAsKey}, true
+	default:
 		return kmapBottom{}, false
 	}
-	argAsKey, argOk := MapKey(k.List[0])
-	if !argOk {
-		return kmapBottom{}, false
-	}
-	return kmapKeyKApply1{labelName: k.Label.Name(), arg1: argAsKey}, true
 }
 
 func (k *Int) convertToMapKey() (KMapKey, bool) {
@@ -101,18 +104,28 @@ func (mapKey kmapKeyBasic) ToKItem() (K, error) {
 }
 
 // String ... string representation of the key
-func (mapKey kmapKeyToken) String() string {
-	return fmt.Sprintf("KToken(%s)_%s", mapKey.sortName, mapKey.value)
+func (k KToken) String() string {
+	return fmt.Sprintf("KToken(%s)_%s", k.Sort.Name(), k.Value)
 }
 
 // ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapKeyToken) ToKItem() (K, error) {
-	return &KToken{Sort: ParseSort(mapKey.sortName), Value: mapKey.value}, nil
+func (k KToken) ToKItem() (K, error) {
+	return &k, nil
+}
+
+// String ... string representation of the key
+func (mapKey kmapKeyKApply0) String() string {
+	return fmt.Sprintf("KApply(%s)", mapKey.label.Name())
+}
+
+// ToKItem ... convert a map key back to a regular K item
+func (mapKey kmapKeyKApply0) ToKItem() (K, error) {
+	return &KApply{Label: mapKey.label, List: nil}, nil
 }
 
 // String ... string representation of the key
 func (mapKey kmapKeyKApply1) String() string {
-	return fmt.Sprintf("KApply(%s)_%s", mapKey.labelName, mapKey.arg1.String())
+	return fmt.Sprintf("KApply(%s)_%s", mapKey.label.Name(), mapKey.arg1.String())
 }
 
 // ToKItem ... convert a map key back to a regular K item
@@ -121,7 +134,7 @@ func (mapKey kmapKeyKApply1) ToKItem() (K, error) {
 	if err != nil {
 		return NoResult, err
 	}
-	return &KApply{Label: ParseKLabel(mapKey.labelName), List: []K{argKItem}}, nil
+	return &KApply{Label: mapKey.label, List: []K{argKItem}}, nil
 }
 
 // String ... string representation of the key

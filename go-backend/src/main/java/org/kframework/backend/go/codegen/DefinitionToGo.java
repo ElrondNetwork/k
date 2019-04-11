@@ -397,7 +397,7 @@ public class DefinitionToGo {
         String tableName = nameProvider.memoTableName(functionLabel);
         int arity = functionArgs.arity();
         String evalFunctionName = nameProvider.evalFunctionName(functionLabel);
-        sb.writeIndent().append("var ").append(tableName).append(" map[");
+        sb.writeIndent().append("var ").append(tableName).append(" = make(map[");
         switch (arity) {
         case 0:
         case 1:
@@ -406,7 +406,7 @@ public class DefinitionToGo {
         default:
             sb.append("[").append(arity).append("]m.KMapKey");
         }
-        sb.append("]m.K").newLine().newLine();
+        sb.append("]m.K)").newLine().newLine();
 
         // eval function
         sb.append("func ");
