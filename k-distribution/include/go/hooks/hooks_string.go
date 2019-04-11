@@ -268,20 +268,62 @@ func (stringHooksType) string2float(c m.K, lbl m.KLabel, sort m.Sort, config m.K
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) replace(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) replace(argS m.K, argToReplace m.K, argReplacement m.K, argCount m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	kS, ok1 := argS.(*m.String)
+	kToReplace, ok2 := argToReplace.(*m.String)
+	kReplacement, ok3 := argReplacement.(*m.String)
+	kCount, ok4 := argCount.(*m.Int)
+	if !ok1 || !ok2 || !ok3 || !ok4 {
+		return invalidArgsResult()
+	}
+	count, countOk := kCount.ToInt32()
+	if !countOk {
+		return invalidArgsResult()
+	}
+
+	result := strings.Replace(kS.Value, kToReplace.Value, kReplacement.Value, count)
+	return m.NewString(result), nil
 }
 
-func (stringHooksType) replaceAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) replaceAll(argS m.K, argToReplace m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	kS, ok1 := argS.(*m.String)
+	kToReplace, ok2 := argToReplace.(*m.String)
+	kReplacement, ok3 := argReplacement.(*m.String)
+	if !ok1 || !ok2 || !ok3 {
+		return invalidArgsResult()
+	}
+	if kS.IsEmpty() {
+		return kS, nil
+	}
+	count := strings.Count(kS.Value, kToReplace.Value)
+	if count == 0 {
+		return kS, nil
+	}
+	if count == 1 && strings.HasPrefix(kS.Value, kToReplace.Value) {
+		if kReplacement.IsEmpty() {
+			// just cut off the prefix
+			return m.NewString(kS.Value[len(kToReplace.Value):]), nil
+		}
+		return m.NewString(kReplacement.Value + kS.Value[len(kToReplace.Value):]), nil
+	}
+
+	result := strings.ReplaceAll(kS.Value, kToReplace.Value, kReplacement.Value)
+	return m.NewString(result), nil
 }
 
 func (stringHooksType) replaceFirst(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) countAllOccurrences(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return m.NoResult, &hookNotImplementedError{}
+func (stringHooksType) countAllOccurrences(argS m.K, argToCount m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+	kS, ok1 := argS.(*m.String)
+	kToCount, ok2 := argToCount.(*m.String)
+	if !ok1 || !ok2 {
+		return invalidArgsResult()
+	}
+
+	result := strings.Count(kS.Value, kToCount.Value)
+	return m.NewIntFromInt(result), nil
 }
 
 func (stringHooksType) category(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {

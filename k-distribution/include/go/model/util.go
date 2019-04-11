@@ -1,5 +1,8 @@
 package %PACKAGE_MODEL%
 
+// StringEmpty ... String item with empty string
+var StringEmpty = &String{Value: ""}
+
 // BytesEmpty ... Bytes item with no bytes (length 0)
 var BytesEmpty = &Bytes{Value: nil}
 
@@ -22,6 +25,11 @@ func NewString(str string) *String {
 // String ... Yields a Go string representation of the K String
 func (k *String) String() string {
 	return k.Value
+}
+
+// IsEmpty ... returns true if it is the empty string
+func (k *String) IsEmpty() bool {
+	return len(k.Value) == 0
 }
 
 // IsEmpty ... returns true if KSequence has no elements
