@@ -38,7 +38,7 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 
 	data := make(map[string][]byte)
 	data["PGM"] = kast
-	final, stepsMade, err := Execute(&data, options)
+	final, stepsMade, err := Execute(data, options)
 
 	if err != nil {
 		panic(err)
@@ -54,22 +54,21 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 }
 
 // Execute ... interprets the program with the structure
-func Execute(kastMap *map[string][]byte, options ExecuteOptions) (finalState m.K, stepsMade int, err error) {
+func Execute(kastMap map[string][]byte, options ExecuteOptions) (finalState m.K, stepsMade int, err error) {
 	verbose = options.Verbose
 
 	kConfigMap := make(map[m.KMapKey]m.K)
-	for key, kastValue := range *kastMap {
-		ktoken := &m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
-		ktokenAsKey, _ := m.MapKey(ktoken)
+	for key, kastValue := range kastMap {
+		ktoken := m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
 		parsedValue := koreparser.Parse(kastValue)
 		kValue := convertParserModelToKModel(parsedValue)
-		kConfigMap[ktokenAsKey] = kValue
+		kConfigMap[ktoken] = kValue
 	}
 
 	// top cell initialization
 	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: kConfigMap}
-	evalK := &m.KApply{Label: topCellInitializer, List: []m.K{kmap}}
-	kinit, err := eval(evalK, m.InternedBottom)
+	evalK := &m.KApply{Label: TopCellInitializer, List: []m.K{kmap}}
+	kinit, err := Eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
 		return kinit, 0, err
@@ -91,10 +90,11 @@ func Execute(kastMap *map[string][]byte, options ExecuteOptions) (finalState m.K
 	defer closeTrace()
 
 	// execute
-	return takeStepsNoThread(kinit, options.MaxSteps)
+	return TakeStepsNoThread(kinit, options.MaxSteps)
 }
 
-func takeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err error) {
+// TakeStepsNoThread ... executes as many steps as possible given the starting configuration
+func TakeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err error) {
 	stepsMade = 0
 	traceInitialState(k)
 

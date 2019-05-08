@@ -28,11 +28,14 @@ public class EvalFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        sb.append("const topCellInitializer m.KLabel = m.");
+        sb.appendIndentedLine("// TopCellInitializer ... label passed to Eval to initialize the top cell");
+        sb.append("const TopCellInitializer m.KLabel = m.");
         sb.append(nameProvider.klabelVariableName(data.topCellInitializer));
         sb.append("\n\n");
 
-        sb.append("func eval(c m.K, config m.K) (m.K, error)").beginBlock();
+
+        sb.appendIndentedLine("// Eval ... evaluates a KApply item based on its label and arguments");
+        sb.append("func Eval(c m.K, config m.K) (m.K, error)").beginBlock();
         sb.writeIndent().append("kapp, isKapply := c.(*m.KApply)\n");
         sb.writeIndent().append("if !isKapply").beginBlock();
         sb.writeIndent().append("return c, nil").newLine();
