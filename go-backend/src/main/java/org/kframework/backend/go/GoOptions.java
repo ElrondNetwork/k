@@ -29,6 +29,9 @@ public class GoOptions implements Serializable {
     @Parameter(names="--go-unit-tests", description="Also create some unit tests in target folder.")
     public boolean unitTests = true;
 
+    @Parameter(names="--go-src-path", description="Specify the location of $GOPATH/src. It is needed to resolve generated import paths.")
+    public String goSrcPath;
+
     // TODO: clean up
     //@Parameter(names="--no-link-prelude", description="Do not link interpreter binaries against constants.cmx and prelude.cmx. Do not use this if you don't know what you're doing.")
     public boolean noLinkPrelude;

@@ -23,16 +23,17 @@ public class GoPackageManager {
             FileUtil files,
             String languageName,
             GoOptions options) {
-        this.files = files;
 
-        String goSrc = System.getenv("GOSRC");
-        if (goSrc == null) {
-            throw KEMException.criticalError("GOSRC environment variable not set. This should point to the $GOPATH/src/");
-        }
+        this.files = files;
         final String packageNameBase = GoStringUtil.packageName(languageName);
 
+        // retrieve GOPATH
+        if (options.goSrcPath == null) {
+            throw KEMException.criticalError("Option --go-src-path is required. It should point to $GOPATH/src/");
+        }
+
         try {
-            goSrcPath = new File(goSrc).getCanonicalFile().toPath();
+            goSrcPath = new File(options.goSrcPath).getCanonicalFile().toPath();
 
             // TODO: make package output path configurable
             this.koreParserPackage = packageFromRelativePath("koreparser", "./koreparser");
