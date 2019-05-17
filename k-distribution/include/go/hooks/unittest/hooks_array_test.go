@@ -1,5 +1,7 @@
 package %PACKAGE_INTERPRETER%
 
+%COMMENT%
+
 import (
 	m "%INCLUDE_MODEL%"
 	"testing"

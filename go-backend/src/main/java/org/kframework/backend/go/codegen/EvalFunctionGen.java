@@ -22,6 +22,7 @@ public class EvalFunctionGen {
 
     public String generate() {
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         sb.append("import (\n");

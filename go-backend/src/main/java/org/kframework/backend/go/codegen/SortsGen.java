@@ -36,7 +36,9 @@ public class SortsGen {
         sorts.add(Sorts.Bytes());
 
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.modelPackage.getName()).append(" \n\n");
+
         sb.append("// Sort ... a K sort identifier\n");
         sb.append("type Sort int\n\n");
 

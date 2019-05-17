@@ -1,3 +1,5 @@
+%COMMENT%
+
 package %PACKAGE_INTERPRETER%
 
 import (
@@ -19,5 +21,10 @@ func doNothing(c m.K) {
 
 // can be handy when debugging
 func debugPrint(c m.K) {
+	fmt.Println(m.PrettyPrint(c))
+}
+
+// DebugPrint ... prints a K item to console, useful for debugging
+func DebugPrint(c m.K) {
 	fmt.Println(m.PrettyPrint(c))
 }

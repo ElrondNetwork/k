@@ -186,6 +186,7 @@ public class DefinitionToGo {
         DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
 
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         // generating imports

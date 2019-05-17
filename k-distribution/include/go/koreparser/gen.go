@@ -1,3 +1,5 @@
+%COMMENT%
+
 // This file holds the go generate command to run yacc on the grammar in koreparser.y.
 // To build koreparser:
 //	% go generate

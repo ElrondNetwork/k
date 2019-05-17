@@ -1,3 +1,5 @@
+%COMMENT%
+
 package %PACKAGE_MODEL%
 
 import "fmt"

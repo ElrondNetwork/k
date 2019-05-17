@@ -1,3 +1,5 @@
+%COMMENT%
+
 package koreparser
 
 import (

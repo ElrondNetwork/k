@@ -43,7 +43,9 @@ public class KLabelsGen {
         //addOpaqueKLabels(klabels);
 
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.modelPackage.getName()).append("\n\n");
+
         sb.append("// KLabel ... a k label identifier").newLine();
         sb.append("type KLabel int\n\n");
 

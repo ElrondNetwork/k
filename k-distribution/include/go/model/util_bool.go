@@ -1,3 +1,5 @@
+%COMMENT%
+
 package %PACKAGE_MODEL%
 
 // BoolTrue ... K boolean value with value true

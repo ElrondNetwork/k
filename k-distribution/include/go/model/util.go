@@ -1,3 +1,5 @@
+%COMMENT%
+
 package %PACKAGE_MODEL%
 
 // StringEmpty ... String item with empty string

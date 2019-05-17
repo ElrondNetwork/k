@@ -64,6 +64,7 @@ public class StepFunctionGen {
 
     public String generateStep() {
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
         sb.append("import (\n");
@@ -77,6 +78,7 @@ public class StepFunctionGen {
 
     public String generateLookupsStep() {
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
         sb.append("import (\n");
@@ -90,6 +92,7 @@ public class StepFunctionGen {
 
     public String generateStepRules() {
         GoStringBuilder sb = new GoStringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
         sb.append("import (\n");

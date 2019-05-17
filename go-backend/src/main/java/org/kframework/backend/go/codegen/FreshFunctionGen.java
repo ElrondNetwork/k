@@ -23,6 +23,7 @@ public class FreshFunctionGen {
 
     public String generate() {
         StringBuilder sb = new StringBuilder();
+        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
         sb.append("import (\n");

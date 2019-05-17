@@ -107,12 +107,15 @@ public class GoBackend implements Backend {
         }
 
         try {
-            // lexer, parser
-            FileUtils.copyFile(files.resolveKBase("include/go/koreparser/stringutil.go"), files.resolveKompiled("koreparser/stringutil.go"));
-            FileUtils.copyFile(files.resolveKBase("include/go/koreparser/model.go"), files.resolveKompiled("koreparser/model.go"));
-            FileUtils.copyFile(files.resolveKBase("include/go/koreparser/korelex.go"), files.resolveKompiled("koreparser/korelex.go"));
-            FileUtils.copyFile(files.resolveKBase("include/go/koreparser/koreparser.y"), files.resolveKompiled("koreparser/koreparser.y"));
-            FileUtils.copyFile(files.resolveKBase("include/go/koreparser/gen.go"), files.resolveKompiled("koreparser/gen.go"));
+            // copy lexer and parser
+            for (String fileName : Arrays.asList(
+                    "stringutil.go",
+                    "model.go", "korelex.go", "koreparser.y",
+                    "gen.go")) {
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/koreparser/" + fileName),
+                        packageManager.koreParserPackage, fileName);
+            }
 
             // copy: model
             for (String fileName : Arrays.asList(

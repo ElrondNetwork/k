@@ -1,3 +1,5 @@
+%COMMENT%
+
 package %PACKAGE_INTERPRETER%
 
 import (

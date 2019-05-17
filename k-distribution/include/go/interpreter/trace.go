@@ -1,3 +1,5 @@
+%COMMENT%
+
 // Handles generation of traces
 // (what rules were applied, in what order, what were the intermediate states).
 // Multiple trace handlers supported.

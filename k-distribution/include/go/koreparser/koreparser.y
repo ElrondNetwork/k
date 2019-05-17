@@ -1,3 +1,5 @@
+%COMMENT%
+
 // This is the source for the generation of the kore parser.
 // To build it:
 // goyacc -o koreparser.go -p "kore" koreparser.y (produces koreparser.go)
