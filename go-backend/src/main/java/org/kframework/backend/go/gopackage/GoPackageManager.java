@@ -2,6 +2,7 @@
 package org.kframework.backend.go.gopackage;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kframework.backend.go.GoOptions;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.utils.errorsystem.KEMException;
@@ -12,6 +13,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GoPackageManager {
 
@@ -86,27 +91,39 @@ public class GoPackageManager {
                 files.resolveKompiled(pkg.getRelativePath() + "/" + fileName));
     }
 
-    private static final String GO_COMMENT = "%COMMENT%";
-    private static final String PACKAGE_INTERPRETER = "%PACKAGE_INTERPRETER%";
-    private static final String INCLUDE_INTERPRETER = "%INCLUDE_INTERPRETER%";
-    private static final String PACKAGE_MODEL = "%PACKAGE_MODEL%";
-    private static final String INCLUDE_MODEL = "%INCLUDE_MODEL%";
-    private static final String PACKAGE_PARSER = "%PACKAGE_PARSER%";
-    private static final String INCLUDE_PARSER = "%INCLUDE_PARSER%";
+    private static final String GO_COMMENT = "COMMENT"; // pattern: %COMMENT%
+    private static final String PACKAGE_INTERPRETER = "PACKAGE_INTERPRETER"; // pattern: %PACKAGE_INTERPRETER%
+    private static final String INCLUDE_INTERPRETER = "INCLUDE_INTERPRETER"; // ...
+    private static final String PACKAGE_MODEL = "PACKAGE_MODEL";
+    private static final String INCLUDE_MODEL = "INCLUDE_MODEL";
+    private static final String PACKAGE_PARSER = "PACKAGE_PARSER";
+    private static final String INCLUDE_PARSER = "INCLUDE_PARSER";
 
     public void copyFileAndReplaceGoPackages(File srcFile, File destFile) throws IOException {
-        // TODO: optimize, by doing all regex in one go
-        // stream directly to file
-        // solution here: https://stackoverflow.com/questions/1326682/java-replacing-multiple-different-substring-in-a-string-at-once-or-in-the-most
+        // the replacement patterns
+        Map<String,String> tokens = new HashMap<>();
+        tokens.put(GO_COMMENT, goNonGeneratedFileComment);
+        tokens.put(PACKAGE_INTERPRETER, interpreterPackage.getName());
+        tokens.put(INCLUDE_INTERPRETER, interpreterPackage.getGoPath());
+        tokens.put(PACKAGE_MODEL, modelPackage.getName());
+        tokens.put(INCLUDE_MODEL, modelPackage.getGoPath());
+        tokens.put(PACKAGE_PARSER, koreParserPackage.getName());
+        tokens.put(INCLUDE_PARSER, koreParserPackage.getGoPath());
+
         String contents = FileUtils.readFileToString(srcFile);
-        contents = contents.replaceAll(GO_COMMENT, goNonGeneratedFileComment);
-        contents = contents.replaceAll(PACKAGE_INTERPRETER, interpreterPackage.getName());
-        contents = contents.replaceAll(INCLUDE_INTERPRETER, interpreterPackage.getGoPath());
-        contents = contents.replaceAll(PACKAGE_MODEL, modelPackage.getName());
-        contents = contents.replaceAll(INCLUDE_MODEL, modelPackage.getGoPath());
-        contents = contents.replaceAll(PACKAGE_PARSER, koreParserPackage.getName());
-        contents = contents.replaceAll(INCLUDE_PARSER, koreParserPackage.getGoPath());
-        FileUtil.save(destFile, contents);
+
+        // Create pattern of the format "%(COMMENT|PACKAGE_INTERPRETER|...)%"
+        String patternString = "%(" + StringUtils.join(tokens.keySet(), "|") + ")%";
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(contents);
+
+        StringBuffer sb = new StringBuffer();
+        while(matcher.find()) {
+            matcher.appendReplacement(sb, tokens.get(matcher.group(1)));
+        }
+        matcher.appendTail(sb);
+
+        FileUtil.save(destFile, sb.toString());
     }
 
 }
