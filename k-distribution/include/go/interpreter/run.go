@@ -30,7 +30,7 @@ type ExecuteOptions struct {
 }
 
 // ExecuteSimple ... interprets the program in the file given at input
-func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
+func ExecuteSimple(kdir string, execFile string, options *ExecuteOptions) {
 	verbose = options.Verbose
 
 	kast := callKast(kdir, execFile)
@@ -56,7 +56,7 @@ func ExecuteSimple(kdir string, execFile string, options ExecuteOptions) {
 }
 
 // Execute ... interprets the program with the structure
-func Execute(kastMap map[string][]byte, options ExecuteOptions) (finalState m.K, stepsMade int, err error) {
+func Execute(kastMap map[string][]byte, options *ExecuteOptions) (finalState m.K, stepsMade int, err error) {
 	verbose = options.Verbose
 
 	kConfigMap := make(map[m.KMapKey]m.K)
@@ -81,7 +81,14 @@ func Execute(kastMap map[string][]byte, options ExecuteOptions) (finalState m.K,
 		fmt.Println(m.PrettyPrint(kinit))
 	}
 
-	// prepare trace
+	// execute
+	return TakeStepsNoThread(kinit, options)
+}
+
+// TakeStepsNoThread ... executes as many steps as possible given the starting configuration
+func TakeStepsNoThread(k m.K, options *ExecuteOptions) (finalState m.K, stepsMade int, err error) {
+
+	// initialize trace handlers (if it's the case)
 	if options.TracePretty {
 		traceHandlers = append(traceHandlers, &tracePrettyDebug{})
 	}
@@ -91,18 +98,14 @@ func Execute(kastMap map[string][]byte, options ExecuteOptions) (finalState m.K,
 	initializeTrace()
 	defer closeTrace()
 
-	// execute
-	return TakeStepsNoThread(kinit, options.MaxSteps)
-}
-
-// TakeStepsNoThread ... executes as many steps as possible given the starting configuration
-func TakeStepsNoThread(k m.K, maxSteps int) (finalState m.K, stepsMade int, err error) {
+	// start
 	stepsMade = 0
 	traceInitialState(k)
 
 	finalState = k
 	err = nil
 
+	maxSteps := options.MaxSteps
 	if maxSteps == 0 {
 		// not set, it means we don't limit the number of steps
 		// except when it overflows an int ... not yet sure if we need uint64, might be overkill

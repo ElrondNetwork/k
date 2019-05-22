@@ -12,7 +12,7 @@ func main() {
 		panic("Argument expected. First argument should be the program to execute.")
 	}
 	execFileName := os.Args[1]
-    options := interpreter.ExecuteOptions{TracePretty: false, Verbose: true}
+    options := &interpreter.ExecuteOptions{TracePretty: false, Verbose: true}
 	for _, flag := range os.Args[2:] {
 		if flag == "--trace" {
 			options.TracePretty = true
