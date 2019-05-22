@@ -49,7 +49,8 @@ type MapKeyValuePair struct {
 	Value       K
 }
 
-// ToOrderedKeyValuePairs ... Yields a list of key-value pairs, ordered by the string representation of the keys
+// ToOrderedKeyValuePairs ... Yields a list of key-value pairs
+// ordered by the string representation of the keys
 func (k *Map) ToOrderedKeyValuePairs() []MapKeyValuePair {
 	result := make([]MapKeyValuePair, len(k.Data))
 
@@ -69,6 +70,31 @@ func (k *Map) ToOrderedKeyValuePairs() []MapKeyValuePair {
 	for i, keyAsString := range keysAsString {
 		pair, _ := stringKeysToPair[keyAsString]
 		result[i] = pair
+	}
+
+	return result
+}
+
+// ToOrderedElements ... Yields a list of the K items in the map (converted from KMapKey)
+// ordered by the KMapKey string representation of the elements
+func (k *Set) ToOrderedElements() []K {
+	result := make([]K, len(k.Data))
+
+	var keysAsString []string
+	stringKeysToElem := make(map[string]K)
+	for key := range k.Data {
+		keyAsString := key.String()
+		keysAsString = append(keysAsString, keyAsString)
+		keyAsK, err := key.ToKItem()
+		if err != nil {
+			panic(err)
+		}
+		stringKeysToElem[keyAsString] = keyAsK
+	}
+	sort.Strings(keysAsString)
+	for i, keyAsString := range keysAsString {
+		elem, _ := stringKeysToElem[keyAsString]
+		result[i] = elem
 	}
 
 	return result

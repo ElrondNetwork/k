@@ -4,7 +4,6 @@ package %PACKAGE_MODEL%
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -94,7 +93,7 @@ func (k *Map) prettyPrint(sb *strings.Builder, indent int) {
 		for _, pair := range orderedKVPairs {
 			sb.WriteString("\n")
 			addIndent(sb, indent+1)
-			sb.WriteString(pair.KeyAsString)
+			pair.Key.prettyPrint(sb, indent+1)
 			sb.WriteString(" => ")
 			pair.Value.prettyPrint(sb, indent+1)
 		}
@@ -137,16 +136,13 @@ func (k *Set) prettyPrint(sb *strings.Builder, indent int) {
 		sb.WriteString(" <empty>")
 	} else {
 		sb.WriteString(", Data: {")
-		var keysAsString []string
-		for k := range k.Data {
-			keysAsString = append(keysAsString, k.String())
-		}
-		sort.Strings(keysAsString)
-		for _, keyAsString := range keysAsString {
+		orderedElems := k.ToOrderedElements()
+		for _, elem := range orderedElems {
 			sb.WriteString("\n")
 			addIndent(sb, indent+1)
-			sb.WriteString(keyAsString)
+			elem.prettyPrint(sb, indent+1)
 		}
+
 		sb.WriteRune('\n')
 		addIndent(sb, indent)
 		sb.WriteRune('}')
@@ -174,7 +170,7 @@ func (k *Array) prettyPrint(sb *strings.Builder, indent int) {
 }
 
 func (k *Int) prettyPrint(sb *strings.Builder, indent int) {
-	sb.WriteString(fmt.Sprintf("Int (%s)", k.Value.String()))
+	sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", k.Value.Text(16), k.Value.String()))
 }
 
 func (k *MInt) prettyPrint(sb *strings.Builder, indent int) {
