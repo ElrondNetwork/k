@@ -45,6 +45,13 @@ func NewIntFromByte(x byte) *Int {
 	return &Int{Value: &z}
 }
 
+// NewIntFromBytes ... provides new Int instance from byte array
+func NewIntFromBytes(bytes []byte) *Int {
+	z := big.NewInt(0)
+	z.SetBytes(bytes)
+	return &Int{Value: z}
+}
+
 // ParseInt ... creates K int from string representation
 func ParseInt(s string) (*Int, error) {
 	b := big.NewInt(0)
