@@ -2,32 +2,55 @@
 
 package %PACKAGE_MODEL%
 
+// we keep all KSequences concatenated into 1 really big slice
+// each KSequence object is actually a pointer to the first element, its index in this slice
+// each KSequence is terminated by a nil element
+// the first element of allKs is the terminator for the empty sequence
+var allKs = []K{nil}
+
+// EmptyKSequence ... the KSequence with no elements
+var EmptyKSequence = KSequence(0)
+
 // NewKSequence ... creates new KSequence instance with elements
 func NewKSequence(elements []K) KSequence {
-	return KSequence(elements)
+	newKsPointer := len(allKs)
+	allKs = append(allKs, elements...)
+	allKs = append(allKs, nil)
+	return KSequence(newKsPointer)
 }
 
 // IsEmpty ... returns true if KSequence has no elements
 func (k KSequence) IsEmpty() bool {
-	ks := []K(k)
-	return len(ks) == 0
+	return allKs[int(k)] == nil
 }
 
-// IsEmpty ... KSequence length
-func (k KSequence) Length() int {
-	return len([]K(k))
-}
-
-// IsEmpty ... element at position
+// Get ... element at position
+// Caution: no checks are performed that the position is valid
 func (k KSequence) Get(position int) K {
-    ks := []K(k)
-	return ks[position]
+	return allKs[int(k)+position]
+}
+
+// Length ... KSequence length
+func (k KSequence) Length() int {
+	length := 0
+	i := int(k)
+	for allKs[i] != nil {
+		i++
+		length++
+	}
+	return length
+}
+
+// ToSlice ... converts KSequence to a slice of K items
+func (k KSequence) ToSlice() []K {
+	ptr := int(k)
+	length := k.Length()
+	return allKs[ptr : ptr+length]
 }
 
 // SubSequence ... subsequence starting at position
 func (k KSequence) SubSequence(startPosition int) KSequence {
-    ks := []K(k)
-	return KSequence(ks[startPosition:])
+	return KSequence(int(k) + startPosition)
 }
 
 // TrySplitToHeadTail ... extracts first element of a KSequence, extracts the rest, if possible
@@ -42,8 +65,7 @@ func TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
 		case 2:
 			return true, kseq.Get(0), kseq.Get(1)
 		default:
-		    ks := []K(kseq)
-			return true, kseq.Get(0), KSequence(ks[1:])
+			return true, kseq.Get(0), kseq.SubSequence(1)
 		}
 	}
 
@@ -58,7 +80,12 @@ func AssembleKSequence(elements ...K) K {
 	var newKs []K
 	for _, element := range elements {
 		if kseqElem, isKseq := element.(KSequence); isKseq {
-			newKs = append(newKs, []K(kseqElem)...)
+			ksLength := kseqElem.Length()
+			if ksLength > 0 {
+				elemPointer := int(kseqElem)
+				elemAsSlice := allKs[elemPointer : elemPointer+ksLength]
+				newKs = append(newKs, elemAsSlice...)
+			}
 		} else {
 			newKs = append(newKs, element)
 		}

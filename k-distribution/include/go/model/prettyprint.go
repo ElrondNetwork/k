@@ -217,7 +217,7 @@ func (k *Bottom) prettyPrint(sb *strings.Builder, indent int) {
 }
 
 func (k KSequence) prettyPrint(sb *strings.Builder, indent int) {
-	ks := []K(k)
+	ks := k.ToSlice()
 	if len(ks) == 0 {
 		sb.WriteString(" .K ")
 	} else {

@@ -210,15 +210,28 @@ func (k KSequence) Equals(arg K) bool {
 	if !typeOk {
 		return false
 	}
-	ks := []K(k)
-	otherKs := []K(other)
-	if len(ks) != len(otherKs) {
-		return false
+
+	ptr1 := int(k)
+	ptr2 := int(other)
+
+	if ptr1 == ptr2 {
+		return true
 	}
-	for i := 0; i < len(ks); i++ {
-		if !ks[i].Equals(otherKs[i]) {
-			return false
+
+	for allKs[ptr1] != nil || allKs[ptr2] != nil {
+		if allKs[ptr1] == nil {
+			return false // k ended sooner
 		}
+		if allKs[ptr2] == nil {
+			return false // other ended sooner
+		}
+		if !allKs[ptr1].Equals(allKs[ptr2]) {
+			return false // element mismatch
+		}
+
+		ptr1++
+		ptr2++
 	}
+
 	return true
 }

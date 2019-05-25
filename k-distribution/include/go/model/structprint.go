@@ -121,7 +121,7 @@ func (k *Bottom) structPrint(sb *strings.Builder, indent int) {
 }
 
 func (k KSequence) structPrint(sb *strings.Builder, indent int) {
-	ks := []K(k)
+	ks := k.ToSlice()
 	addIndent(sb, indent)
 	sb.WriteString("KSequence {")
 	if len(ks) == 0 {

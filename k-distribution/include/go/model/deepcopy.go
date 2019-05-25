@@ -108,10 +108,10 @@ func (k *Bottom) DeepCopy() K {
 
 // DeepCopy ... complete copy of the object
 func (k KSequence) DeepCopy() K {
-	ks := []K(k)
+	ks := k.ToSlice()
 	ksCopy := make([]K, len(ks))
 	for i, elem := range ks {
 		ksCopy[i] = elem.DeepCopy()
 	}
-	return KSequence(ksCopy)
+	return NewKSequence(ksCopy)
 }

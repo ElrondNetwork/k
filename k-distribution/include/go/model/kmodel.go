@@ -18,10 +18,8 @@ type K interface {
 }
 
 // KSequence ... a sequence of K items
-type KSequence []K
-
-// EmptyKSequence ... the KSequence with no elements
-var EmptyKSequence = KSequence(nil)
+// see util_kseq.go for implementation details
+type KSequence int
 
 // KItem ...
 type KItem interface {

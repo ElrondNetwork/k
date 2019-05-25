@@ -120,12 +120,12 @@ func (k *KApply) collectionsToK() K {
 }
 
 func (k KSequence) collectionsToK() K {
-	ks := []K(k)
+	ks := k.ToSlice()
 	newKs := make([]K, len(ks))
 	for i, child := range ks {
 		newKs[i] = child.collectionsToK()
 	}
-	return KSequence(newKs)
+	return NewKSequence(newKs)
 }
 
 func (k *InjectedKLabel) collectionsToK() K {

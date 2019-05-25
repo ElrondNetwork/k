@@ -122,7 +122,7 @@ func (k *Bottom) kprint(sb *strings.Builder) {
 }
 
 func (k KSequence) kprint(sb *strings.Builder) {
-	ks := []K(k)
+	ks := k.ToSlice()
 	if len(ks) == 0 {
 		sb.WriteString(".K")
 	} else if len(ks) == 1 {
