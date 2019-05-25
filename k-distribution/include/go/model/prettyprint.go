@@ -216,16 +216,17 @@ func (k *Bottom) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString("Bottom")
 }
 
-func (k *KSequence) prettyPrint(sb *strings.Builder, indent int) {
-	if len(k.Ks) == 0 {
+func (k KSequence) prettyPrint(sb *strings.Builder, indent int) {
+	ks := []K(k)
+	if len(ks) == 0 {
 		sb.WriteString(" .K ")
 	} else {
-		for i, childk := range k.Ks {
+		for i, childk := range ks {
 			if i > 0 {
 				addIndent(sb, indent)
 			}
 			childk.prettyPrint(sb, indent)
-			if i < len(k.Ks)-1 {
+			if i < len(ks)-1 {
 				sb.WriteString(" ~>\n")
 			} else {
 				sb.WriteString(" ~> . ")

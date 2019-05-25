@@ -28,7 +28,7 @@ func convertParserModelToKModel(pk koreparser.K) m.K {
 		for _, ksElem := range v {
 			convertedKs = append(convertedKs, convertParserModelToKModel(ksElem))
 		}
-		return &m.KSequence{Ks: convertedKs}
+		return m.NewKSequence(convertedKs)
 	default:
 		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
 	}

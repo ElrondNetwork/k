@@ -33,8 +33,3 @@ func (k *String) String() string {
 func (k *String) IsEmpty() bool {
 	return len(k.Value) == 0
 }
-
-// IsEmpty ... returns true if KSequence has no elements
-func (k *KSequence) IsEmpty() bool {
-	return len(k.Ks) == 0
-}

@@ -205,16 +205,18 @@ func (k *Bottom) Equals(arg K) bool {
 }
 
 // Equals ... Deep comparison
-func (k *KSequence) Equals(arg K) bool {
-	other, typeOk := arg.(*KSequence)
+func (k KSequence) Equals(arg K) bool {
+	other, typeOk := arg.(KSequence)
 	if !typeOk {
 		return false
 	}
-	if len(k.Ks) != len(other.Ks) {
+	ks := []K(k)
+	otherKs := []K(other)
+	if len(ks) != len(otherKs) {
 		return false
 	}
-	for i := 0; i < len(k.Ks); i++ {
-		if !k.Ks[i].Equals(other.Ks[i]) {
+	for i := 0; i < len(ks); i++ {
+		if !ks[i].Equals(otherKs[i]) {
 			return false
 		}
 	}

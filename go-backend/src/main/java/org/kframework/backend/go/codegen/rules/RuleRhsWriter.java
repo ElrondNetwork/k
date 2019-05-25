@@ -271,7 +271,7 @@ public class RuleRhsWriter extends VisitK {
             return;
         default:
             start();
-            currentSb.append("assembleKSequence(");
+            currentSb.append("m.AssembleKSequence(");
             currentSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;

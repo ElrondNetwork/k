@@ -120,16 +120,17 @@ func (k *Bottom) structPrint(sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, "Bottom")
 }
 
-func (k *KSequence) structPrint(sb *strings.Builder, indent int) {
+func (k KSequence) structPrint(sb *strings.Builder, indent int) {
+	ks := []K(k)
 	addIndent(sb, indent)
 	sb.WriteString("KSequence {")
-	if len(k.Ks) == 0 {
+	if len(ks) == 0 {
 		sb.WriteString(" <empty> }")
 	} else {
-		for i, childk := range k.Ks {
+		for i, childk := range ks {
 			sb.WriteString("\n")
 			childk.structPrint(sb, indent+1)
-			if i < len(k.Ks)-1 {
+			if i < len(ks)-1 {
 				sb.WriteString(" ~>")
 			}
 		}

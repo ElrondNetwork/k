@@ -121,15 +121,16 @@ func (k *Bottom) kprint(sb *strings.Builder) {
 	kprintKApply(sb, LblXhashBottom, []K{})
 }
 
-func (k *KSequence) kprint(sb *strings.Builder) {
-	if len(k.Ks) == 0 {
+func (k KSequence) kprint(sb *strings.Builder) {
+	ks := []K(k)
+	if len(ks) == 0 {
 		sb.WriteString(".K")
-	} else if len(k.Ks) == 1 {
-		k.Ks[0].kprint(sb)
+	} else if len(ks) == 1 {
+		ks[0].kprint(sb)
 	} else {
-		for i, childk := range k.Ks {
+		for i, childk := range ks {
 			childk.kprint(sb)
-			if i < len(k.Ks)-1 {
+			if i < len(ks)-1 {
 				sb.WriteString(" ~> ")
 			}
 		}

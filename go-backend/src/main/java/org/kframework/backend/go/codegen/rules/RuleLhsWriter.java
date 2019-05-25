@@ -125,7 +125,7 @@ public class RuleLhsWriter extends VisitK {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if ").append(castVar).append(", t := ");
-        sb.append(subject).append(".(*m.").append(type).append("); t");
+        sb.append(subject).append(".(").append(type).append("); t");
     }
 
     @Override
@@ -139,13 +139,13 @@ public class RuleLhsWriter extends VisitK {
             //magic down-ness
             String ktVar = "kt" + kitemIndex;
             kitemIndex++;
-            lhsTypeIf(ktVar, consumeSubject(), "KToken");
+            lhsTypeIf(ktVar, consumeSubject(), "*m.KToken");
             sb.append(" && ").append(ktVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
             nextSubject = ktVar + ".Value";
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
-            lhsTypeIf("_", consumeSubject(), "Bottom");
+            lhsTypeIf("_", consumeSubject(), "*m.Bottom");
         } else if (data.functions.contains(k.klabel())) {
             if (data.collectionFor.containsKey(k.klabel())) {
                 KLabel collectionLabel = data.collectionFor.get(k.klabel());
@@ -157,7 +157,7 @@ public class RuleLhsWriter extends VisitK {
                     // list
                     String listVar = "list" + kitemIndex;
                     kitemIndex++;
-                    lhsTypeIf(listVar, consumeSubject(), "List");
+                    lhsTypeIf(listVar, consumeSubject(), "*m.List");
                     Sort sort = data.mainModule.sortFor().apply(collectionLabel);
 
                     sb.append(" && ").append(listVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
@@ -180,7 +180,7 @@ public class RuleLhsWriter extends VisitK {
                 kitemIndex++;
             }
 
-            lhsTypeIf(kappVar, consumeSubject(), "KApply");
+            lhsTypeIf(kappVar, consumeSubject(), "*m.KApply");
             sb.append(" && ").append(kappVar).append(".Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
             sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
             sb.beginBlock(ToKast.apply(k), aliasComment);
@@ -364,7 +364,7 @@ public class RuleLhsWriter extends VisitK {
             kitemIndex++;
             sb.writeIndent().append("if ok, ");
             sb.append(kseqHead).append(", ");
-            sb.append(kseqTail).append(" := trySplitToHeadTail(").append(consumeSubject()).append("); ok");
+            sb.append(kseqTail).append(" := m.TrySplitToHeadTail(").append(consumeSubject()).append("); ok");
             sb.beginBlock(ToKast.apply(k));
             nextSubject = kseqHead;
             apply(k.items().get(0));
@@ -375,17 +375,17 @@ public class RuleLhsWriter extends VisitK {
             // must match KSequence
             String kseqVar = "kseq" + kitemIndex;
             kitemIndex++;
-            lhsTypeIf(kseqVar, consumeSubject(), "KSequence");
+            lhsTypeIf(kseqVar, consumeSubject(), "m.KSequence");
             int nrHeads = k.items().size() - 1;
-            sb.append(" && len(").append(kseqVar).append(".Ks) >= ").append(nrHeads);
+            sb.append(" && ").append(kseqVar).append(".Length() >= ").append(nrHeads);
             sb.beginBlock("lhs KSequence size:" + k.items().size());
             // heads
             for (int i = 0; i < nrHeads; i++) {
-                nextSubject = kseqVar + ".Ks[" + i + "]";
+                nextSubject = kseqVar + ".Get(" + i + ")";
                 apply(k.items().get(i));
             }
             // tail
-            nextSubject = "&m.KSequence{Ks:" + kseqVar + ".Ks[" + nrHeads + ":]}"; // slice with the rest, can be empty
+            nextSubject = kseqVar + ".SubSequence(" + nrHeads + ")"; // slice with the rest, can be empty
             apply(k.items().get(nrHeads)); // last element
             return;
         }
@@ -393,7 +393,7 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(InjectedKLabel k) {
-        lhsTypeIf("ikl", consumeSubject(), "InjectedKLabel");
+        lhsTypeIf("ikl", consumeSubject(), "*m.InjectedKLabel");
         sb.append(" && ikl.Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
         sb.beginBlock();
     }

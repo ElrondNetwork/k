@@ -18,12 +18,10 @@ type K interface {
 }
 
 // KSequence ... a sequence of K items
-type KSequence struct {
-	Ks []K
-}
+type KSequence []K
 
 // EmptyKSequence ... the KSequence with no elements
-var EmptyKSequence = &KSequence{Ks: nil}
+var EmptyKSequence = KSequence(nil)
 
 // KItem ...
 type KItem interface {

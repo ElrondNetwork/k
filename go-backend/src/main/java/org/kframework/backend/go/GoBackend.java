@@ -124,7 +124,7 @@ public class GoBackend implements Backend {
                     "deepcopy.go", "equals.go",
                     "dynarray.go", "kmapkey.go", "collectionstok.go",
                     "kprint.go", "prettyprint.go", "structprint.go", "printutil.go",
-                    "util.go", "util_bool.go", "util_collections.go", "util_int.go")) {
+                    "util.go", "util_bool.go", "util_collections.go", "util_int.go", "util_kseq.go")) {
                 packageManager.copyFileToPackage(
                         files.resolveKBase("include/go/model/" + fileName),
                         packageManager.modelPackage, fileName);

@@ -107,10 +107,11 @@ func (k *Bottom) DeepCopy() K {
 }
 
 // DeepCopy ... complete copy of the object
-func (k *KSequence) DeepCopy() K {
-	ksCopy := make([]K, len(k.Ks))
-	for i, elem := range k.Ks {
+func (k KSequence) DeepCopy() K {
+	ks := []K(k)
+	ksCopy := make([]K, len(ks))
+	for i, elem := range ks {
 		ksCopy[i] = elem.DeepCopy()
 	}
-	return &KSequence{Ks: ksCopy}
+	return KSequence(ksCopy)
 }
