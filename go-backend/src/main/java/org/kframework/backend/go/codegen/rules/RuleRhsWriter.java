@@ -199,7 +199,14 @@ public class RuleRhsWriter extends VisitK {
                 sb.append("&m.MInt{Value: ").append(k.s()).append("}");
                 return;
             case "INT.Int":
-                sb.append("m.NewIntFromString(\"").append(k.s()).append("\")");
+                if (k.s().equals("0")) {
+                    sb.append("m.IntZero");
+                    return;
+                }
+                String ivarName = nameProvider.constVariableName("Int", k.s());
+                String ivalue = "m.NewIntFromString(\"" + k.s() + "\")";
+                data.constants.intConstants.put(ivarName, ivalue);
+                sb.append(ivarName);
                 return;
             case "FLOAT.Float":
                 sb.append("&m.Float{Value: ").append(k.s()).append("}");
@@ -207,7 +214,10 @@ public class RuleRhsWriter extends VisitK {
             case "STRING.String":
                 String unquotedStr = StringUtil.unquoteKString(k.s());
                 String goStr = GoStringUtil.enquoteString(unquotedStr);
-                sb.append("m.NewString(").append(goStr).append(")");
+                String svarName = nameProvider.constVariableName("String", k.s());
+                String svalue = "m.NewString(" + goStr + ")";
+                data.constants.stringConstants.put(svarName, svalue);
+                sb.append(svarName);
                 return;
             case "BYTES.Bytes":
                 String unquotedBytes = StringUtil.unquoteKString(k.s());
@@ -220,10 +230,13 @@ public class RuleRhsWriter extends VisitK {
             }
         }
 
-        sb.append("&m.KToken{Sort: m.").append(nameProvider.sortVariableName(k.sort()));
-        sb.append(", Value: ");
-        sb.append(GoStringUtil.enquoteString(k.s()));
-        sb.append("}");
+        String ktvarName = nameProvider.constVariableName(
+                "KToken",
+                nameProvider.sortVariableName(k.sort()) + k.s());
+        String ktvalue = "&m.KToken{Sort: m." + nameProvider.sortVariableName(k.sort()) +
+                ", Value: " + GoStringUtil.enquoteString(k.s()) + "}";
+        data.constants.tokenConstants.put(ktvarName, ktvalue);
+        sb.append(ktvalue);
     }
 
     @Override

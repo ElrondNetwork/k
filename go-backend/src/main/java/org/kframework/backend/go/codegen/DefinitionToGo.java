@@ -16,6 +16,7 @@ import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
 import org.kframework.backend.go.gopackage.GoPackage;
 import org.kframework.backend.go.gopackage.GoPackageManager;
+import org.kframework.backend.go.model.ConstantKTokens;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionParams;
@@ -104,13 +105,14 @@ public class DefinitionToGo {
     private Module mainModule;
     private KLabel topCellInitializer;
     private Map<KLabel, KLabel> collectionFor;
+    private final ConstantKTokens constants = new ConstantKTokens();
 
     public DefinitionData definitionData() {
         return new DefinitionData(mainModule,
                 functions, anywhereKLabels,
                 functionRules, anywhereRules,
                 functionParams, topCellInitializer,
-                collectionFor);
+                collectionFor, constants);
     }
 
     RuleWriter ruleWriter;

@@ -3,6 +3,7 @@ package org.kframework.backend.go;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.kframework.backend.go.codegen.ConstantsGen;
 import org.kframework.backend.go.codegen.DefinitionToGo;
 import org.kframework.backend.go.codegen.EvalFunctionGen;
 import org.kframework.backend.go.codegen.FreshFunctionGen;
@@ -99,6 +100,8 @@ public class GoBackend implements Backend {
                     stepFunctionGen.generateStepRules());
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "constants.go",
+                    new ConstantsGen(packageManager, data.constants).generate());
 
 
         } catch (Exception e) {

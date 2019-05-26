@@ -19,4 +19,6 @@ public interface GoNameProvider {
     String memoTableName(KLabel lbl);
 
     String ruleVariableName(String varName);
+
+    String constVariableName(String typeName, String token);
 }

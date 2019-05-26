@@ -69,6 +69,15 @@ public class GoNameProviderProper implements GoNameProvider {
         return sb.toString();
     }
 
+    @Override
+    public String constVariableName(String typeName, String token) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("const");
+        sb.append(typeName);
+        appendAlphanumericEncodedString(sb, token);
+        return sb.toString();
+    }
+
     private static void appendAlphanumericEncodedString(StringBuilder sb, String name) {
         for (int i = 0; i < name.length(); i++) {
             int charAt = (int) name.charAt(i);
