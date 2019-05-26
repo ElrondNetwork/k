@@ -211,26 +211,18 @@ func (k KSequence) Equals(arg K) bool {
 		return false
 	}
 
-	ptr1 := int(k)
-	ptr2 := int(other)
-
-	if ptr1 == ptr2 {
-		return true
+	length := k.Length()
+	if length != other.Length() {
+		return false
 	}
 
-	for allKs[ptr1] != nil || allKs[ptr2] != nil {
-		if allKs[ptr1] == nil {
-			return false // k ended sooner
-		}
-		if allKs[ptr2] == nil {
-			return false // other ended sooner
-		}
-		if !allKs[ptr1].Equals(allKs[ptr2]) {
+	seq1 := allKs[k.sequenceIndex]
+	seq2 := allKs[other.sequenceIndex]
+
+	for i := 0; i < length; i++ {
+		if !seq1[k.headIndex+i].Equals(seq2[other.headIndex+i]) {
 			return false // element mismatch
 		}
-
-		ptr1++
-		ptr2++
 	}
 
 	return true

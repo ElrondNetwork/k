@@ -2,81 +2,73 @@
 
 package %PACKAGE_MODEL%
 
-// we keep all KSequences concatenated into 1 really big slice
+// we keep all KSequences concatenated into one 2d structure
 // each KSequence object is actually a pointer to the first element, its index in this slice
-// each KSequence is terminated by a nil element
-// the first element of allKs is the terminator for the empty sequence
-var allKs = []K{nil}
+// the first element of allKs is the empty sequence
+var allKs = [][]K{[]K{}}
 
 // ClearModel ... clean up any data left from previous executions, to save memory
 func ClearModel() {
-	allKs = []K{nil}
+	allKs = [][]K{[]K{}}
 }
 
 // EmptyKSequence ... the KSequence with no elements
-var EmptyKSequence = KSequence(0)
+var EmptyKSequence = KSequence{sequenceIndex: 0, headIndex: 0}
 
 // NewKSequence ... creates new KSequence instance with elements
 func NewKSequence(elements []K) KSequence {
-	newKsPointer := len(allKs)
-	allKs = append(allKs, elements...)
-	allKs = append(allKs, nil)
-	return KSequence(newKsPointer)
+	newSequenceIndex := len(allKs)
+	allKs = append(allKs, elements)
+	return KSequence{sequenceIndex: newSequenceIndex, headIndex: 0}
 }
 
 // IsEmpty ... returns true if KSequence has no elements
 func (k KSequence) IsEmpty() bool {
-	return allKs[int(k)] == nil
+	return k.Length() == 0
 }
 
 // Get ... element at position
 // Caution: no checks are performed that the position is valid
 func (k KSequence) Get(position int) K {
-	return allKs[int(k)+position]
+	seq := allKs[k.sequenceIndex]
+	return seq[k.headIndex+position]
 }
 
 // Length ... KSequence length
 func (k KSequence) Length() int {
-	length := 0
-	i := int(k)
-	for allKs[i] != nil {
-		i++
-		length++
-	}
-	return length
+	return len(allKs[k.sequenceIndex]) - k.headIndex
 }
 
 // ToSlice ... converts KSequence to a slice of K items
 func (k KSequence) ToSlice() []K {
-	ptr := int(k)
-	length := k.Length()
-	return allKs[ptr : ptr+length]
+	return allKs[k.sequenceIndex][k.headIndex:]
 }
 
 // SubSequence ... subsequence starting at position
 func (k KSequence) SubSequence(startPosition int) KSequence {
-	return KSequence(int(k) + startPosition)
+	return KSequence{sequenceIndex: k.sequenceIndex, headIndex: k.headIndex + startPosition}
 }
 
 // TrySplitToHeadTail ... extracts first element of a KSequence, extracts the rest, if possible
 // will treat non-KSequence as if they were KSequences of length 1
 func TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
 	if kseq, isKseq := k.(KSequence); isKseq {
-		ptr := int(kseq)
-		head := allKs[ptr]
-		if head == nil {
+		seq := allKs[kseq.sequenceIndex]
+		length := len(seq) - kseq.headIndex
+		switch length {
+		case 0:
 			// empty KSequence, no result
 			return false, NoResult, EmptyKSequence
-		}
-
-		second := allKs[ptr+1]
-		if second != nil && allKs[ptr+2] == nil {
+		case 1:
+			return true, seq[kseq.headIndex], EmptyKSequence
+		case 2:
 			// the KSequence has length 2
 			// this case is special because here the tail is not a KSequence
-			return true, head, second
+			return true, seq[kseq.headIndex], seq[kseq.headIndex+1]
+		default:
+			// advance head
+			return true, seq[kseq.headIndex], KSequence{kseq.sequenceIndex, kseq.headIndex + 1}
 		}
-
-		return true, head, KSequence(ptr + 1)
 	}
 
 	// treat non-KSequences as if they were KSequences with 1 element
@@ -90,12 +82,7 @@ func AssembleKSequence(elements ...K) K {
 	var newKs []K
 	for _, element := range elements {
 		if kseqElem, isKseq := element.(KSequence); isKseq {
-			ksLength := kseqElem.Length()
-			if ksLength > 0 {
-				elemPointer := int(kseqElem)
-				elemAsSlice := allKs[elemPointer : elemPointer+ksLength]
-				newKs = append(newKs, elemAsSlice...)
-			}
+			newKs = append(newKs, kseqElem.ToSlice()...)
 		} else {
 			newKs = append(newKs, element)
 		}

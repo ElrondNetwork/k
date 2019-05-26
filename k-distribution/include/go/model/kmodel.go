@@ -19,7 +19,10 @@ type K interface {
 
 // KSequence ... a sequence of K items
 // see util_kseq.go for implementation details
-type KSequence int
+type KSequence struct {
+	sequenceIndex int
+	headIndex     int
+}
 
 // KItem ...
 type KItem interface {
