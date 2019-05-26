@@ -8,6 +8,11 @@ package %PACKAGE_MODEL%
 // the first element of allKs is the terminator for the empty sequence
 var allKs = []K{nil}
 
+// ClearModel ... clean up any data left from previous executions, to save memory
+func ClearModel() {
+	allKs = []K{nil}
+}
+
 // EmptyKSequence ... the KSequence with no elements
 var EmptyKSequence = KSequence(0)
 
@@ -57,16 +62,21 @@ func (k KSequence) SubSequence(startPosition int) KSequence {
 // will treat non-KSequence as if they were KSequences of length 1
 func TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
 	if kseq, isKseq := k.(KSequence); isKseq {
-		switch kseq.Length() {
-		case 0:
+		ptr := int(kseq)
+		head := allKs[ptr]
+		if head == nil {
+			// empty KSequence, no result
 			return false, NoResult, EmptyKSequence
-		case 1:
-			return true, kseq.Get(0), EmptyKSequence
-		case 2:
-			return true, kseq.Get(0), kseq.Get(1)
-		default:
-			return true, kseq.Get(0), kseq.SubSequence(1)
 		}
+
+		second := allKs[ptr+1]
+		if second != nil && allKs[ptr+2] == nil {
+			// the KSequence has length 2
+			// this case is special because here the tail is not a KSequence
+			return true, head, second
+		}
+
+		return true, head, KSequence(ptr + 1)
 	}
 
 	// treat non-KSequences as if they were KSequences with 1 element
