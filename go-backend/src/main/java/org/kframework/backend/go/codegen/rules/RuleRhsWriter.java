@@ -212,10 +212,14 @@ public class RuleRhsWriter extends VisitK {
                 sb.append("&m.Float{Value: ").append(k.s()).append("}");
                 return;
             case "STRING.String":
+                if (k.s().equals("")) {
+                    sb.append("m.StringEmpty");
+                    return;
+                }
                 String unquotedStr = StringUtil.unquoteKString(k.s());
                 String goStr = GoStringUtil.enquoteString(unquotedStr);
                 String svarName = nameProvider.constVariableName("String", k.s());
-                String svalue = "m.NewString(" + goStr + ")";
+                String svalue = "m.NewString(" + k.s() + ")";
                 data.constants.stringConstants.put(svarName, svalue);
                 sb.append(svarName);
                 return;
