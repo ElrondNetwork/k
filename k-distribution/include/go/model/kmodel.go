@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-// K ... Defines a K entity
+// K defines a K entity
 type K interface {
-	Equals(K) bool
-	DeepCopy() K
-	structPrint(sb *strings.Builder, indent int)
-	prettyPrint(sb *strings.Builder, indent int)
-	kprint(sb *strings.Builder)
-	collectionsToK() K
+	equals(ms *ModelState, other K) bool
+	deepCopy(ms *ModelState) K
+	structPrint(ms *ModelState, sb *strings.Builder, indent int)
+	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
+	kprint(ms *ModelState, sb *strings.Builder)
+	collectionsToK(ms *ModelState) K
 }
 
 // KSequence ... a sequence of K items

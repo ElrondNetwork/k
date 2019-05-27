@@ -122,7 +122,7 @@ public class GoBackend implements Backend {
 
             // copy: model
             for (String fileName : Arrays.asList(
-                    "kmodel.go",
+                    "data.go", "kmodel.go",
                     "error.go",
                     "deepcopy.go", "equals.go",
                     "dynarray.go", "kmapkey.go", "collectionstok.go",
@@ -135,8 +135,8 @@ public class GoBackend implements Backend {
 
             // copy: interpreter
             for (String fileName : Arrays.asList(
-                    "error.go", "global.go",
-                    "kmodelconvert.go", "ksequenceutil.go",
+                    "interpreter.go", "error.go", "global.go",
+                    "kmodelconvert.go",
                     "run.go",
                     "trace.go", "tracepretty.go", "tracekprint.go", "tracecompare.go")) {
                 packageManager.copyFileToPackage(

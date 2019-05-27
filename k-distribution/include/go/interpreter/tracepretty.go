@@ -17,6 +17,7 @@ type tracePrettyDebug struct {
 	dirName     string
 	currentFile *os.File
 	fileWriter  *bufio.Writer
+	interpreter *Interpreter
 }
 
 func (t *tracePrettyDebug) initialize() {
@@ -52,7 +53,7 @@ func (t *tracePrettyDebug) closeTrace() {
 
 func (t *tracePrettyDebug) traceInitialState(state m.K) {
 	t.fileWriter.WriteString("initial state:\n\n")
-	t.fileWriter.WriteString(m.PrettyPrint(state))
+	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(state))
 }
 
 func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.K) {
@@ -62,12 +63,12 @@ func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.K) {
 
 func (t *tracePrettyDebug) traceStepEnd(stepNr int, currentState m.K) {
 	t.fileWriter.WriteString(fmt.Sprintf("\nstep #%d end; current state:\n\n", stepNr))
-	t.fileWriter.WriteString(m.PrettyPrint(currentState))
+	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(currentState))
 }
 
 func (t *tracePrettyDebug) traceNoStep(stepNr int, currentState m.K) {
 	t.fileWriter.WriteString(fmt.Sprintf("\nstep #%d end, no more steps\n\n", stepNr))
-	t.fileWriter.WriteString(m.PrettyPrint(currentState))
+	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(currentState))
 }
 
 func (t *tracePrettyDebug) traceRuleApply(ruleType string, stepNr int, ruleInfo string) {

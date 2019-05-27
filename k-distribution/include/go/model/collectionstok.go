@@ -6,12 +6,12 @@ import (
 	"sort"
 )
 
-// CollectionsToK ... convert all collections to standard K items, like KApply, KToken, etc.
-func CollectionsToK(k K) K {
-	return k.collectionsToK()
+// CollectionsToK converts all collections to standard K items, like KApply, KToken, etc.
+func (ms *ModelState) CollectionsToK(k K) K {
+	return k.collectionsToK(ms)
 }
 
-func (k *Map) collectionsToK() K {
+func (k *Map) collectionsToK(ms *ModelState) K {
 	if len(k.Data) == 0 {
 		return &KApply{Label: UnitFor(k.Label), List: nil}
 	}
@@ -23,7 +23,7 @@ func (k *Map) collectionsToK() K {
 	elemLabel := ElementFor(k.Label)
 	var result K
 	for i, pair := range orderedKVPairs {
-		elemK := &KApply{Label: elemLabel, List: []K{pair.Key, pair.Value.collectionsToK()}}
+		elemK := &KApply{Label: elemLabel, List: []K{pair.Key, pair.Value.collectionsToK(ms)}}
 		if i == 0 {
 			result = elemK
 		} else {
@@ -35,7 +35,7 @@ func (k *Map) collectionsToK() K {
 	return result
 }
 
-func (k *List) collectionsToK() K {
+func (k *List) collectionsToK(ms *ModelState) K {
 	if len(k.Data) == 0 {
 		return &KApply{Label: UnitFor(k.Label), List: nil}
 	}
@@ -55,7 +55,7 @@ func (k *List) collectionsToK() K {
 	return result
 }
 
-func (k *Set) collectionsToK() K {
+func (k *Set) collectionsToK(ms *ModelState) K {
 	if len(k.Data) == 0 {
 		return &KApply{Label: UnitFor(k.Label), List: nil}
 	}
@@ -91,7 +91,7 @@ func (k *Set) collectionsToK() K {
 	return result
 }
 
-func (k *Array) collectionsToK() K {
+func (k *Array) collectionsToK(ms *ModelState) K {
 	result := &KApply{Label: UnitForArray(k.Sort), List: []K{
 		NewString("uid"),
 		NewIntFromUint64(k.Data.MaxSize),
@@ -111,63 +111,63 @@ func (k *Array) collectionsToK() K {
 
 }
 
-func (k *KApply) collectionsToK() K {
+func (k *KApply) collectionsToK(ms *ModelState) K {
 	newList := make([]K, len(k.List))
 	for i, child := range k.List {
-		newList[i] = child.collectionsToK()
+		newList[i] = child.collectionsToK(ms)
 	}
 	return &KApply{Label: k.Label, List: newList}
 }
 
-func (k KSequence) collectionsToK() K {
-	ks := k.ToSlice()
+func (k KSequence) collectionsToK(ms *ModelState) K {
+	ks := ms.KSequenceToSlice(k)
 	newKs := make([]K, len(ks))
 	for i, child := range ks {
-		newKs[i] = child.collectionsToK()
+		newKs[i] = child.collectionsToK(ms)
 	}
-	return NewKSequence(newKs)
+	return ms.NewKSequence(newKs)
 }
 
-func (k *InjectedKLabel) collectionsToK() K {
+func (k *InjectedKLabel) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *KToken) collectionsToK() K {
+func (k *KToken) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *KVariable) collectionsToK() K {
+func (k *KVariable) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *Int) collectionsToK() K {
+func (k *Int) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *MInt) collectionsToK() K {
+func (k *MInt) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *Float) collectionsToK() K {
+func (k *Float) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *String) collectionsToK() K {
+func (k *String) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *StringBuffer) collectionsToK() K {
+func (k *StringBuffer) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *Bytes) collectionsToK() K {
+func (k *Bytes) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *Bool) collectionsToK() K {
+func (k *Bool) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *Bottom) collectionsToK() K {
+func (k *Bottom) collectionsToK(ms *ModelState) K {
 	return k
 }

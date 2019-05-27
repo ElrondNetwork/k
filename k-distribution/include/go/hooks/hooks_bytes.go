@@ -20,11 +20,11 @@ func reverseBytes(bytes []byte) []byte {
 	return revBytes
 }
 
-func (bytesHooksType) empty(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) empty(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.BytesEmpty, nil
 }
 
-func (bytesHooksType) bytes2int(argBytes m.K, argEndian m.K, argSigned m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) bytes2int(argBytes m.K, argEndian m.K, argSigned m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok1 := argBytes.(*m.Bytes)
 	kappEndian, ok2 := argEndian.(*m.KApply)
 	kappSigned, ok3 := argSigned.(*m.KApply)
@@ -87,7 +87,7 @@ func (bytesHooksType) bytes2int(argBytes m.K, argEndian m.K, argSigned m.K, lbl 
 	return &m.Int{Value: result}, nil
 }
 
-func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	klen, ok1 := argLen.(*m.Int)
 	kint, ok2 := argI.(*m.Int)
 	kappEndian, ok3 := argEndian.(*m.KApply)
@@ -154,7 +154,7 @@ func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabe
 	return &m.Bytes{Value: resultBytes}, nil
 }
 
-func (bytesHooksType) bytes2string(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) bytes2string(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok := arg.(*m.Bytes)
 	if !ok {
 		return invalidArgsResult()
@@ -162,7 +162,7 @@ func (bytesHooksType) bytes2string(arg m.K, lbl m.KLabel, sort m.Sort, config m.
 	return m.NewString(string(kbytes.Value)), nil
 }
 
-func (bytesHooksType) string2bytes(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) string2bytes(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kstr, ok := arg.(*m.String)
 	if !ok {
 		return invalidArgsResult()
@@ -170,7 +170,7 @@ func (bytesHooksType) string2bytes(arg m.K, lbl m.KLabel, sort m.Sort, config m.
 	return &m.Bytes{Value: []byte(kstr.Value)}, nil
 }
 
-func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok1 := argBytes.(*m.Bytes)
 	koff1, ok2 := argOffset1.(*m.Int)
 	koff2, ok3 := argOffset2.(*m.Int)
@@ -197,7 +197,7 @@ func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m
 	return &m.Bytes{Value: kbytes.Value[offset1:offset2]}, nil
 }
 
-func (bytesHooksType) replaceAt(argBytes m.K, argOffset m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) replaceAt(argBytes m.K, argOffset m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok1 := argBytes.(*m.Bytes)
 	koff, ok2 := argOffset.(*m.Int)
 	krepl, ok3 := argReplacement.(*m.Bytes)
@@ -218,7 +218,7 @@ func (bytesHooksType) replaceAt(argBytes m.K, argOffset m.K, argReplacement m.K,
 	return &m.Bytes{Value: result}, nil
 }
 
-func (bytesHooksType) length(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) length(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok := argBytes.(*m.Bytes)
 	if !ok {
 		return invalidArgsResult()
@@ -226,7 +226,7 @@ func (bytesHooksType) length(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K
 	return m.NewIntFromInt(len(kbytes.Value)), nil
 }
 
-func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok1 := argBytes.(*m.Bytes)
 	klen, ok2 := argLen.(*m.Int)
 	kwith, ok3 := argWith.(*m.Int)
@@ -257,7 +257,7 @@ func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLab
 	return &m.Bytes{Value: result}, nil
 }
 
-func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok1 := argBytes.(*m.Bytes)
 	klen, ok2 := argLen.(*m.Int)
 	kwith, ok3 := argWith.(*m.Int)
@@ -291,7 +291,7 @@ func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabe
 	return &m.Bytes{Value: result}, nil
 }
 
-func (bytesHooksType) reverse(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) reverse(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes, ok := argBytes.(*m.Bytes)
 	if !ok {
 		return invalidArgsResult()
@@ -304,7 +304,7 @@ func (bytesHooksType) reverse(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.
 	return &m.Bytes{Value: revBytes}, nil
 }
 
-func (bytesHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (bytesHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kbytes1, ok1 := c1.(*m.Bytes)
 	kbytes2, ok2 := c2.(*m.Bytes)
 	if !ok1 || !ok2 {

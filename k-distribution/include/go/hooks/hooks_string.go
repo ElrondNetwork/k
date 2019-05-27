@@ -13,7 +13,7 @@ type stringHooksType int
 
 const stringHooks stringHooksType = 0
 
-func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -22,7 +22,7 @@ func (stringHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config 
 	return m.NewString(k1.String() + k2.String()), nil
 }
 
-func (stringHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -31,7 +31,7 @@ func (stringHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() < k2.String()), nil
 }
 
-func (stringHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -40,7 +40,7 @@ func (stringHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() <= k2.String()), nil
 }
 
-func (stringHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -49,7 +49,7 @@ func (stringHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() > k2.String()), nil
 }
 
-func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -58,7 +58,7 @@ func (stringHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() >= k2.String()), nil
 }
 
-func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -67,7 +67,7 @@ func (stringHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() == k2.String()), nil
 }
 
-func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k1, ok1 := c1.(*m.String)
 	k2, ok2 := c2.(*m.String)
 	if !ok1 || !ok2 {
@@ -76,7 +76,7 @@ func (stringHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.ToBool(k1.String() != k2.String()), nil
 }
 
-func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i, ok := c.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
@@ -87,7 +87,7 @@ func (stringHooksType) chr(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, e
 	return m.NewString(string(bytes)), nil
 }
 
-func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	str, ok1 := c1.(*m.String)
 	substr, ok2 := c2.(*m.String)
 	firstIdx, ok3 := c3.(*m.Int)
@@ -109,7 +109,7 @@ func (stringHooksType) find(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, c
 	return m.NewIntFromUint64(firstIdxInt + uint64(result)), nil
 }
 
-func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	str, ok1 := c1.(*m.String)
 	substr, ok2 := c2.(*m.String)
 	lastIdx, ok3 := c3.(*m.Int)
@@ -130,7 +130,7 @@ func (stringHooksType) rfind(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, 
 	return m.NewIntFromInt(result), nil
 }
 
-func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k, ok := c.(*m.String)
 	if !ok {
 		return invalidArgsResult()
@@ -138,7 +138,7 @@ func (stringHooksType) length(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	return m.NewIntFromInt(len(k.String())), nil
 }
 
-func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	str, ok1 := c1.(*m.String)
 	from, ok2 := c2.(*m.Int) // from is inclusive
 	to, ok3 := c3.(*m.Int)   // to is exclusive
@@ -160,7 +160,7 @@ func (stringHooksType) substr(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort,
 	return m.NewString(str.String()[fromInt:toInt]), nil
 }
 
-func (stringHooksType) ord(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) ord(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	str, ok := arg.(*m.String)
 	if !ok {
 		return invalidArgsResult()
@@ -175,7 +175,7 @@ func (stringHooksType) ord(arg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K,
 	return m.NewIntFromByte(asBytes[0]), nil
 }
 
-func (stringHooksType) int2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) int2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i, ok := c.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
@@ -183,11 +183,11 @@ func (stringHooksType) int2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	return m.NewString(i.Value.String()), nil
 }
 
-func (stringHooksType) string2int(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) string2int(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2base(kstr m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) string2base(kstr m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	str, ok1 := kstr.(*m.String)
 	base, ok2 := kbase.(*m.Int)
 	if !ok1 || !ok2 {
@@ -209,7 +209,7 @@ func (stringHooksType) string2base(kstr m.K, kbase m.K, lbl m.KLabel, sort m.Sor
 	return m.NewInt(i), nil
 }
 
-func (stringHooksType) base2string(kint m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) base2string(kint m.K, kbase m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i, ok1 := kint.(*m.Int)
 	base, ok2 := kbase.(*m.Int)
 	if !ok1 || !ok2 {
@@ -226,7 +226,7 @@ func (stringHooksType) base2string(kint m.K, kbase m.K, lbl m.KLabel, sort m.Sor
 	return m.NewString(str), nil
 }
 
-func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	k, ok := c.(*m.String)
 	if !ok {
 		return invalidArgsResult()
@@ -234,7 +234,7 @@ func (stringHooksType) string2token(c m.K, lbl m.KLabel, sort m.Sort, config m.K
 	return &m.KToken{Sort: sort, Value: k.String()}, nil
 }
 
-func (stringHooksType) token2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) token2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	if k, typeOk := c.(*m.KToken); typeOk {
 		return m.NewString(k.Value), nil
 	}
@@ -254,23 +254,23 @@ func (stringHooksType) token2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K
 	return invalidArgsResult()
 }
 
-func (stringHooksType) float2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) float2string(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) uuid(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) uuid(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) floatFormat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) floatFormat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) string2float(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) string2float(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) replace(argS m.K, argToReplace m.K, argReplacement m.K, argCount m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) replace(argS m.K, argToReplace m.K, argReplacement m.K, argCount m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kS, ok1 := argS.(*m.String)
 	kToReplace, ok2 := argToReplace.(*m.String)
 	kReplacement, ok3 := argReplacement.(*m.String)
@@ -287,7 +287,7 @@ func (stringHooksType) replace(argS m.K, argToReplace m.K, argReplacement m.K, a
 	return m.NewString(result), nil
 }
 
-func (stringHooksType) replaceAll(argS m.K, argToReplace m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) replaceAll(argS m.K, argToReplace m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kS, ok1 := argS.(*m.String)
 	kToReplace, ok2 := argToReplace.(*m.String)
 	kReplacement, ok3 := argReplacement.(*m.String)
@@ -313,11 +313,11 @@ func (stringHooksType) replaceAll(argS m.K, argToReplace m.K, argReplacement m.K
 	return m.NewString(result), nil
 }
 
-func (stringHooksType) replaceFirst(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) replaceFirst(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) countAllOccurrences(argS m.K, argToCount m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) countAllOccurrences(argS m.K, argToCount m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kS, ok1 := argS.(*m.String)
 	kToCount, ok2 := argToCount.(*m.String)
 	if !ok1 || !ok2 {
@@ -328,18 +328,18 @@ func (stringHooksType) countAllOccurrences(argS m.K, argToCount m.K, lbl m.KLabe
 	return m.NewIntFromInt(result), nil
 }
 
-func (stringHooksType) category(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) category(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) directionality(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) directionality(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) findChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) findChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (stringHooksType) rfindChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (stringHooksType) rfindChar(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }

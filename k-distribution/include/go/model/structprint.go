@@ -8,9 +8,9 @@ import (
 )
 
 // StructPrint ... returns a representation of a K item that somewhat resembles a Go declaration
-func StructPrint(k K) string {
+func (ms *ModelState) StructPrint(k K) string {
 	var sb strings.Builder
-	k.structPrint(&sb, 0)
+	k.structPrint(ms, &sb, 0)
 	return sb.String()
 }
 
@@ -19,7 +19,7 @@ func simplePrint(sb *strings.Builder, indent int, str string) {
 	sb.WriteString(str)
 }
 
-func (k *KApply) structPrint(sb *strings.Builder, indent int) {
+func (k *KApply) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	addIndent(sb, indent)
 	sb.WriteString("KApply {Label:")
 	sb.WriteString(k.Label.Name())
@@ -29,7 +29,7 @@ func (k *KApply) structPrint(sb *strings.Builder, indent int) {
 	} else {
 		for _, childk := range k.List {
 			sb.WriteRune('\n')
-			childk.structPrint(sb, indent+1)
+			childk.structPrint(ms, sb, indent+1)
 		}
 		sb.WriteRune('\n')
 		addIndent(sb, indent)
@@ -37,19 +37,19 @@ func (k *KApply) structPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *InjectedKLabel) structPrint(sb *strings.Builder, indent int) {
+func (k *InjectedKLabel) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("InjectedKLabel {Label:%s}", k.Label.Name()))
 }
 
-func (k *KToken) structPrint(sb *strings.Builder, indent int) {
+func (k *KToken) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("KToken {Sort:%s, Value:%s}", k.Sort.Name(), k.Value))
 }
 
-func (k *KVariable) structPrint(sb *strings.Builder, indent int) {
+func (k *KVariable) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("KVariable {Name:%s}", k.Name))
 }
 
-func (k *Map) structPrint(sb *strings.Builder, indent int) {
+func (k *Map) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	addIndent(sb, indent)
 	sb.WriteString("Map {Sort:")
 	sb.WriteString(k.Sort.Name())
@@ -65,7 +65,7 @@ func (k *Map) structPrint(sb *strings.Builder, indent int) {
 			sb.WriteString("key: ")
 			sb.WriteString(k.String())
 			sb.WriteString("  value: ")
-			v.structPrint(sb, 0)
+			v.structPrint(ms, sb, 0)
 		}
 		sb.WriteRune('\n')
 		addIndent(sb, indent)
@@ -73,55 +73,55 @@ func (k *Map) structPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *List) structPrint(sb *strings.Builder, indent int) {
+func (k *List) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	// TODO: print data
 	simplePrint(sb, indent, fmt.Sprintf("List {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
-func (k *Set) structPrint(sb *strings.Builder, indent int) {
+func (k *Set) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	// TODO: print data
 	simplePrint(sb, indent, fmt.Sprintf("Set {Sort:%s, Label:%s}", k.Sort.Name(), k.Label.Name()))
 }
 
-func (k *Array) structPrint(sb *strings.Builder, indent int) {
+func (k *Array) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	// TODO: print data
 	simplePrint(sb, indent, fmt.Sprintf("Array {Sort:%s}", k.Sort.Name()))
 }
 
-func (k *Int) structPrint(sb *strings.Builder, indent int) {
+func (k *Int) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("Int (%s)", k.Value.String()))
 }
 
-func (k *MInt) structPrint(sb *strings.Builder, indent int) {
+func (k *MInt) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("MInt (%d)", k.Value))
 }
 
-func (k *Float) structPrint(sb *strings.Builder, indent int) {
+func (k *Float) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("Float (%f)", k.Value))
 }
 
-func (k *String) structPrint(sb *strings.Builder, indent int) {
+func (k *String) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("String (%s)", k))
 }
 
-func (k *StringBuffer) structPrint(sb *strings.Builder, indent int) {
+func (k *StringBuffer) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("StringBuffer (%s)", k.Value.String()))
 }
 
-func (k *Bytes) structPrint(sb *strings.Builder, indent int) {
+func (k *Bytes) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("Bytes (%b)", k))
 }
 
-func (k *Bool) structPrint(sb *strings.Builder, indent int) {
+func (k *Bool) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, fmt.Sprintf("Bool (%t)", k.Value))
 }
 
-func (k *Bottom) structPrint(sb *strings.Builder, indent int) {
+func (k *Bottom) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	simplePrint(sb, indent, "Bottom")
 }
 
-func (k KSequence) structPrint(sb *strings.Builder, indent int) {
-	ks := k.ToSlice()
+func (k KSequence) structPrint(ms *ModelState, sb *strings.Builder, indent int) {
+	ks := ms.KSequenceToSlice(k)
 	addIndent(sb, indent)
 	sb.WriteString("KSequence {")
 	if len(ks) == 0 {
@@ -129,7 +129,7 @@ func (k KSequence) structPrint(sb *strings.Builder, indent int) {
 	} else {
 		for i, childk := range ks {
 			sb.WriteString("\n")
-			childk.structPrint(sb, indent+1)
+			childk.structPrint(ms, sb, indent+1)
 			if i < len(ks)-1 {
 				sb.WriteString(" ~>")
 			}

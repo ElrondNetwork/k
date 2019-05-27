@@ -6,50 +6,49 @@ import (
 	"math/big"
 )
 
+
 // DeepCopy ... complete copy of the object
-func (k *KApply) DeepCopy() K {
+func (ms *ModelState) DeepCopy(k K) K {
+	return k.deepCopy(ms)
+}
+
+func (k *KApply) deepCopy(ms *ModelState) K {
 	listCopy := make([]K, len(k.List))
 	for i, child := range k.List {
-		listCopy[i] = child.DeepCopy()
+		listCopy[i] = child.deepCopy(ms)
 	}
 	return &KApply{Label: k.Label, List: listCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *InjectedKLabel) DeepCopy() K {
+func (k *InjectedKLabel) deepCopy(ms *ModelState) K {
 	return &InjectedKLabel{Label: k.Label}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *KToken) DeepCopy() K {
+func (k *KToken) deepCopy(ms *ModelState) K {
 	return &KToken{Sort: k.Sort, Value: k.Value}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *KVariable) DeepCopy() K {
+func (k *KVariable) deepCopy(ms *ModelState) K {
 	return &KVariable{Name: k.Name}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Map) DeepCopy() K {
+func (k *Map) deepCopy(ms *ModelState) K {
 	mapCopy := make(map[KMapKey]K)
 	for key, val := range k.Data {
-		mapCopy[key] = val.DeepCopy()
+		mapCopy[key] = val.deepCopy(ms)
 	}
 	return &Map{Data: mapCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *List) DeepCopy() K {
+func (k *List) deepCopy(ms *ModelState) K {
 	listCopy := make([]K, len(k.Data))
 	for i, elem := range k.Data {
-		listCopy[i] = elem.DeepCopy()
+		listCopy[i] = elem.deepCopy(ms)
 	}
 	return &List{Sort: k.Sort, Label: k.Label, Data: listCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Set) DeepCopy() K {
+func (k *Set) deepCopy(ms *ModelState) K {
 	mapCopy := make(map[KMapKey]bool)
 	for key := range k.Data {
 		mapCopy[key] = true
@@ -57,61 +56,51 @@ func (k *Set) DeepCopy() K {
 	return &Set{Data: mapCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Array) DeepCopy() K {
+func (k *Array) deepCopy(ms *ModelState) K {
 	return k // TODO: not implemented
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Int) DeepCopy() K {
+func (k *Int) deepCopy(ms *ModelState) K {
 	intCopy := new(big.Int)
 	intCopy.Set(k.Value)
 	return &Int{Value: intCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *MInt) DeepCopy() K {
+func (k *MInt) deepCopy(ms *ModelState) K {
 	return k // not implemented
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Float) DeepCopy() K {
+func (k *Float) deepCopy(ms *ModelState) K {
 	return k // not implemented
 }
 
-// DeepCopy ... complete copy of the object
-func (k *String) DeepCopy() K {
+func (k *String) deepCopy(ms *ModelState) K {
 	return &String{Value: k.Value}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *StringBuffer) DeepCopy() K {
+func (k *StringBuffer) deepCopy(ms *ModelState) K {
 	return k // no deep copy needed here
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Bytes) DeepCopy() K {
+func (k *Bytes) deepCopy(ms *ModelState) K {
 	bytesCopy := make([]byte, len(k.Value))
 	copy(bytesCopy, k.Value)
 	return &Bytes{Value: bytesCopy}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Bool) DeepCopy() K {
+func (k *Bool) deepCopy(ms *ModelState) K {
 	return &Bool{Value: k.Value}
 }
 
-// DeepCopy ... complete copy of the object
-func (k *Bottom) DeepCopy() K {
+func (k *Bottom) deepCopy(ms *ModelState) K {
 	return &Bottom{}
 }
 
-// DeepCopy ... complete copy of the object
-func (k KSequence) DeepCopy() K {
-	ks := k.ToSlice()
+func (k KSequence) deepCopy(ms *ModelState) K {
+	ks := ms.KSequenceToSlice(k)
 	ksCopy := make([]K, len(ks))
 	for i, elem := range ks {
-		ksCopy[i] = elem.DeepCopy()
+		ksCopy[i] = elem.deepCopy(ms)
 	}
-	return NewKSequence(ksCopy)
+	return ms.NewKSequence(ksCopy)
 }

@@ -20,6 +20,7 @@ var noStep = &noStepError{}
 type stuckError struct {
 	funcName string
 	args     []m.K
+	ms       *m.ModelState
 }
 
 func (e *stuckError) Error() string {
@@ -28,7 +29,7 @@ func (e *stuckError) Error() string {
 	}
 	s := "Stuck! Function name: " + e.funcName + ". Args:"
 	for i, arg := range e.args {
-		s += fmt.Sprintf("\n%d: %s", i, m.PrettyPrint(arg))
+		s += fmt.Sprintf("\n%d: %s", i, e.ms.PrettyPrint(arg))
 	}
 	return s
 }

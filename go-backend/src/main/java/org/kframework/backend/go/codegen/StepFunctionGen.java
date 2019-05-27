@@ -112,7 +112,7 @@ public class StepFunctionGen {
 
             String funcName = "stepRule" + ruleNum;
 
-            sb.append("func ").append(funcName).append("(c m.K, config m.K) (m.K, error)").beginBlock();
+            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K) (m.K, error)").beginBlock();
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
@@ -129,7 +129,7 @@ public class StepFunctionGen {
 
             String funcName = "stepLookupRule" + ruleNum;
 
-            sb.append("func ").append(funcName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
@@ -142,14 +142,14 @@ public class StepFunctionGen {
     }
 
     private void writeStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func step(c m.K) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) step(c m.K) (m.K, error)").beginBlock();
         sb.writeIndent().append("config := c").newLine();
         sb.appendIndentedLine("var result m.K");
         sb.appendIndentedLine("var err error");
         for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
             int ruleNum = entry.getKey();
             String funcName = "stepRule" + ruleNum;
-            sb.appendIndentedLine("result, err = ", funcName, "(c, config)");
+            sb.appendIndentedLine("result, err = i.", funcName, "(c, config)");
             sb.writeIndent().append("if err == nil").beginBlock();
             sb.appendIndentedLine("return result, nil");
             sb.endOneBlock();
@@ -158,18 +158,18 @@ public class StepFunctionGen {
             sb.endOneBlock();
         }
 
-        sb.writeIndent().append("return stepLookups(c, config, -1)\n");
+        sb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
         sb.endOneBlock().newLine();
     }
 
     private void writeLookupsStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func stepLookups(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) stepLookups(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
         sb.appendIndentedLine("var result m.K");
         sb.appendIndentedLine("var err error");
         for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
             int ruleNum = entry.getKey();
             String funcName = "stepLookupRule" + ruleNum;
-            sb.appendIndentedLine("result, err = ", funcName, "(c, config, guard)");
+            sb.appendIndentedLine("result, err = i.", funcName, "(c, config, guard)");
             sb.writeIndent().append("if err == nil").beginBlock();
             sb.appendIndentedLine("return result, nil");
             sb.endOneBlock();

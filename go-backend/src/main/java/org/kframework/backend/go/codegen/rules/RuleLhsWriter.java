@@ -45,7 +45,7 @@ public class RuleLhsWriter extends VisitK {
 
     private int kitemIndex = 0;
 
-    public enum ExpressionType { IF, STATEMENT, NOTHING }
+    public enum ExpressionType {IF, STATEMENT, NOTHING}
 
     private ExpressionType topExpressionType = null;
     private boolean containsIf = false;
@@ -169,7 +169,7 @@ public class RuleLhsWriter extends VisitK {
                 throw new RuntimeException("Unexpected function on LHS.");
             }
         } else {
-            KVariable alias  = consumeAlias();
+            KVariable alias = consumeAlias();
             String kappVar;
             String aliasComment = "";
             if (alias != null) {
@@ -258,7 +258,7 @@ public class RuleLhsWriter extends VisitK {
         if (!(k.alias() instanceof KVariable)) {
             throw new IllegalArgumentException("KAs alias is not a KVariable.");
         }
-        nextAlias = (KVariable)k.alias();
+        nextAlias = (KVariable) k.alias();
         apply(k.pattern());
 
         if (nextAlias != null) {
@@ -275,7 +275,7 @@ public class RuleLhsWriter extends VisitK {
     public void apply(KToken k) {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
-        sb.append("if ").append(consumeSubject()).append(".Equals(");
+        sb.append("if i.Model.Equals(").append(consumeSubject()).append(", ");
         RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
         sb.beginBlock(ToKast.apply(k));
@@ -288,7 +288,7 @@ public class RuleLhsWriter extends VisitK {
         if (alreadySeenVariables.contains(k)) {
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
-            sb.append("if ").append(consumeSubject()).append(".Equals(").append(varName).append(")");
+            sb.append("if i.Model.Equals(").append(consumeSubject()).append(", ").append(varName).append(")");
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
             return;
         }
@@ -304,7 +304,7 @@ public class RuleLhsWriter extends VisitK {
                 sb.writeIndent();
                 String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
                 boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
-                                || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
+                        || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
                 String declarationVarName = varNeeded ? varName : "_";
                 sb.append(String.format(pattern,
                         declarationVarName, consumeSubject()));
@@ -364,7 +364,7 @@ public class RuleLhsWriter extends VisitK {
             kitemIndex++;
             sb.writeIndent().append("if ok, ");
             sb.append(kseqHead).append(", ");
-            sb.append(kseqTail).append(" := m.TrySplitToHeadTail(").append(consumeSubject()).append("); ok");
+            sb.append(kseqTail).append(" := i.Model.TrySplitToHeadTail(").append(consumeSubject()).append("); ok");
             sb.beginBlock(ToKast.apply(k));
             nextSubject = kseqHead;
             apply(k.items().get(0));
@@ -377,15 +377,15 @@ public class RuleLhsWriter extends VisitK {
             kitemIndex++;
             lhsTypeIf(kseqVar, consumeSubject(), "m.KSequence");
             int nrHeads = k.items().size() - 1;
-            sb.append(" && ").append(kseqVar).append(".Length() >= ").append(nrHeads);
+            sb.append(" && i.Model.KSequenceLength(").append(kseqVar).append(") >= ").append(nrHeads);
             sb.beginBlock("lhs KSequence size:" + k.items().size());
             // heads
             for (int i = 0; i < nrHeads; i++) {
-                nextSubject = kseqVar + ".Get(" + i + ")";
+                nextSubject = "i.Model.KSequenceGet(" + kseqVar + ", " + i + ")";
                 apply(k.items().get(i));
             }
             // tail
-            nextSubject = kseqVar + ".SubSequence(" + nrHeads + ")"; // slice with the rest, can be empty
+            nextSubject = "i.Model.KSequenceSub(" + kseqVar + ", " + nrHeads + ")"; // slice with the rest, can be empty
             apply(k.items().get(nrHeads)); // last element
             return;
         }

@@ -9,12 +9,12 @@ import (
 	"strconv"
 )
 
-func convertParserModelToKModel(pk koreparser.K) m.K {
+func (i *Interpreter) convertParserModelToKModel(pk koreparser.K) m.K {
 	switch v := pk.(type) {
 	case koreparser.KApply:
 		var convertedList []m.K
 		for _, le := range v.List {
-			convertedList = append(convertedList, convertParserModelToKModel(le))
+			convertedList = append(convertedList, i.convertParserModelToKModel(le))
 		}
 		return &m.KApply{Label: m.ParseKLabel(v.Label), List: convertedList}
 	case koreparser.InjectedKLabel:
@@ -26,9 +26,9 @@ func convertParserModelToKModel(pk koreparser.K) m.K {
 	case koreparser.KSequence:
 		var convertedKs []m.K
 		for _, ksElem := range v {
-			convertedKs = append(convertedKs, convertParserModelToKModel(ksElem))
+			convertedKs = append(convertedKs, i.convertParserModelToKModel(ksElem))
 		}
-		return m.NewKSequence(convertedKs)
+		return i.Model.NewKSequence(convertedKs)
 	default:
 		panic(fmt.Sprintf("Unknown parser model K type: %#v", v))
 	}

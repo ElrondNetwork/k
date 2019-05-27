@@ -30,12 +30,12 @@ public class FreshFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        sb.append("func freshFunction (s m.Sort, config m.K, counter int) (m.K, error) {\n");
+        sb.append("func (i *Interpreter) freshFunction (s m.Sort, config m.K, counter int) (m.K, error) {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : iterable(data.mainModule.freshFunctionFor().keys())) {
             sb.append("\t\tcase m.").append(nameProvider.sortVariableName(sort));
             sb.append(":\n");
-            sb.append("\t\t\treturn ");
+            sb.append("\t\t\treturn i.");
             KLabel freshFunction = data.mainModule.freshFunctionFor().apply(sort);
             sb.append(nameProvider.evalFunctionName(freshFunction));
             sb.append("(m.NewIntFromInt(counter), config, -1)\n");

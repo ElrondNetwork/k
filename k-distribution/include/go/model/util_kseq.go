@@ -2,58 +2,48 @@
 
 package %PACKAGE_MODEL%
 
-// we keep all KSequences concatenated into one 2d structure
-// each KSequence object is actually a pointer to the first element, its index in this slice
-// the first element of allKs is the empty sequence
-var allKs = [][]K{[]K{}}
-
-// ClearModel ... clean up any data left from previous executions, to save memory
-func ClearModel() {
-	allKs = [][]K{[]K{}}
-}
-
 // EmptyKSequence ... the KSequence with no elements
 var EmptyKSequence = KSequence{sequenceIndex: 0, headIndex: 0}
 
 // NewKSequence ... creates new KSequence instance with elements
-func NewKSequence(elements []K) KSequence {
-	newSequenceIndex := len(allKs)
-	allKs = append(allKs, elements)
+func (ms *ModelState) NewKSequence(elements []K) KSequence {
+	newSequenceIndex := len(ms.allKs)
+	ms.allKs = append(ms.allKs, elements)
 	return KSequence{sequenceIndex: newSequenceIndex, headIndex: 0}
 }
 
-// IsEmpty ... returns true if KSequence has no elements
-func (k KSequence) IsEmpty() bool {
-	return k.Length() == 0
+// KSequenceIsEmpty returns true if KSequence has no elements
+func (ms *ModelState) KSequenceIsEmpty(k KSequence) bool {
+	return ms.KSequenceLength(k) == 0
 }
 
-// Get ... element at position
+// KSequenceGet yields element at position
 // Caution: no checks are performed that the position is valid
-func (k KSequence) Get(position int) K {
-	seq := allKs[k.sequenceIndex]
+func (ms *ModelState) KSequenceGet(k KSequence, position int) K {
+	seq := ms.allKs[k.sequenceIndex]
 	return seq[k.headIndex+position]
 }
 
-// Length ... KSequence length
-func (k KSequence) Length() int {
-	return len(allKs[k.sequenceIndex]) - k.headIndex
+// KSequenceLength yields KSequence length
+func (ms *ModelState) KSequenceLength(k KSequence) int {
+	return len(ms.allKs[k.sequenceIndex]) - k.headIndex
 }
 
-// ToSlice ... converts KSequence to a slice of K items
-func (k KSequence) ToSlice() []K {
-	return allKs[k.sequenceIndex][k.headIndex:]
+// KSequenceToSlice converts KSequence to a slice of K items
+func (ms *ModelState) KSequenceToSlice(k KSequence) []K {
+	return ms.allKs[k.sequenceIndex][k.headIndex:]
 }
 
-// SubSequence ... subsequence starting at position
-func (k KSequence) SubSequence(startPosition int) KSequence {
+// KSequenceSub yields subsequence starting at position
+func (ms *ModelState) KSequenceSub(k KSequence, startPosition int) KSequence {
 	return KSequence{sequenceIndex: k.sequenceIndex, headIndex: k.headIndex + startPosition}
 }
 
 // TrySplitToHeadTail ... extracts first element of a KSequence, extracts the rest, if possible
 // will treat non-KSequence as if they were KSequences of length 1
-func TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
+func (ms *ModelState) TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
 	if kseq, isKseq := k.(KSequence); isKseq {
-		seq := allKs[kseq.sequenceIndex]
+		seq := ms.allKs[kseq.sequenceIndex]
 		length := len(seq) - kseq.headIndex
 		switch length {
 		case 0:
@@ -78,11 +68,11 @@ func TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
 // AssembleKSequence ... appends all elements into a KSequence
 // flattens if there are any KSequences among the elements (but only on 1 level, does not handle multiple nesting)
 // never returns KSequence of 1 element, it returns the element directly instead
-func AssembleKSequence(elements ...K) K {
+func (ms *ModelState) AssembleKSequence(elements ...K) K {
 	var newKs []K
 	for _, element := range elements {
 		if kseqElem, isKseq := element.(KSequence); isKseq {
-			newKs = append(newKs, kseqElem.ToSlice()...)
+			newKs = append(newKs, ms.KSequenceToSlice(kseqElem)...)
 		} else {
 			newKs = append(newKs, element)
 		}
@@ -93,5 +83,5 @@ func AssembleKSequence(elements ...K) K {
 	if len(newKs) == 1 {
 		return newKs[0]
 	}
-	return NewKSequence(newKs)
+	return ms.NewKSequence(newKs)
 }

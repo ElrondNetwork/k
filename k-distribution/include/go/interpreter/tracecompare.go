@@ -24,6 +24,7 @@ type traceReferenceComparer struct {
 	fileReader        *bufio.Reader
 	currentStep       int
 	running           bool
+	interpreter *Interpreter
 }
 
 func (t *traceReferenceComparer) initialize() {
@@ -82,25 +83,25 @@ func (t *traceReferenceComparer) traceStepStart(stepNr int, currentState m.K) {
 	line := t.consumeStepLine()
 
 	parsedLine := koreparser.Parse([]byte(line))
-	lineAsK := convertParserModelToKModel(parsedLine)
+	lineAsK := t.interpreter.convertParserModelToKModel(parsedLine)
 
-	pure := m.CollectionsToK(currentState)
-	if !pure.Equals(lineAsK) {
+	pure := t.interpreter.Model.CollectionsToK(currentState)
+	if !t.interpreter.Model.Equals(pure, lineAsK) {
 		fmt.Printf("Stopped at step %d.", stepNr)
 		t.running = false
 		formattedNow := time.Now().Format("20060102150405")
-		writeStateToFile(pure, "traceRef_"+formattedNow+"_actual.log")
-		writeStateToFile(lineAsK, "traceRef_"+formattedNow+"_expected.log")
+		t.writeStateToFile(pure, "traceRef_"+formattedNow+"_actual.log")
+		t.writeStateToFile(lineAsK, "traceRef_"+formattedNow+"_expected.log")
 	}
 }
 
-func writeStateToFile(state m.K, fileName string) {
+func (t *traceReferenceComparer) writeStateToFile(state m.K, fileName string) {
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error while creating trace file:" + err.Error())
 	}
 	writer := bufio.NewWriter(file)
-	writer.WriteString(m.PrettyPrint(state))
+	writer.WriteString(t.interpreter.Model.PrettyPrint(state))
 	writer.Flush()
 	file.Close()
 }

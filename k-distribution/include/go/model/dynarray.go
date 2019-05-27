@@ -11,19 +11,25 @@ type DynamicArray struct {
 	MaxSize uint64
 	data    []K
 	Default K
+	ms      *ModelState
 }
 
 // ErrIndexOutOfBounds ... returned when the index exceeds DynamicArray max size
 var ErrIndexOutOfBounds = errors.New("DynamicArray index out of bounds")
 
 // MakeDynamicArray ... create new DynamicArray instance
-func MakeDynamicArray(maxSize uint64, defaultVal K) *DynamicArray {
+func (ms *ModelState) MakeDynamicArray(maxSize uint64, defaultVal K) *DynamicArray {
 	initialSize := maxSize
 	if initialSize > 10 {
 		initialSize = 10
 	}
 	data := make([]K, initialSize)
-	return &DynamicArray{MaxSize: maxSize, data: data, Default: defaultVal}
+	return &DynamicArray{
+		MaxSize: maxSize,
+		data:    data,
+		Default: defaultVal,
+		ms:      ms,
+	}
 }
 
 // Get ... get element at index
@@ -60,14 +66,14 @@ func (da *DynamicArray) Set(index uint64, value K) error {
 	}
 	currentLen := uint64(len(da.data))
 	if index >= currentLen {
-		if !value.Equals(da.Default) {
+		if !da.ms.Equals(value, da.Default) {
 			da.UpgradeSize(index + 1) // extend if necessary
 			da.data[index] = value
 		}
 		return nil
 	}
 
-	if value.Equals(da.Default) {
+	if da.ms.Equals(value, da.Default) {
 		da.data[index] = nil
 	} else {
 		da.data[index] = value
@@ -83,7 +89,7 @@ func (da *DynamicArray) Equals(other *DynamicArray) bool {
 	if da.MaxSize != other.MaxSize {
 		return false
 	}
-	if !da.Default.Equals(other.Default) {
+	if !da.ms.Equals(da.Default, other.Default) {
 		return false
 	}
 	maxLen := len(da.data)
@@ -93,7 +99,7 @@ func (da *DynamicArray) Equals(other *DynamicArray) bool {
 	for i := uint64(0); i < uint64(maxLen); i++ {
 		val1, _ := da.Get(i)
 		val2, _ := other.Get(i)
-		if !val1.Equals(val2) {
+		if !da.ms.Equals(val1, val2) {
 			return false
 		}
 	}

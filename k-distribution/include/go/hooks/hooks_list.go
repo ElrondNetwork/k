@@ -10,18 +10,18 @@ type listHooksType int
 
 const listHooks listHooksType = 0
 
-func (listHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	data := make([]m.K, 0)
 	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
-func (listHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	data := make([]m.K, 1)
 	data[0] = e
 	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
-func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l1, isList1 := klist1.(*m.List)
 	l2, isList2 := klist2.(*m.List)
 	if !isList1 || !isList2 {
@@ -37,7 +37,7 @@ func (listHooksType) concat(klist1 m.K, klist2 m.K, lbl m.KLabel, sort m.Sort, c
 	return &m.List{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
-func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l, isList := klist.(*m.List)
 	if !isList {
 		return invalidArgsResult()
@@ -50,7 +50,7 @@ func (listHooksType) in(e m.K, klist m.K, lbl m.KLabel, sort m.Sort, config m.K)
 	return m.BoolFalse, nil
 }
 
-func (listHooksType) get(klist m.K, kindex m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) get(klist m.K, kindex m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l, isList := klist.(*m.List)
 	i, isInt := kindex.(*m.Int)
 	if !isList || !isInt {
@@ -69,7 +69,7 @@ func (listHooksType) get(klist m.K, kindex m.K, lbl m.KLabel, sort m.Sort, confi
 	return l.Data[index], nil
 }
 
-func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l, isList := klist.(*m.List)
 	si, isInt1 := start.(*m.Int)
 	ei, isInt2 := end.(*m.Int)
@@ -81,7 +81,7 @@ func (listHooksType) listRange(klist m.K, start m.K, end m.K, lbl m.KLabel, sort
 	return &m.List{Sort: l.Sort, Label: l.Label, Data: l.Data[siUint:eiUint]}, nil
 }
 
-func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l, isList := klist.(*m.List)
 	if !isList {
 		return invalidArgsResult()
@@ -89,18 +89,18 @@ func (listHooksType) size(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	return m.NewIntFromInt(len(l.Data)), nil
 }
 
-func (listHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) make(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (listHooksType) fill(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) fill(c1 m.K, c2 m.K, c3 m.K, c4 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (listHooksType) update(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) update(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (listHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (listHooksType) updateAll(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }

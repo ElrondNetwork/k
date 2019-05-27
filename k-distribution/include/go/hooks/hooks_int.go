@@ -11,7 +11,7 @@ type intHooksType int
 
 const intHooks intHooksType = 0
 
-func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -20,7 +20,7 @@ func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) == 0), nil
 }
 
-func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -29,7 +29,7 @@ func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) != 0), nil
 }
 
-func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -38,7 +38,7 @@ func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) <= 0), nil
 }
 
-func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -47,7 +47,7 @@ func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) < 0), nil
 }
 
-func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -56,7 +56,7 @@ func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) >= 0), nil
 }
 
-func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -65,7 +65,7 @@ func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.ToBool(i1.Value.Cmp(i2.Value) > 0), nil
 }
 
-func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -76,7 +76,7 @@ func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -87,7 +87,7 @@ func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -99,7 +99,7 @@ func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 }
 
 // Integer division. The result is truncated towards zero and obeys the rule of signs.
-func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -128,7 +128,7 @@ func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K
 
 // Integer remainder. The result of rem a b has the sign of a, and its absolute value is strictly smaller than the absolute value of b.
 // The result satisfies the equality a = b * div a b + rem a b.
-func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -149,7 +149,7 @@ func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K
 }
 
 // Euclidian division
-func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -164,7 +164,7 @@ func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 }
 
 // Euclidian remainder
-func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -178,7 +178,7 @@ func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) 
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -189,7 +189,7 @@ func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	i3, ok3 := c3.(*m.Int)
@@ -201,7 +201,7 @@ func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, co
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -216,7 +216,7 @@ func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -231,7 +231,7 @@ func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -242,7 +242,7 @@ func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -253,7 +253,7 @@ func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -264,7 +264,7 @@ func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i, ok := c.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
@@ -274,7 +274,7 @@ func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, erro
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i, ok := c.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
@@ -284,7 +284,7 @@ func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, erro
 	return m.NewInt(&z), nil
 }
 
-func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -296,7 +296,7 @@ func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return c2, nil
 }
 
-func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	i1, ok1 := c1.(*m.Int)
 	i2, ok2 := c2.(*m.Int)
 	if !ok1 || !ok2 {
@@ -308,7 +308,7 @@ func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return c1, nil
 }
 
-func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	bigi, ok := karg.(*m.Int)
 	if !ok {
 		return invalidArgsResult()
@@ -326,7 +326,7 @@ func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return m.NewIntFromInt(nrBytes + (len(bytes)-1)*8 - 1), nil
 }
 
-func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	// rule bitRangeInt(I::Int, IDX::Int, LEN::Int) => (I >>Int IDX) modInt (1 <<Int LEN)
 	ki, ok1 := argI.(*m.Int)
 	koff, ok2 := argOffset.(*m.Int)
@@ -379,7 +379,7 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 	return &m.Int{Value: result}, nil
 }
 
-func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	// rule signExtendBitRangeInt(I::Int, IDX::Int, LEN::Int) => (bitRangeInt(I, IDX, LEN) +Int (1 <<Int (LEN -Int 1))) modInt (1 <<Int LEN) -Int (1 <<Int (LEN -Int 1))
 	ki, ok1 := argI.(*m.Int)
 	koff, ok2 := argOffset.(*m.Int)
@@ -431,10 +431,10 @@ func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl 
 	return &m.Int{Value: result}, nil
 }
 
-func (intHooksType) rand(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) rand(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (intHooksType) srand(c m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (intHooksType) srand(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }

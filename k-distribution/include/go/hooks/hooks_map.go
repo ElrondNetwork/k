@@ -11,7 +11,7 @@ type mapHooksType int
 const mapHooks mapHooksType = 0
 
 // returns a map with 1 key to value mapping
-func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	kkey, keyOk := m.MapKey(key)
 	if !keyOk {
 		return m.NoResult, errInvalidMapKey
@@ -22,16 +22,16 @@ func (mapHooksType) element(key m.K, val m.K, lbl m.KLabel, sort m.Sort, config 
 }
 
 // returns an empty map
-func (mapHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	var mp map[m.KMapKey]m.K
 	return &m.Map{Sort: sort, Label: m.CollectionFor(lbl), Data: mp}, nil
 }
 
-func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
-	return mh.lookupOrDefault(kmap, key, m.InternedBottom, lbl, sort, config)
+func (mh mapHooksType) lookup(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+	return mh.lookupOrDefault(kmap, key, m.InternedBottom, lbl, sort, config, interpreter)
 }
 
-func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	if mp, isMap := kmap.(*m.Map); isMap {
 		kkey, keyOk := m.MapKey(key)
 		if !keyOk {
@@ -51,7 +51,7 @@ func (mapHooksType) lookupOrDefault(kmap m.K, key m.K, defaultRes m.K, lbl m.KLa
 	return invalidArgsResult()
 }
 
-func (mapHooksType) update(kmap m.K, key m.K, newValue m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) update(kmap m.K, key m.K, newValue m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -71,7 +71,7 @@ func (mapHooksType) update(kmap m.K, key m.K, newValue m.K, lbl m.KLabel, sort m
 	return &m.Map{Sort: mp.Sort, Label: mp.Label, Data: newData}, nil
 }
 
-func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -90,7 +90,7 @@ func (mapHooksType) remove(kmap m.K, key m.K, lbl m.KLabel, sort m.Sort, config 
 	return &m.Map{Sort: mp.Sort, Label: mp.Label, Data: newData}, nil
 }
 
-func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	m1, isMap1 := kmap1.(*m.Map)
 	m2, isMap2 := kmap2.(*m.Map)
 	if !isMap1 || !isMap2 {
@@ -116,7 +116,7 @@ func (mapHooksType) concat(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, conf
 	return &m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	m1, isMap1 := kmap1.(*m.Map)
 	m2, isMap2 := kmap2.(*m.Map)
 	if !isMap1 || !isMap2 {
@@ -136,7 +136,7 @@ func (mapHooksType) difference(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, 
 	return &m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -148,7 +148,7 @@ func (mapHooksType) keys(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return &m.Set{Sort: m.SortSet, Label: m.KLabelForSet, Data: keySet}, nil
 }
 
-func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -164,7 +164,7 @@ func (mapHooksType) keysList(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return &m.List{Sort: m.SortList, Label: m.KLabelForList, Data: keyList}, nil
 }
 
-func (mapHooksType) inKeys(key m.K, kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) inKeys(key m.K, kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -177,7 +177,7 @@ func (mapHooksType) inKeys(key m.K, kmap m.K, lbl m.KLabel, sort m.Sort, config 
 	return m.ToBool(keyExists), nil
 }
 
-func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -189,7 +189,7 @@ func (mapHooksType) values(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	return &m.List{Sort: m.SortList, Label: m.KLabelForList, Data: valueList}, nil
 }
 
-func (mapHooksType) choice(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) choice(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -200,7 +200,7 @@ func (mapHooksType) choice(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	return invalidArgsResult()
 }
 
-func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	if !isMap {
 		return invalidArgsResult()
@@ -208,7 +208,7 @@ func (mapHooksType) size(kmap m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return m.NewIntFromInt(len(mp.Data)), nil
 }
 
-func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	m1, isMap1 := kmap1.(*m.Map)
 	m2, isMap2 := kmap2.(*m.Map)
 	if !isMap1 || !isMap2 {
@@ -226,7 +226,7 @@ func (mapHooksType) inclusion(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, c
 	return m.BoolTrue, nil
 }
 
-func (mapHooksType) updateAll(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) updateAll(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	m1, isMap1 := kmap1.(*m.Map)
 	m2, isMap2 := kmap2.(*m.Map)
 	if !isMap1 || !isMap2 {
@@ -245,7 +245,7 @@ func (mapHooksType) updateAll(kmap1 m.K, kmap2 m.K, lbl m.KLabel, sort m.Sort, c
 	return &m.Map{Sort: m1.Sort, Label: m1.Label, Data: data}, nil
 }
 
-func (mapHooksType) removeAll(kmap m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (mapHooksType) removeAll(kmap m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	mp, isMap := kmap.(*m.Map)
 	s, isSet := kset.(*m.Set)
 	if !isMap || !isSet {

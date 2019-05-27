@@ -9,13 +9,13 @@ import (
 
 // PrettyPrint ... returns a representation of a K item that tries to be as readable as possible
 // designed for debugging purposes only
-func PrettyPrint(k K) string {
+func (ms *ModelState) PrettyPrint(k K) string {
 	var sb strings.Builder
-	k.prettyPrint(&sb, 0)
+	k.prettyPrint(ms, &sb, 0)
 	return sb.String()
 }
 
-func (k *KApply) prettyPrint(sb *strings.Builder, indent int) {
+func (k *KApply) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	lblName := k.Label.Name()
 	isKCell := strings.HasPrefix(lblName, "<") && strings.HasSuffix(lblName, ">")
 
@@ -32,7 +32,7 @@ func (k *KApply) prettyPrint(sb *strings.Builder, indent int) {
 	}
 	if !done && len(k.List) == 1 {
 		var tempSb strings.Builder
-		k.List[0].prettyPrint(&tempSb, 0)
+		k.List[0].prettyPrint(ms, &tempSb, 0)
 		childStr := tempSb.String()
 		if !strings.Contains(childStr, "\n") {
 			// if only one child and its representation not too big, just put everything in one row
@@ -50,7 +50,7 @@ func (k *KApply) prettyPrint(sb *strings.Builder, indent int) {
 		for i, childk := range k.List {
 			sb.WriteRune('\n')
 			addIndent(sb, indent+1)
-			childk.prettyPrint(sb, indent+1)
+			childk.prettyPrint(ms, sb, indent+1)
 			if !isKCell && i < len(k.List)-1 {
 				sb.WriteString(",")
 			}
@@ -68,19 +68,19 @@ func (k *KApply) prettyPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *InjectedKLabel) prettyPrint(sb *strings.Builder, indent int) {
+func (k *InjectedKLabel) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("InjectedKLabel(%s)", k.Label.Name()))
 }
 
-func (k *KToken) prettyPrint(sb *strings.Builder, indent int) {
+func (k *KToken) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("%s: %s", k.Sort.Name(), k.Value))
 }
 
-func (k *KVariable) prettyPrint(sb *strings.Builder, indent int) {
+func (k *KVariable) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("var %s", k.Name))
 }
 
-func (k *Map) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Map) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("Map Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -93,9 +93,9 @@ func (k *Map) prettyPrint(sb *strings.Builder, indent int) {
 		for _, pair := range orderedKVPairs {
 			sb.WriteString("\n")
 			addIndent(sb, indent+1)
-			pair.Key.prettyPrint(sb, indent+1)
+			pair.Key.prettyPrint(ms, sb, indent+1)
 			sb.WriteString(" => ")
-			pair.Value.prettyPrint(sb, indent+1)
+			pair.Value.prettyPrint(ms, sb, indent+1)
 		}
 		sb.WriteRune('\n')
 		addIndent(sb, indent)
@@ -103,7 +103,7 @@ func (k *Map) prettyPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *List) prettyPrint(sb *strings.Builder, indent int) {
+func (k *List) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("List Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -118,7 +118,7 @@ func (k *List) prettyPrint(sb *strings.Builder, indent int) {
 			if item == nil {
 				sb.WriteString("nil")
 			} else {
-				item.prettyPrint(sb, indent+1)
+				item.prettyPrint(ms, sb, indent+1)
 			}
 		}
 		sb.WriteRune('\n')
@@ -127,7 +127,7 @@ func (k *List) prettyPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *Set) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Set) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("Set Sort:")
 	sb.WriteString(k.Sort.Name())
 	sb.WriteString(", Label:")
@@ -140,7 +140,7 @@ func (k *Set) prettyPrint(sb *strings.Builder, indent int) {
 		for _, elem := range orderedElems {
 			sb.WriteString("\n")
 			addIndent(sb, indent+1)
-			elem.prettyPrint(sb, indent+1)
+			elem.prettyPrint(ms, sb, indent+1)
 		}
 
 		sb.WriteRune('\n')
@@ -149,7 +149,7 @@ func (k *Set) prettyPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *Array) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Array) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("Array Sort:")
 	sb.WriteString(k.Sort.Name())
 	slice := k.Data.ToSlice()
@@ -161,7 +161,7 @@ func (k *Array) prettyPrint(sb *strings.Builder, indent int) {
 			sb.WriteString("\n")
 			addIndent(sb, indent+1)
 			sb.WriteString(fmt.Sprintf("[%d] => ", i))
-			item.prettyPrint(sb, indent+1)
+			item.prettyPrint(ms, sb, indent+1)
 		}
 		sb.WriteRune('\n')
 		addIndent(sb, indent)
@@ -169,31 +169,31 @@ func (k *Array) prettyPrint(sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *Int) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Int) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", k.Value.Text(16), k.Value.String()))
 }
 
-func (k *MInt) prettyPrint(sb *strings.Builder, indent int) {
+func (k *MInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("MInt (%d)", k.Value))
 }
 
-func (k *Float) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Float) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("Float (%f)", k.Value))
 }
 
-func (k *String) prettyPrint(sb *strings.Builder, indent int) {
+func (k *String) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("String(\"")
 	writeEscapedString(sb, k.Value)
 	sb.WriteString("\")")
 }
 
-func (k *StringBuffer) prettyPrint(sb *strings.Builder, indent int) {
+func (k *StringBuffer) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("StringBuffer(\"")
 	writeEscapedString(sb, k.Value.String())
 	sb.WriteString("\")")
 }
 
-func (k *Bytes) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Bytes) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("Bytes(")
 	if len(k.Value) == 0 {
 		sb.WriteString("empty")
@@ -208,16 +208,16 @@ func (k *Bytes) prettyPrint(sb *strings.Builder, indent int) {
 	sb.WriteString(")")
 }
 
-func (k *Bool) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Bool) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("Bool (%t)", k.Value))
 }
 
-func (k *Bottom) prettyPrint(sb *strings.Builder, indent int) {
+func (k *Bottom) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("Bottom")
 }
 
-func (k KSequence) prettyPrint(sb *strings.Builder, indent int) {
-	ks := k.ToSlice()
+func (k KSequence) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
+	ks := ms.KSequenceToSlice(k)
 	if len(ks) == 0 {
 		sb.WriteString(" .K ")
 	} else {
@@ -225,7 +225,7 @@ func (k KSequence) prettyPrint(sb *strings.Builder, indent int) {
 			if i > 0 {
 				addIndent(sb, indent)
 			}
-			childk.prettyPrint(sb, indent)
+			childk.prettyPrint(ms, sb, indent)
 			if i < len(ks)-1 {
 				sb.WriteString(" ~>\n")
 			} else {

@@ -14,6 +14,7 @@ import (
 type traceKPrint struct {
 	file       *os.File
 	fileWriter *bufio.Writer
+	interpreter *Interpreter
 }
 
 func (t *traceKPrint) initialize() {
@@ -38,7 +39,7 @@ func (t *traceKPrint) traceInitialState(state m.K) {
 }
 
 func (t *traceKPrint) traceStepStart(stepNr int, currentState m.K) {
-	kast := m.KPrint(currentState)
+	kast := t.interpreter.Model.KPrint(currentState)
 	t.fileWriter.WriteString(fmt.Sprintf("\nstep %d %s", stepNr, kast))
 }
 

@@ -21,78 +21,66 @@ func callKast(kdir string, programPath string) []byte {
 	return out
 }
 
-// ExecuteOptions ... options for executing programs
-type ExecuteOptions struct {
-	TracePretty bool
-	TraceKPrint bool
-	Verbose     bool
-	MaxSteps    int
-}
-
 // ExecuteSimple ... interprets the program in the file given at input
-func ExecuteSimple(kdir string, execFile string, options *ExecuteOptions) {
-	verbose = options.Verbose
-
+func (i *Interpreter) ExecuteSimple(kdir string, execFile string) {
 	kast := callKast(kdir, execFile)
-	if verbose {
+	if i.Verbose {
 		fmt.Printf("Kast: %s\n\n", kast)
 	}
 
 	data := make(map[string][]byte)
 	data["PGM"] = kast
-	final, stepsMade, err := Execute(data, options)
+	final, stepsMade, err := i.Execute(data)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if verbose {
+	if i.Verbose {
 		fmt.Println("\n\npretty print:")
-		fmt.Println(m.PrettyPrint(final))
+		fmt.Println(i.Model.PrettyPrint(final))
 		fmt.Println("\n\nk print:")
-		fmt.Println(m.KPrint(final))
+		fmt.Println(i.Model.KPrint(final))
 		fmt.Printf("\n\nsteps made: %d\n", stepsMade)
 	}
 }
 
 // Execute ... interprets the program with the structure
-func Execute(kastMap map[string][]byte, options *ExecuteOptions) (finalState m.K, stepsMade int, err error) {
-	verbose = options.Verbose
-
+func (i *Interpreter) Execute(kastMap map[string][]byte) (finalState m.K, stepsMade int, err error) {
 	kConfigMap := make(map[m.KMapKey]m.K)
 	for key, kastValue := range kastMap {
 		ktoken := m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
 		parsedValue := koreparser.Parse(kastValue)
-		kValue := convertParserModelToKModel(parsedValue)
+		kValue := i.convertParserModelToKModel(parsedValue)
 		kConfigMap[ktoken] = kValue
 	}
 
 	// top cell initialization
 	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: kConfigMap}
 	evalK := &m.KApply{Label: TopCellInitializer, List: []m.K{kmap}}
-	kinit, err := Eval(evalK, m.InternedBottom)
+	kinit, err := i.Eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
 		return kinit, 0, err
 	}
 
-	if verbose {
+	if i.Verbose {
 		fmt.Println("\n\ntop level init:")
-		fmt.Println(m.PrettyPrint(kinit))
+		fmt.Println(i.Model.PrettyPrint(kinit))
 	}
 
 	// execute
-	return TakeStepsNoThread(kinit, options)
+	return i.TakeStepsNoThread(kinit)
 }
 
 // TakeStepsNoThread ... executes as many steps as possible given the starting configuration
-func TakeStepsNoThread(k m.K, options *ExecuteOptions) (finalState m.K, stepsMade int, err error) {
+func (i *Interpreter) TakeStepsNoThread(k m.K) (finalState m.K, stepsMade int, err error) {
 
 	// initialize trace handlers (if it's the case)
-	if options.TracePretty {
+	if i.TracePretty {
 		traceHandlers = append(traceHandlers, &tracePrettyDebug{})
 	}
-	if options.TraceKPrint {
+	if i.TraceKPrint {
 		traceHandlers = append(traceHandlers, &traceKPrint{})
 	}
 	initializeTrace()
@@ -105,7 +93,7 @@ func TakeStepsNoThread(k m.K, options *ExecuteOptions) (finalState m.K, stepsMad
 	finalState = k
 	err = nil
 
-	maxSteps := options.MaxSteps
+	maxSteps := i.MaxSteps
 	if maxSteps == 0 {
 		// not set, it means we don't limit the number of steps
 		// except when it overflows an int ... not yet sure if we need uint64, might be overkill
@@ -114,7 +102,7 @@ func TakeStepsNoThread(k m.K, options *ExecuteOptions) (finalState m.K, stepsMad
 
 	for stepsMade < maxSteps {
 		traceStepStart(stepsMade, finalState)
-		finalState, err = step(finalState)
+		finalState, err = i.step(finalState)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
 				traceNoStep(stepsMade, finalState)

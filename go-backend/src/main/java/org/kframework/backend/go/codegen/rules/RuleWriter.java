@@ -163,7 +163,7 @@ public class RuleWriter {
 
         int lookupIndex = 0;
         for (Lookup lookup : lookups) {
-            String reapply = "return " + functionName + "(" + functionArgs.callParameters() + "config, " + ruleNum + ") // reapply";
+            String reapply = "return i." + functionName + "(" + functionArgs.callParameters() + "config, " + ruleNum + ") // reapply";
 
             sb.appendIndentedLine("// lookup:", lookup.comment());
 

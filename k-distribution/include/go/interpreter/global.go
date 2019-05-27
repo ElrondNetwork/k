@@ -7,10 +7,8 @@ import (
 	m "%INCLUDE_MODEL%"
 )
 
-var verbose bool = true
-
-func warn(message string) {
-    if verbose {
+func (i *Interpreter) warn(message string) {
+    if i.Verbose {
         fmt.Printf("Warning: %s\n", message)
     }
 }
@@ -19,12 +17,7 @@ func warn(message string) {
 func doNothing(c m.K) {
 }
 
-// can be handy when debugging
-func debugPrint(c m.K) {
-	fmt.Println(m.PrettyPrint(c))
-}
-
 // DebugPrint ... prints a K item to console, useful for debugging
-func DebugPrint(c m.K) {
-	fmt.Println(m.PrettyPrint(c))
+func (i *Interpreter) DebugPrint(c m.K) {
+	fmt.Println(i.Model.PrettyPrint(c))
 }

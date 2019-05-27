@@ -36,7 +36,7 @@ public class EvalFunctionGen {
 
 
         sb.appendIndentedLine("// Eval ... evaluates a KApply item based on its label and arguments");
-        sb.append("func Eval(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) Eval(c m.K, config m.K) (m.K, error)").beginBlock();
         sb.writeIndent().append("kapp, isKapply := c.(*m.KApply)\n");
         sb.writeIndent().append("if !isKapply").beginBlock();
         sb.writeIndent().append("return c, nil").newLine();
@@ -57,7 +57,7 @@ public class EvalFunctionGen {
             sb.endOneBlock();
 
             // function call
-            sb.writeIndent().append("return ");
+            sb.writeIndent().append("return i.");
             sb.append(nameProvider.evalFunctionName(label));
             sb.append("(");
             for (int i = 0; i < arity; i++) {

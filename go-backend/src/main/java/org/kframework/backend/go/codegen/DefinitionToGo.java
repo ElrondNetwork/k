@@ -237,7 +237,7 @@ public class DefinitionToGo {
                 assert sb.getCurrentIndent() == 0;
 
                 // start typing
-                sb.append("func ");
+                sb.append("func (i *Interpreter) ");
                 sb.append(functionName);
                 sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
@@ -265,7 +265,7 @@ public class DefinitionToGo {
                     sb.writeIndent().append("if hookRes, hookErr := ");
                     sb.append(hookCall).append("(");
                     sb.append(functionVars.callParameters());
-                    sb.append("lbl, sort, config); hookErr == nil");
+                    sb.append("lbl, sort, config, i); hookErr == nil");
                     sb.beginBlock();
 
                     if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
@@ -275,7 +275,7 @@ public class DefinitionToGo {
                     sb.writeIndent().append("return hookRes, nil").newLine();
 
                     sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
-                    sb.writeIndent().append("warn(\" Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
+                    sb.writeIndent().append("i.warn(\" Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
                     sb.writeIndent().append("return m.NoResult, hookErr").newLine();
                     sb.endOneBlock().newLine();
@@ -429,7 +429,7 @@ public class DefinitionToGo {
                 // launch a warning, compute, return result without memoization
                 sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.MapKey(c" + i + ")");
                 sb.writeIndent().append("if !ok" + i).beginBlock();
-                sb.appendIndentedLine("warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
+                sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
                 sb.writeIndent().append("return ");
                 sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
                 sb.append(functionArgs.callParameters()).append("config, guard)").newLine();

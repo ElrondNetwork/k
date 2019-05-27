@@ -129,6 +129,7 @@ public class RuleRhsWriter extends VisitK {
         String comment = ToKast.apply(k);
 
         evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
+        evalSb.append("i.");
         evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
         if (k.items().size() == 0) { // call parameters
             evalSb.append("(config, -1) // ").append(comment).newLine();
@@ -288,7 +289,7 @@ public class RuleRhsWriter extends VisitK {
             return;
         default:
             start();
-            currentSb.append("m.AssembleKSequence(");
+            currentSb.append("i.Model.AssembleKSequence(");
             currentSb.increaseIndent();
             for (K item : k.items()) {
                 newlineNext = true;

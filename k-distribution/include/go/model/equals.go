@@ -7,7 +7,11 @@ import (
 )
 
 // Equals ... Deep comparison
-func (k *KApply) Equals(arg K) bool {
+func (ms *ModelState) Equals(arg1 K, arg2 K) bool {
+	return arg1.equals(ms, arg2)
+}
+
+func (k *KApply) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*KApply)
 	if !typeOk {
 		return false
@@ -19,15 +23,14 @@ func (k *KApply) Equals(arg K) bool {
 		return false
 	}
 	for i := 0; i < len(k.List); i++ {
-		if !k.List[i].Equals(other.List[i]) {
+		if !k.List[i].equals(ms, other.List[i]) {
 			return false
 		}
 	}
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *InjectedKLabel) Equals(arg K) bool {
+func (k *InjectedKLabel) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*InjectedKLabel)
 	if !typeOk {
 		return false
@@ -38,8 +41,7 @@ func (k *InjectedKLabel) Equals(arg K) bool {
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *KToken) Equals(arg K) bool {
+func (k *KToken) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*KToken)
 	if !typeOk {
 		return false
@@ -50,8 +52,7 @@ func (k *KToken) Equals(arg K) bool {
 	return k.Value == other.Value
 }
 
-// Equals ... Deep comparison
-func (k *KVariable) Equals(arg K) bool {
+func (k *KVariable) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*KVariable)
 	if !typeOk {
 		return false
@@ -62,8 +63,7 @@ func (k *KVariable) Equals(arg K) bool {
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *Map) Equals(arg K) bool {
+func (k *Map) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Map)
 	if !typeOk {
 		return false
@@ -76,15 +76,14 @@ func (k *Map) Equals(arg K) bool {
 		if !found {
 			return false
 		}
-		if !val.Equals(otherVal) {
+		if !val.equals(ms, otherVal) {
 			return false
 		}
 	}
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *List) Equals(arg K) bool {
+func (k *List) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*List)
 	if !typeOk {
 		return false
@@ -99,15 +98,14 @@ func (k *List) Equals(arg K) bool {
 		return false
 	}
 	for i := 0; i < len(k.Data); i++ {
-		if !k.Data[i].Equals(other.Data[i]) {
+		if !k.Data[i].equals(ms, other.Data[i]) {
 			return false
 		}
 	}
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *Set) Equals(arg K) bool {
+func (k *Set) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Set)
 	if !typeOk {
 		return false
@@ -124,8 +122,7 @@ func (k *Set) Equals(arg K) bool {
 	return true
 }
 
-// Equals ... Deep comparison
-func (k *Array) Equals(arg K) bool {
+func (k *Array) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Array)
 	if !typeOk {
 		return false
@@ -136,8 +133,7 @@ func (k *Array) Equals(arg K) bool {
 	return k.Data.Equals(other.Data)
 }
 
-// Equals ... Deep comparison
-func (k *Int) Equals(arg K) bool {
+func (k *Int) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Int)
 	if !typeOk {
 		return false
@@ -145,8 +141,7 @@ func (k *Int) Equals(arg K) bool {
 	return k.Value.Cmp(other.Value) == 0
 }
 
-// Equals ... Deep comparison
-func (k *MInt) Equals(arg K) bool {
+func (k *MInt) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*MInt)
 	if !typeOk {
 		return false
@@ -154,8 +149,7 @@ func (k *MInt) Equals(arg K) bool {
 	return k.Value == other.Value
 }
 
-// Equals ... Deep comparison
-func (k *Float) Equals(arg K) bool {
+func (k *Float) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Float)
 	if !typeOk {
 		return false
@@ -163,8 +157,7 @@ func (k *Float) Equals(arg K) bool {
 	return k.Value == other.Value
 }
 
-// Equals ... Deep comparison
-func (k *String) Equals(arg K) bool {
+func (k *String) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*String)
 	if !typeOk {
 		return false
@@ -173,12 +166,11 @@ func (k *String) Equals(arg K) bool {
 }
 
 // Equals ... Pointer comparison only for StringBuffer
-func (k *StringBuffer) Equals(arg K) bool {
+func (k *StringBuffer) equals(ms *ModelState, arg K) bool {
 	return k == arg
 }
 
-// Equals ... Deep comparison
-func (k *Bytes) Equals(arg K) bool {
+func (k *Bytes) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Bytes)
 	if !typeOk {
 		return false
@@ -186,8 +178,7 @@ func (k *Bytes) Equals(arg K) bool {
 	return bytes.Equal(k.Value, other.Value)
 }
 
-// Equals ... Deep comparison
-func (k *Bool) Equals(arg K) bool {
+func (k *Bool) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(*Bool)
 	if !typeOk {
 		return false
@@ -195,8 +186,7 @@ func (k *Bool) Equals(arg K) bool {
 	return k.Value == other.Value
 }
 
-// Equals ... Deep comparison
-func (k *Bottom) Equals(arg K) bool {
+func (k *Bottom) equals(ms *ModelState, arg K) bool {
 	_, typeOk := arg.(*Bottom)
 	if !typeOk {
 		return false
@@ -204,23 +194,22 @@ func (k *Bottom) Equals(arg K) bool {
 	return true
 }
 
-// Equals ... Deep comparison
-func (k KSequence) Equals(arg K) bool {
+func (k KSequence) equals(ms *ModelState, arg K) bool {
 	other, typeOk := arg.(KSequence)
 	if !typeOk {
 		return false
 	}
 
-	length := k.Length()
-	if length != other.Length() {
+	length := ms.KSequenceLength(k)
+	if length != ms.KSequenceLength(other) {
 		return false
 	}
 
-	seq1 := allKs[k.sequenceIndex]
-	seq2 := allKs[other.sequenceIndex]
+	seq1 := ms.allKs[k.sequenceIndex]
+	seq2 := ms.allKs[other.sequenceIndex]
 
 	for i := 0; i < length; i++ {
-		if !seq1[k.headIndex+i].Equals(seq2[other.headIndex+i]) {
+		if !seq1[k.headIndex+i].equals(ms, seq2[other.headIndex+i]) {
 			return false // element mismatch
 		}
 	}

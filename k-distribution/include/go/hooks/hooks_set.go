@@ -10,7 +10,7 @@ type setHooksType int
 
 const setHooks setHooksType = 0
 
-func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s, isSet := kset.(*m.Set)
 	if !isSet {
 		return invalidArgsResult()
@@ -23,13 +23,13 @@ func (setHooksType) in(e m.K, kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (
 	return m.ToBool(exists), nil
 }
 
-func (setHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) unit(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	var data map[m.KMapKey]bool
 	return &m.Set{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
 // returns a set with 1 element
-func (setHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	setElem, setElemOk := m.MapKey(e)
 	if !setElemOk {
 		return m.NoResult, errBadSetElement
@@ -39,7 +39,7 @@ func (setHooksType) element(e m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return &m.Set{Sort: sort, Label: m.CollectionFor(lbl), Data: data}, nil
 }
 
-func (setHooksType) concat(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) concat(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s1, isSet1 := kset1.(*m.Set)
 	s2, isSet2 := kset2.(*m.Set)
 	if !isSet1 || !isSet2 {
@@ -55,7 +55,7 @@ func (setHooksType) concat(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, conf
 	return &m.Set{Sort: sort, Label: lbl, Data: data}, nil
 }
 
-func (setHooksType) difference(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) difference(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s1, isSet1 := kset1.(*m.Set)
 	s2, isSet2 := kset2.(*m.Set)
 	if !isSet1 || !isSet2 {
@@ -72,7 +72,7 @@ func (setHooksType) difference(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, 
 }
 
 // tests if kset1 is a subset of kset2
-func (setHooksType) inclusion(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) inclusion(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s1, isSet1 := kset1.(*m.Set)
 	s2, isSet2 := kset2.(*m.Set)
 	if !isSet1 || !isSet2 {
@@ -87,7 +87,7 @@ func (setHooksType) inclusion(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, c
 	return m.BoolTrue, nil
 }
 
-func (setHooksType) intersection(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) intersection(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s1, isSet1 := kset1.(*m.Set)
 	s2, isSet2 := kset2.(*m.Set)
 	if !isSet1 || !isSet2 {
@@ -103,7 +103,7 @@ func (setHooksType) intersection(kset1 m.K, kset2 m.K, lbl m.KLabel, sort m.Sort
 	return &m.Set{Sort: sort, Label: lbl, Data: data}, nil
 }
 
-func (setHooksType) choice(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) choice(kset m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s, isSet := kset.(*m.Set)
 	if !isSet {
 		return invalidArgsResult()
@@ -114,7 +114,7 @@ func (setHooksType) choice(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K
 	return invalidArgsResult()
 }
 
-func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s, isSet := kset.(*m.Set)
 	if !isSet {
 		return invalidArgsResult()
@@ -122,7 +122,7 @@ func (setHooksType) size(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, 
 	return m.NewIntFromInt(len(s.Data)), nil
 }
 
-func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	s, isSet := kset.(*m.Set)
 	if !isSet {
 		return invalidArgsResult()
@@ -138,7 +138,7 @@ func (setHooksType) set2list(kset m.K, lbl m.KLabel, sort m.Sort, config m.K) (m
 	return &m.List{Sort: m.SortList, Label: m.KLabelForList, Data: list}, nil
 }
 
-func (setHooksType) list2set(klist m.K, lbl m.KLabel, sort m.Sort, config m.K) (m.K, error) {
+func (setHooksType) list2set(klist m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	l, isList := klist.(*m.List)
 	if !isList {
 		return invalidArgsResult()
