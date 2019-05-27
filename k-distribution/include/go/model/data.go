@@ -13,6 +13,13 @@ type ModelState struct {
 }
 
 // Init prepares model for execution
+func NewModel() *ModelState {
+    ms := &ModelState{}
+    ms.Init()
+    return ms
+}
+
+// Init prepares model for execution
 func (ms *ModelState) Init() {
     if ms.initialized {
         return
