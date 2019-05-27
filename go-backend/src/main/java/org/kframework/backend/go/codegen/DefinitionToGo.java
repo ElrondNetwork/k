@@ -14,7 +14,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.kframework.backend.go.GoOptions;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
-import org.kframework.backend.go.gopackage.GoPackage;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.ConstantKTokens;
 import org.kframework.backend.go.model.DefinitionData;
@@ -53,16 +52,13 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import scala.Function1;
-import scala.Option;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.*;
@@ -112,7 +108,8 @@ public class DefinitionToGo {
                 functions, anywhereKLabels,
                 functionRules, anywhereRules,
                 functionParams, topCellInitializer,
-                collectionFor, constants);
+                collectionFor, constants,
+                extHookManager);
     }
 
     RuleWriter ruleWriter;
@@ -191,27 +188,8 @@ public class DefinitionToGo {
         sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append("\n\n");
 
-        // generating imports
-        Set<GoPackage> importsSorted = new TreeSet<>(Comparator.comparing(GoPackage::getName));
-        importsSorted.add(packageManager.modelPackage);
-        for (KLabel functionLabel : functions) {
-            Option<String> hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).getOption(Attribute.HOOK_KEY);
-            if (hook.nonEmpty()) {
-                FunctionHookName funcHook = new FunctionHookName(hook.get());
-                GoPackage externalHookPkg = extHookManager.getPackage(funcHook.getExternalGoPackageName());
-                if (externalHookPkg != null) {
-                    importsSorted.add(externalHookPkg);
-                }
-            }
-        }
-        sb.append("import (").newLine();
-        for (GoPackage pkg : importsSorted) {
-            if (pkg.getGoPath() == null) {
-                sb.append("\t\"").append(pkg.getName()).append("\"").newLine(); // "fmt"
-            } else {
-                sb.append("\t").append(pkg.getAlias()).append(" \"").append(pkg.getGoPath()).append("\"").newLine();
-            }
-        }
+        sb.append("import (\n");
+        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         // constants := arity == 0 && !impure
@@ -248,10 +226,13 @@ public class DefinitionToGo {
                 // hook implementation
                 FunctionHookName funcHook = new FunctionHookName(hook);
                 String hookCall = null;
+                boolean isExternalHook = false;
                 if (GoBuiltin.HOOK_NAMESPACES.contains(funcHook.getNamespace())) {
                     hookCall = funcHook.getGoHookObjName() + "." + funcHook.getGoFuncName();
                 } else if (extHookManager.containsPackage(funcHook.getExternalGoPackageName())) {
-                    hookCall = funcHook.getExternalGoPackageName() + "." + funcHook.getExternalGoFuncName();
+                    isExternalHook = true;
+                    String hookFieldRef = funcHook.getExternalGoPackageName().toLowerCase();
+                    hookCall = "i." + hookFieldRef + "Ref." + funcHook.getExternalGoFuncName();
                 } else if (!hook.equals(".")) {
                     kem.registerCompilerWarning("missing entry for hook " + hook);
                 }
@@ -265,7 +246,11 @@ public class DefinitionToGo {
                     sb.writeIndent().append("if hookRes, hookErr := ");
                     sb.append(hookCall).append("(");
                     sb.append(functionVars.callParameters());
-                    sb.append("lbl, sort, config, i); hookErr == nil");
+                    sb.append("lbl, sort, config");
+                    if (!isExternalHook) {
+                        sb.append(", i");
+                    }
+                    sb.append("); hookErr == nil");
                     sb.beginBlock();
 
                     if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
@@ -363,7 +348,7 @@ public class DefinitionToGo {
 
                 // start typing
                 sb.appendIndentedLine("// ANYWHERE");
-                sb.append("func ");
+                sb.append("func (i *Interpreter) ");
                 sb.append(functionName);
                 sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
@@ -412,7 +397,7 @@ public class DefinitionToGo {
         sb.append("]m.K)").newLine().newLine();
 
         // eval function
-        sb.append("func ");
+        sb.append("func (i *Interpreter) ");
         sb.append(evalFunctionName);
         sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
         sb.beginBlock();
@@ -430,7 +415,7 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.MapKey(c" + i + ")");
                 sb.writeIndent().append("if !ok" + i).beginBlock();
                 sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
-                sb.writeIndent().append("return ");
+                sb.writeIndent().append("return i.");
                 sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
                 sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
                 sb.endOneBlock();
@@ -450,7 +435,7 @@ public class DefinitionToGo {
         sb.writeIndent().append("if result, found := ").append(tableName).append("[memoKey]; found").beginBlock();
         sb.appendIndentedLine("return result, nil");
         sb.endOneBlock();
-        sb.writeIndent().append("computation, err := ");
+        sb.writeIndent().append("computation, err := i.");
         sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
         sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
         sb.writeIndent().append("if err != nil").beginBlock();

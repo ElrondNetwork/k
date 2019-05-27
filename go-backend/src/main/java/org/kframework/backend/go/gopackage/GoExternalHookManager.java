@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class GoExternalHookManager {
 
-    private final Map<String, GoPackage> nameToPackage;
+    public final Map<String, GoPackage> nameToPackage;
     private final GoPackageManager packageManager;
 
     public GoExternalHookManager(List<String> hookPackagePaths, GoPackageManager packageManager) {

@@ -8,6 +8,7 @@ import org.kframework.backend.go.codegen.DefinitionToGo;
 import org.kframework.backend.go.codegen.EvalFunctionGen;
 import org.kframework.backend.go.codegen.FreshFunctionGen;
 import org.kframework.backend.go.codegen.GoBuiltin;
+import org.kframework.backend.go.codegen.InterpreterDefGen;
 import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
@@ -102,6 +103,8 @@ public class GoBackend implements Backend {
                     def.definition());
             packageManager.saveToPackage(packageManager.interpreterPackage, "constants.go",
                     new ConstantsGen(packageManager, data.constants).generate());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "interpreter.go",
+                    new InterpreterDefGen(data, packageManager).generate());
 
 
         } catch (Exception e) {
@@ -135,7 +138,7 @@ public class GoBackend implements Backend {
 
             // copy: interpreter
             for (String fileName : Arrays.asList(
-                    "interpreter.go", "error.go", "global.go",
+                    "error.go", "global.go",
                     "kmodelconvert.go",
                     "run.go",
                     "trace.go", "tracepretty.go", "tracekprint.go", "tracecompare.go")) {
