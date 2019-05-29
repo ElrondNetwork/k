@@ -13,7 +13,9 @@ import (
 
 // SetTracePretty makes the interpreter save pretty traces of the execution
 func (i *Interpreter) SetTracePretty() {
-    i.traceHandlers = append(i.traceHandlers, &tracePrettyDebug{})
+    i.traceHandlers = append(i.traceHandlers, &tracePrettyDebug{
+        interpreter: i,
+    })
 }
 
 // creates a folder with the timestamp and writes each step in a separate file
