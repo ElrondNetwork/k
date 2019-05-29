@@ -42,26 +42,26 @@ func (i *Interpreter) traceInitialState(state m.K) {
 	}
 }
 
-func (i *Interpreter) traceStepStart(stepNr int, currentState m.K) {
+func (i *Interpreter) traceStepStart() {
 	for _, t := range i.traceHandlers {
-		t.traceStepStart(stepNr, currentState)
+		t.traceStepStart(i.currentStep, i.state)
 	}
 }
 
-func (i *Interpreter) traceStepEnd(stepNr int, currentState m.K) {
+func (i *Interpreter) traceStepEnd() {
 	for _, t := range i.traceHandlers {
-		t.traceStepEnd(stepNr, currentState)
+		t.traceStepEnd(i.currentStep, i.state)
 	}
 }
 
-func (i *Interpreter) traceNoStep(stepNr int, currentState m.K) {
+func (i *Interpreter) traceNoStep() {
 	for _, t := range i.traceHandlers {
-		t.traceNoStep(stepNr, currentState)
+		t.traceNoStep(i.currentStep, i.state)
 	}
 }
 
-func (i *Interpreter) traceRuleApply(ruleType string, stepNr int, ruleInfo string) {
+func (i *Interpreter) traceRuleApply(ruleType string, ruleNr int, ruleInfo string) {
 	for _, t := range i.traceHandlers {
-		t.traceRuleApply(ruleType, stepNr, ruleInfo)
+		t.traceRuleApply(ruleType, ruleNr, ruleInfo)
 	}
 }

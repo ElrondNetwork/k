@@ -103,7 +103,7 @@ public class GoBackend implements Backend {
                     def.definition());
             packageManager.saveToPackage(packageManager.interpreterPackage, "constants.go",
                     new ConstantsGen(packageManager, data.constants).generate());
-            packageManager.saveToPackage(packageManager.interpreterPackage, "interpreter.go",
+            packageManager.saveToPackage(packageManager.interpreterPackage, "interpreterDef.go",
                     new InterpreterDefGen(data, packageManager).generate());
 
 
@@ -138,6 +138,7 @@ public class GoBackend implements Backend {
 
             // copy: interpreter
             for (String fileName : Arrays.asList(
+                    "interpreterFunc.go",
                     "error.go", "global.go",
                     "kmodelconvert.go",
                     "run.go",

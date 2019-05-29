@@ -21,7 +21,7 @@ func callKast(kdir string, programPath string) []byte {
 	return out
 }
 
-// ExecuteSimple ... interprets the program in the file given at input
+// ExecuteSimple interprets the program in the file given at input
 func (i *Interpreter) ExecuteSimple(kdir string, execFile string) {
 	kast := callKast(kdir, execFile)
 	if i.Verbose {
@@ -30,11 +30,13 @@ func (i *Interpreter) ExecuteSimple(kdir string, execFile string) {
 
 	data := make(map[string][]byte)
 	data["PGM"] = kast
-	final, stepsMade, err := i.Execute(data)
 
+	err := i.Execute(data)
 	if err != nil {
 		panic(err)
 	}
+	final := i.GetState()
+	stepsMade := i.GetNrSteps()
 
 	if i.Verbose {
 		fmt.Println("\n\npretty print:")
@@ -45,8 +47,8 @@ func (i *Interpreter) ExecuteSimple(kdir string, execFile string) {
 	}
 }
 
-// Execute ... interprets the program with the structure
-func (i *Interpreter) Execute(kastMap map[string][]byte) (finalState m.K, stepsMade int, err error) {
+// Execute interprets the program with the structure
+func (i *Interpreter) Execute(kastMap map[string][]byte) error {
 	kConfigMap := make(map[m.KMapKey]m.K)
 	for key, kastValue := range kastMap {
 		ktoken := m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
@@ -61,7 +63,7 @@ func (i *Interpreter) Execute(kastMap map[string][]byte) (finalState m.K, stepsM
 	kinit, err := i.Eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
-		return kinit, 0, err
+		return err
 	}
 
 	if i.Verbose {
@@ -73,17 +75,16 @@ func (i *Interpreter) Execute(kastMap map[string][]byte) (finalState m.K, stepsM
 	return i.TakeStepsNoThread(kinit)
 }
 
-// TakeStepsNoThread ... executes as many steps as possible given the starting configuration
-func (i *Interpreter) TakeStepsNoThread(k m.K) (finalState m.K, stepsMade int, err error) {
+// TakeStepsNoThread executes as many steps as possible given the starting configuration
+func (i *Interpreter) TakeStepsNoThread(k m.K) error {
 	i.initializeTrace()
 	defer i.closeTrace()
 
 	// start
-	stepsMade = 0
-	i.traceInitialState(k)
+	i.currentStep = 0
+	i.state = k
+    i.traceInitialState(k)
 
-	finalState = k
-	err = nil
 
 	maxSteps := i.MaxSteps
 	if maxSteps == 0 {
@@ -92,20 +93,20 @@ func (i *Interpreter) TakeStepsNoThread(k m.K) (finalState m.K, stepsMade int, e
 		maxSteps = math.MaxInt32
 	}
 
-	for stepsMade < maxSteps {
-		i.traceStepStart(stepsMade, finalState)
-		finalState, err = i.step(finalState)
+	for i.currentStep < maxSteps {
+		i.traceStepStart()
+		var err error
+		i.state, err = i.step(i.state)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
-				i.traceNoStep(stepsMade, finalState)
-				err = nil
+				i.traceNoStep()
+				return nil
 			}
-			return
+			return err
 		}
 
-		i.traceStepEnd(stepsMade, finalState)
-		stepsMade++
+		i.traceStepEnd()
+		i.currentStep++
 	}
-	err = errMaxStepsReached
-	return
+	return errMaxStepsReached
 }

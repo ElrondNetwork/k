@@ -57,9 +57,11 @@ public class InterpreterDefGen {
         sb.append("type Interpreter struct").beginBlock();
 
         sb.appendIndentedLine("Model         *m.ModelState");
+        sb.appendIndentedLine("currentStep   int");
+        sb.appendIndentedLine("MaxSteps      int");
+        sb.appendIndentedLine("state         m.K");
         sb.appendIndentedLine("traceHandlers []traceHandler");
         sb.appendIndentedLine("Verbose       bool");
-        sb.appendIndentedLine("MaxSteps      int");
 
         // hook references here
         if (fields.size() > 0) {
@@ -81,9 +83,11 @@ public class InterpreterDefGen {
         sb.newLine();
         sb.writeIndent().append("return &Interpreter").beginBlock();
         sb.appendIndentedLine("Model:         model,");
+        sb.appendIndentedLine("MaxSteps:      0,");
+        sb.appendIndentedLine("currentStep:   -1, // meaning that no processing started yet");
+        sb.appendIndentedLine("state:         nil,");
         sb.appendIndentedLine("traceHandlers: nil,");
         sb.appendIndentedLine("Verbose:       false,");
-        sb.appendIndentedLine("MaxSteps:      0,");
         for (FieldDefinition field : fields) {
             sb.appendIndentedLine(field.fieldName, ": ", field.fieldName, ",");
         }
