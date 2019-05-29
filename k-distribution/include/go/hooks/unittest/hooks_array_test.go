@@ -8,7 +8,7 @@ import (
 )
 
 func TestArrayMake(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var int3 = m.NewIntFromInt(3)
@@ -28,7 +28,7 @@ func TestArrayMake(t *testing.T) {
 
 // Without default (default = bottom)
 func TestArrayMakeUpdateRemoveLookup1(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var elem m.K
@@ -69,7 +69,7 @@ func TestArrayMakeUpdateRemoveLookup1(t *testing.T) {
 
 // With default
 func TestArrayMakeUpdateRemoveLookup2(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var elem m.K
@@ -109,7 +109,7 @@ func TestArrayMakeUpdateRemoveLookup2(t *testing.T) {
 }
 
 func TestArrayIncreaseSize(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var elem m.K
@@ -143,7 +143,7 @@ func TestArrayIncreaseSize(t *testing.T) {
 }
 
 func TestArrayUpdateAll1(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var bottom = m.InternedBottom
@@ -155,7 +155,7 @@ func TestArrayUpdateAll1(t *testing.T) {
 }
 
 func TestArrayUpdateAll2(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var bottom = m.InternedBottom
@@ -167,7 +167,7 @@ func TestArrayUpdateAll2(t *testing.T) {
 }
 
 func TestArrayFill1(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var bottom = m.InternedBottom
@@ -179,7 +179,7 @@ func TestArrayFill1(t *testing.T) {
 }
 
 func TestArrayFill2(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var bottom = m.InternedBottom
@@ -191,7 +191,7 @@ func TestArrayFill2(t *testing.T) {
 }
 
 func TestArrayInKeys(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var arr m.K
 	var err error
 	var result m.K

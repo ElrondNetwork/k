@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseIntOk(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	strs := []string{
 		"0", "123",
 		"-123",
@@ -32,7 +32,7 @@ func TestParseIntError(t *testing.T) {
 }
 
 func TestIntHooks1(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	a := m.NewIntFromInt(1)
 	b := m.NewIntFromInt(2)
 	var z m.K
@@ -149,7 +149,7 @@ func TestIntHooks1(t *testing.T) {
 }
 
 func TestIntHooks2(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	a := m.NewIntFromInt(1)
 	b := m.NewIntFromInt(1)
 
@@ -269,7 +269,7 @@ func TestIntHooks2(t *testing.T) {
 }
 
 func TestIntHooksPow(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	a := m.NewIntFromInt(2)
 	b := m.NewIntFromInt(10)
 	c := m.NewIntFromInt(1000)
@@ -294,7 +294,7 @@ func TestIntHooksPow(t *testing.T) {
 }
 
 func TestIntLog2(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var arg m.K
@@ -359,7 +359,7 @@ func TestIntLog2(t *testing.T) {
 }
 
 func TestIntBitRangeZero(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -390,7 +390,7 @@ func TestIntBitRangeZero(t *testing.T) {
 }
 
 func TestIntBitRangePositive(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -421,7 +421,7 @@ func TestIntBitRangePositive(t *testing.T) {
 }
 
 func TestIntBitRangeNegative(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -442,7 +442,7 @@ func TestIntBitRangeNegative(t *testing.T) {
 }
 
 func TestIntBitRangeExamplesFromCode(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -517,7 +517,7 @@ func TestIntBitRangeExamplesFromCode(t *testing.T) {
 }
 
 func TestIntSignExtendBitRangeZero(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -548,7 +548,7 @@ func TestIntSignExtendBitRangeZero(t *testing.T) {
 }
 
 func TestIntSignExtendBitRangeMinusOne(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K
@@ -565,7 +565,7 @@ func TestIntSignExtendBitRangeMinusOne(t *testing.T) {
 }
 
 func TestIntSignExtendBitRangeExamplesFromCode(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var log m.K
 	var err error
 	var argI, argOff, argLen m.K

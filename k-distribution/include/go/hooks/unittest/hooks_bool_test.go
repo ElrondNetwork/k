@@ -8,7 +8,7 @@ import (
 )
 
 func TestBoolHooks(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var z m.K
 	var err error
 

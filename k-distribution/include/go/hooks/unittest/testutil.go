@@ -29,3 +29,20 @@ func (interpreter *Interpreter) checkImmutable(t *testing.T, args ...m.K) {
 		}
 	}
 }
+
+// newTestInterpreter provides an interpreter for the unit tests
+// does not initialize external hooks, even if they exist in the project
+// do not make public, the only public constructor should be the one in interpreterDef.go
+func newTestInterpreter() *Interpreter {
+	model := &m.ModelState{}
+	model.Init()
+
+	return &Interpreter {
+		Model:         model,
+		MaxSteps:      0,
+		currentStep:   -1,
+		state:         nil,
+		traceHandlers: nil,
+		Verbose:       false,
+	}
+}

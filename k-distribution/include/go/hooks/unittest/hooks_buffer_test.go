@@ -8,7 +8,7 @@ import (
 )
 
 func TestStringBuffer(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var sb m.K
 	var str m.K
 	var err error

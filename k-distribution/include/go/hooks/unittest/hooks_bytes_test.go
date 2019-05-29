@@ -8,7 +8,7 @@ import (
 )
 
 func TestBytesEmpty(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs m.K
 	var err error
 	bs, err = bytesHooks.empty(m.LblDummy, m.SortString, m.InternedBottom, interpreter)
@@ -16,7 +16,7 @@ func TestBytesEmpty(t *testing.T) {
 }
 
 func TestBytes2Int(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var res m.K
 	var err error
 	var arg1, arg2, arg3 m.K
@@ -95,7 +95,7 @@ func TestBytes2Int(t *testing.T) {
 }
 
 func TestInt2Bytes(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs m.K
 	var err error
 	kappBigEndian := &m.KApply{Label: m.LblBigEndianBytes}
@@ -266,7 +266,7 @@ func TestInt2Bytes(t *testing.T) {
 }
 
 func TestBytesSubstr(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, arg1, arg2, arg3 m.K
 	var err error
 
@@ -320,7 +320,7 @@ func TestBytesSubstr(t *testing.T) {
 }
 
 func TestBytesReplaceAt(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, arg1, arg2, arg3 m.K
 	var err error
 
@@ -362,7 +362,7 @@ func TestBytesReplaceAt(t *testing.T) {
 }
 
 func TestBytesLength(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var res m.K
 	var err error
 
@@ -379,7 +379,7 @@ func TestBytesLength(t *testing.T) {
 }
 
 func TestBytesPadRight(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, argB, argLen m.K
 	var err error
 	padChar := m.NewIntFromInt(80)
@@ -410,7 +410,7 @@ func TestBytesPadRight(t *testing.T) {
 }
 
 func TestBytesPadLeft(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, argB, argLen m.K
 	var err error
 	padChar := m.NewIntFromInt(80)
@@ -441,7 +441,7 @@ func TestBytesPadLeft(t *testing.T) {
 }
 
 func TestBytesReverse(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, arg m.K
 	var err error
 
@@ -459,7 +459,7 @@ func TestBytesReverse(t *testing.T) {
 }
 
 func TestBytesConcat(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var bs, arg1, arg2 m.K
 	var err error
 

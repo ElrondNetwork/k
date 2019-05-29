@@ -8,14 +8,14 @@ import (
 )
 
 func TestStringConcat(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 
 	result, err := stringHooks.concat(m.NewString("abc"), m.NewString("def"), m.LblDummy, m.SortString, m.InternedBottom, interpreter)
 	assertStringOk(t, "abcdef", result, err, interpreter)
 }
 
 func TestStringEq(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var result m.K
 	var err error
 
@@ -33,7 +33,7 @@ func TestStringEq(t *testing.T) {
 }
 
 func TestStringChr(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var result m.K
 	var err error
 
@@ -48,7 +48,7 @@ func TestStringChr(t *testing.T) {
 }
 
 func TestStringFind(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var result m.K
 	var err error
 
@@ -81,13 +81,13 @@ func TestStringFind(t *testing.T) {
 }
 
 func TestStringLength(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	len, err := stringHooks.length(m.NewString("abc"), m.LblDummy, m.SortString, m.InternedBottom, interpreter)
 	assertIntOk(t, "3", len, err, interpreter)
 }
 
 func TestStringSubstr(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var result m.K
 	var err error
 
@@ -116,7 +116,7 @@ func TestStringSubstr(t *testing.T) {
 }
 
 func TestString2Base2String(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var i m.K
 	var str m.K
 	var err error
@@ -132,7 +132,7 @@ func TestString2Base2String(t *testing.T) {
 }
 
 func TestBase2String2Base(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var i m.K
 	var str m.K
 	var err error
@@ -149,7 +149,7 @@ func TestBase2String2Base(t *testing.T) {
 }
 
 func TestString2Token(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	result, err := stringHooks.string2token(m.NewString("abc"), m.LblDummy, m.SortString, m.InternedBottom, interpreter)
 	if err != nil {
 		t.Error(err, interpreter)
@@ -163,7 +163,7 @@ func TestString2Token(t *testing.T) {
 }
 
 func TestToken2String(t *testing.T) {
-	interpreter := NewInterpreter()
+	interpreter := newTestInterpreter()
 	var result m.K
 	var err error
 
