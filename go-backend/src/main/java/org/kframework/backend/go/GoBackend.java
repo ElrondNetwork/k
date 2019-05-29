@@ -172,16 +172,19 @@ public class GoBackend implements Backend {
                 }
             }
 
-            // main
-            packageManager.copyFileAndReplaceGoPackages(
-                    files.resolveKBase("include/go/main.go"),
-                    files.resolveKompiled("main.go"));
+            // files that enable us to run the interpreter directly on simple cases, like imp
+            if (!options.srcOnly && options.quickTest != null) {
+                // quickMain
+                packageManager.copyFileAndReplaceGoPackages(
+                        files.resolveKBase("include/go/quickMain.go"),
+                        files.resolveKompiled("quickMain.go"));
 
-            //save .vscode config, it is convenient for VSCode users for debugging
-            copyFileAndReplaceVsCodeConfig(
-                    files.resolveKBase("include/go/vscode_launch.json"),
-                    files.resolveKompiled(".vscode/launch.json"),
-                    options.quickTest == null ? "" : '"' + options.quickTest + '"');
+                //save .vscode config, it is convenient for VSCode users for debugging
+                copyFileAndReplaceVsCodeConfig(
+                        files.resolveKBase("include/go/vscode_launch.json"),
+                        files.resolveKompiled(".vscode/launch.json"),
+                        options.quickTest == null ? "" : '"' + options.quickTest + '"');
+            }
 
         } catch (IOException e) {
             throw KEMException.criticalError("Error copying go files: " + e.getMessage(), e);

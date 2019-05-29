@@ -1,5 +1,8 @@
 %COMMENT%
 
+// File provided for convenience, to quickly evaluate simple languages, like IMP.
+// Will not work if there are external hooks.
+
 package main
 
 import (
@@ -17,7 +20,7 @@ func main() {
     i.Verbose = true
 	for _, flag := range os.Args[2:] {
 		if flag == "--trace" {
-			i.TracePretty = true
+			i.SetTracePretty()
 		}
 	}
 

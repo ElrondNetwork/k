@@ -317,7 +317,7 @@ public class RuleWriter {
 
     private static void traceLine(GoStringBuilder sb, RuleType ruleType, int ruleNum, Rule r) {
         sb.appendIndentedLine(
-                "traceRuleApply(\"",
+                "i.traceRuleApply(\"",
                 traceRuleTypeString(ruleType),
                 "\", ",
                 Integer.toString(ruleNum),

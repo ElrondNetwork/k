@@ -75,20 +75,12 @@ func (i *Interpreter) Execute(kastMap map[string][]byte) (finalState m.K, stepsM
 
 // TakeStepsNoThread ... executes as many steps as possible given the starting configuration
 func (i *Interpreter) TakeStepsNoThread(k m.K) (finalState m.K, stepsMade int, err error) {
-
-	// initialize trace handlers (if it's the case)
-	if i.TracePretty {
-		traceHandlers = append(traceHandlers, &tracePrettyDebug{})
-	}
-	if i.TraceKPrint {
-		traceHandlers = append(traceHandlers, &traceKPrint{})
-	}
-	initializeTrace()
-	defer closeTrace()
+	i.initializeTrace()
+	defer i.closeTrace()
 
 	// start
 	stepsMade = 0
-	traceInitialState(k)
+	i.traceInitialState(k)
 
 	finalState = k
 	err = nil
@@ -101,17 +93,17 @@ func (i *Interpreter) TakeStepsNoThread(k m.K) (finalState m.K, stepsMade int, e
 	}
 
 	for stepsMade < maxSteps {
-		traceStepStart(stepsMade, finalState)
+		i.traceStepStart(stepsMade, finalState)
 		finalState, err = i.step(finalState)
 		if err != nil {
 			if _, t := err.(*noStepError); t {
-				traceNoStep(stepsMade, finalState)
+				i.traceNoStep(stepsMade, finalState)
 				err = nil
 			}
 			return
 		}
 
-		traceStepEnd(stepsMade, finalState)
+		i.traceStepEnd(stepsMade, finalState)
 		stepsMade++
 	}
 	err = errMaxStepsReached

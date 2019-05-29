@@ -56,12 +56,10 @@ public class InterpreterDefGen {
         sb.append("// Interpreter is a container with a reference to model and basic options").newLine();
         sb.append("type Interpreter struct").beginBlock();
 
-        sb.appendIndentedLine("Model *m.ModelState");
-        sb.newLine();
-        sb.appendIndentedLine("TracePretty bool");
-        sb.appendIndentedLine("TraceKPrint bool");
-        sb.appendIndentedLine("Verbose     bool");
-        sb.appendIndentedLine("MaxSteps    int");
+        sb.appendIndentedLine("Model         *m.ModelState");
+        sb.appendIndentedLine("traceHandlers []traceHandler");
+        sb.appendIndentedLine("Verbose       bool");
+        sb.appendIndentedLine("MaxSteps      int");
 
         // hook references here
         if (fields.size() > 0) {
@@ -82,11 +80,10 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("model.Init()");
         sb.newLine();
         sb.writeIndent().append("return &Interpreter").beginBlock();
-        sb.appendIndentedLine("Model:       model,");
-        sb.appendIndentedLine("TracePretty: false,");
-        sb.appendIndentedLine("TraceKPrint: false,");
-        sb.appendIndentedLine("Verbose:     false,");
-        sb.appendIndentedLine("MaxSteps:    0,");
+        sb.appendIndentedLine("Model:         model,");
+        sb.appendIndentedLine("traceHandlers: nil,");
+        sb.appendIndentedLine("Verbose:       false,");
+        sb.appendIndentedLine("MaxSteps:      0,");
         for (FieldDefinition field : fields) {
             sb.appendIndentedLine(field.fieldName, ": ", field.fieldName, ",");
         }
