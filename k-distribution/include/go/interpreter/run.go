@@ -83,30 +83,63 @@ func (i *Interpreter) TakeStepsNoThread(k m.K) error {
 	// start
 	i.currentStep = 0
 	i.state = k
-    i.traceInitialState(k)
-
+	i.traceInitialState(k)
 
 	maxSteps := i.MaxSteps
 	if maxSteps == 0 {
 		// not set, it means we don't limit the number of steps
-		// except when it overflows an int ... not yet sure if we need uint64, might be overkill
 		maxSteps = math.MaxInt32
 	}
 
-	for i.currentStep < maxSteps {
+	// run - main
+	var err error
+	err = i.runSteps(maxSteps)
+	if err != nil {
+		return err
+	}
+
+	// try to make stuck, to enable steps dependent on stuck state
+	i.currentStep++
+	i.traceStepStart()
+	i.state, err = i.makeStuck(i.state, i.state)
+	if err != nil {
+		return err
+	}
+	i.traceStepEnd()
+	i.currentStep++
+
+	// run - stuck steps
+	err = i.runSteps(maxSteps)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Interpreter) runSteps(maxSteps int) error {
+	running := true
+	for running {
+		if i.currentStep >= maxSteps {
+			return errMaxStepsReached
+		}
 		i.traceStepStart()
 		var err error
 		i.state, err = i.step(i.state)
-		if err != nil {
+		if err == nil {
+			i.traceStepEnd()
+			i.currentStep++
+		} else {
 			if _, t := err.(*noStepError); t {
+				// no step error, the stop sign
 				i.traceNoStep()
-				return nil
+				running = false
+			} else {
+				// unexpected error
+				return err
 			}
-			return err
 		}
-
-		i.traceStepEnd()
-		i.currentStep++
 	}
-	return errMaxStepsReached
+
+	return nil
 }

@@ -30,13 +30,16 @@ import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
 import org.kframework.compile.ExpandMacros;
 import org.kframework.compile.GenerateSortPredicateRules;
+import org.kframework.compile.IncompleteCellUtils;
 import org.kframework.compile.RewriteToTop;
+import org.kframework.definition.Constructors;
 import org.kframework.definition.Module;
 import org.kframework.definition.ModuleTransformer;
 import org.kframework.definition.Production;
 import org.kframework.definition.Rule;
 import org.kframework.kil.Attribute;
 import org.kframework.kompile.CompiledDefinition;
+import org.kframework.kompile.Kompile;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
@@ -102,6 +105,7 @@ public class DefinitionToGo {
     private KLabel topCellInitializer;
     private Map<KLabel, KLabel> collectionFor;
     private final ConstantKTokens constants = new ConstantKTokens();
+    private Rule makeStuck, makeUnstuck;
 
     public DefinitionData definitionData() {
         return new DefinitionData(mainModule,
@@ -109,7 +113,8 @@ public class DefinitionToGo {
                 functionRules, anywhereRules,
                 functionParams, topCellInitializer,
                 collectionFor, constants,
-                extHookManager);
+                extHookManager,
+                makeStuck, makeUnstuck);
     }
 
     RuleWriter ruleWriter;
@@ -132,6 +137,18 @@ public class DefinitionToGo {
         mainModule = pipeline.apply(def.executionModule());
         topCellInitializer = def.topCellInitializer;
         collectionFor = ConvertDataStructureToLookup.collectionFor(mainModule);
+
+        // stuck/unstuck rules
+        KLabel stratCell = KLabel("<s>");
+        if (mainModule.definedKLabels().contains(stratCell)) {
+            Rule makeStuck = Constructors.Rule(IncompleteCellUtils.make(stratCell, false, KRewrite(KSequence(), KApply(KLabel("#STUCK"))), true), BooleanUtils.TRUE, BooleanUtils.TRUE);
+            Rule makeUnstuck = Constructors.Rule(IncompleteCellUtils.make(stratCell, false, KRewrite(KApply(KLabel("#STUCK")), KSequence()), true), BooleanUtils.TRUE, BooleanUtils.TRUE);
+            this.makeStuck = new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeStuck);
+            this.makeUnstuck = new Kompile(kompileOptions, files, kem).compileRule(def.kompiledDefinition, makeUnstuck);
+        } else {
+            this.makeStuck = null;
+            this.makeUnstuck = null;
+        }
 
         //TODO: warning! duplicate code with DefinitionToOcaml
         functionRules = HashMultimap.create();
@@ -318,7 +335,7 @@ public class DefinitionToGo {
 
                 if (!unreachableCode) {
                     // stuck!
-                    sb.writeIndent().append("return m.NoResult, &stuckError{funcName: \"").append(functionName).append("\", args: ");
+                    sb.writeIndent().append("return m.NoResult, &stuckError{ms: i.Model, funcName: \"").append(functionName).append("\", args: ");
                     if (functionVars.arity() == 0) {
                         sb.append("nil");
                     } else {

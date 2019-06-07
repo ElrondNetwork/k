@@ -12,6 +12,7 @@ import org.kframework.backend.go.codegen.InterpreterDefGen;
 import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
+import org.kframework.backend.go.codegen.StuckGen;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
@@ -101,6 +102,8 @@ public class GoBackend implements Backend {
                     stepFunctionGen.generateStepRules());
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "stuck.go",
+                    new StuckGen(data, packageManager, nameProvider).generateStuck());
             packageManager.saveToPackage(packageManager.interpreterPackage, "constants.go",
                     new ConstantsGen(packageManager, data.constants).generate());
             packageManager.saveToPackage(packageManager.interpreterPackage, "interpreterDef.go",

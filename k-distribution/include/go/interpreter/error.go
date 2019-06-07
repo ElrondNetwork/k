@@ -18,9 +18,9 @@ func (e *noStepError) Error() string {
 var noStep = &noStepError{}
 
 type stuckError struct {
+	ms       *m.ModelState
 	funcName string
 	args     []m.K
-	ms       *m.ModelState
 }
 
 func (e *stuckError) Error() string {

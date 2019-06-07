@@ -23,6 +23,7 @@ public class DefinitionData {
     public final Map<KLabel, KLabel> collectionFor;
     public final ConstantKTokens constants;
     public final GoExternalHookManager extHookManager;
+    public final Rule makeStuck, makeUnstuck;
 
     public DefinitionData(
             Module mainModule,
@@ -34,7 +35,8 @@ public class DefinitionData {
             KLabel topCellInitializer,
             Map<KLabel, KLabel> collectionFor,
             ConstantKTokens constants,
-            GoExternalHookManager extHookManager) {
+            GoExternalHookManager extHookManager,
+            Rule makeStuck, Rule makeUnstuck) {
         this.mainModule = mainModule;
         this.functions = functions;
         this.anywhereKLabels = anywhereKLabels;
@@ -45,6 +47,8 @@ public class DefinitionData {
         this.collectionFor = collectionFor;
         this.constants = constants;
         this.extHookManager = extHookManager;
+        this.makeStuck = makeStuck;
+        this.makeUnstuck = makeUnstuck;
     }
 
     public boolean isFunctionOrAnywhere(KLabel klabel) {
