@@ -9,6 +9,7 @@ import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.Sorts;
+import org.kframework.kil.Attribute;
 import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -128,26 +129,73 @@ public class RuleRhsWriter extends VisitK {
 
         String comment = ToKast.apply(k);
 
-        evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
-        evalSb.append("i.");
-        evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
-        if (k.items().size() == 0) { // call parameters
-            evalSb.append("(config, -1) // ").append(comment).newLine();
+        String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
+        if (hook.equals("KEQUAL.ite")) {
+            // if-then-else hook
+            // if arg0 { arg1 } else { arg2 }
+            // optimization aside, it is important that we avoid evaluating the branch we don't need
+            // because there are cases when evaluating this branch causes the entire execution to fail
+            assert k.klist().items().size() == 3;
+
+            // arg0 (the condition) is treated normally
+            evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", comment);
+            evalSb.writeIndent().append("if m.IsTrue(");
+            apply(k.klist().items().get(0)); // 1st argument, the condition
+            evalSb.append(")").beginBlock("rhs if-then-else");
+
+            // we separate the evaluation of arg1 from the rest
+            // and place its entire evaluation tree in the if block
+            // we need a new writer to avoid mixing arg1's evalCalls with the current ones
+            RuleRhsWriter ifBranchWriter = new RuleRhsWriter(data, nameProvider,
+                    lhsVars, tempVarCounters,
+                    evalSb.getCurrentIndent(), 0);
+            ifBranchWriter.apply(k.klist().items().get(1));
+
+            ifBranchWriter.writeEvalCalls(evalSb);
+            evalSb.writeIndent().append(evalVarName).append(" = ");
+            ifBranchWriter.writeReturnValue(evalSb);
+
+            // } else {
+            evalSb.newLine().endOneBlockNoNewline().append(" else").beginBlock();
+
+            // we separate the evaluation of arg2 from the rest
+            // and place its entire evaluation tree in the else block
+            // we need a new writer to avoid mixing arg2's evalCalls with the current ones
+            RuleRhsWriter elseBranchWriter = new RuleRhsWriter(data, nameProvider,
+                    lhsVars, tempVarCounters,
+                    evalSb.getCurrentIndent(), 0);
+            elseBranchWriter.apply(k.klist().items().get(2));
+
+            elseBranchWriter.writeEvalCalls(evalSb);
+            evalSb.writeIndent().append(evalVarName).append(" = ");
+            elseBranchWriter.writeReturnValue(evalSb);
+
+            // }
+            evalSb.newLine().endOneBlock();
         } else {
-            evalSb.append("( // ").append(comment);
-            evalSb.increaseIndent();
-            for (K item : k.items()) {
-                newlineNext = true;
-                apply(item);
-                evalSb.append(",");
+            // regular eval
+            // evalX, errX := func <funcName> (...)
+            evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
+            evalSb.append("i.");
+            evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
+            if (k.items().size() == 0) { // call parameters
+                evalSb.append("(config, -1) // ").append(comment).newLine();
+            } else {
+                evalSb.append("( // ").append(comment);
+                evalSb.increaseIndent();
+                for (K item : k.items()) {
+                    newlineNext = true;
+                    apply(item);
+                    evalSb.append(",");
+                }
+                evalSb.newLine().writeIndent().append("config, -1)");
+                evalSb.decreaseIndent();
+                evalSb.newLine();
             }
-            evalSb.newLine().writeIndent().append("config, -1)");
-            evalSb.decreaseIndent();
-            evalSb.newLine();
+            evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
+            evalSb.writeIndent().append("return m.NoResult, ").append(errVarName).newLine();
+            evalSb.endOneBlock();
         }
-        evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
-        evalSb.writeIndent().append("return m.NoResult, ").append(errVarName).newLine();
-        evalSb.endOneBlock();
 
         evalCalls.add(evalSb.toString());
         assert currentSb == evalSb;
