@@ -35,9 +35,9 @@ public class RuleRhsWriter extends VisitK {
 
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
-    private final RuleVars lhsVars;
-    private final TempVarCounters tempVarCounters;
-    private final int topLevelIndent;
+    protected final RuleVars lhsVars;
+    protected final TempVarCounters tempVarCounters;
+    protected final int topLevelIndent;
 
     private boolean newlineNext = false;
 

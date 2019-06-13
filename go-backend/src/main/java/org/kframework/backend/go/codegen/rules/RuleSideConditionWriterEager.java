@@ -6,26 +6,28 @@ import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
-import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KToken;
-import org.kframework.unparser.ToKast;
 
-public class RuleSideConditionWriter extends RuleRhsWriter {
+/**
+ * Old version of the `requires` writer. It lacks short-circuited execution of && and ||,
+ * it computes everything every time.
+ */
+public class RuleSideConditionWriterEager extends RuleRhsWriter {
 
     private enum ExpressionType {BOOLEAN, K}
 
     private ExpressionType expectedExprType = ExpressionType.BOOLEAN;
     private int depthFromFuncIsTrue = -1;
 
-    public RuleSideConditionWriter(DefinitionData data,
-                                   GoNameProvider nameProvider,
-                                   RuleVars lhsVars,
-                                   TempVarCounters tempVarCounters,
-                                   int tabsIndent) {
+    public RuleSideConditionWriterEager(DefinitionData data,
+                                        GoNameProvider nameProvider,
+                                        RuleVars lhsVars,
+                                        TempVarCounters tempVarCounters,
+                                        int tabsIndent) {
         super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
     }
 
@@ -75,86 +77,34 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
                 } else if (PrecomputePredicates.isTrueToken(arg1)) {
                     // true && ...
                     // comment everything other than the second argument
-                    appendKTokenComment((KToken) arg1);
-                    currentSb.append("/* && */ ");
+                    appendKTokenComment((KToken)arg1);
+                    currentSb.append("/* && */").newLine().writeIndent();
                     apply(arg2);
                 } else if (PrecomputePredicates.isTrueToken(arg2)) {
                     // ... && true
                     // comment everything other than the first argument
                     apply(arg1);
                     currentSb.append(" /* && */ ");
-                    appendKTokenComment((KToken) arg2);
+                    appendKTokenComment((KToken)arg2);
                 } else {
-                    // we trick all nodes below to output to the eval call instead of the return by swapping the string builder
-                    GoStringBuilder evalSb = new GoStringBuilder(topLevelIndent, 0);
-                    GoStringBuilder backupSb = currentSb;
-                    currentSb = evalSb;
-
-                    // get arg1 evaluation first
-                    String andVarName = "evalAnd" + tempVarCounters.consumeEvalVarIndex();
-                    evalSb.appendIndentedLine("var ", andVarName, " bool // ", ToKast.apply(k));
-                    evalSb.writeIndent().append(andVarName).append(" = ");
+                    // output && with both arguments
+                    currentSb.append("(");
                     apply(arg1);
-                    evalSb.newLine();
-                    evalSb.writeIndent().append("if ").append(andVarName).beginBlock();
-
-                    // all evaluations for arg2 have happen in this block,
-                    // to avoid executing any of them if arg1 is false
-                    RuleSideConditionWriter arg2Writer = new RuleSideConditionWriter(data, nameProvider,
-                            lhsVars, tempVarCounters,
-                            evalSb.getCurrentIndent());
-                    arg2Writer.apply(arg2);
-
-                    arg2Writer.writeEvalCalls(evalSb);
-                    evalSb.writeIndent().append(andVarName).append(" = ");
-                    arg2Writer.writeReturnValue(evalSb);
-                    evalSb.newLine();
-                    evalSb.endOneBlock();
-
-                    assert currentSb == evalSb;
-                    currentSb = backupSb; // restore
-
-                    evalCalls.add(evalSb.toString()); // eval call
-                    currentSb.append(andVarName); // this is the actual result, we output the name of the variable
+                    //currentSb.append(") && (");
+                    currentSb.append(") &&").newLine().writeIndent().append("(");
+                    apply(arg2);
+                    currentSb.append(")");
                 }
                 return;
             case "BOOL.or":
             case "BOOL.orElse":
                 assert k.klist().items().size() == 2;
 
-                // we trick all nodes below to output to the eval call instead of the return by swapping the string builder
-                GoStringBuilder evalSb = new GoStringBuilder(topLevelIndent, 0);
-                GoStringBuilder backupSb = currentSb;
-                currentSb = evalSb;
-
-                String orVarName = "evalOr" + tempVarCounters.consumeEvalVarIndex();
-                evalSb.appendIndentedLine("var ", orVarName, " bool // ", ToKast.apply(k));
-
-                // get arg1 evaluation first
-                evalSb.writeIndent().append(orVarName).append(" = ");
+                currentSb.append("(");
                 apply(k.klist().items().get(0));
-                evalSb.newLine();
-                evalSb.writeIndent().append("if !").append(orVarName).beginBlock();
-
-                // all evaluations for arg2 have happen in this block,
-                // to avoid executing any of them if arg1 is true
-                RuleSideConditionWriter arg2Writer = new RuleSideConditionWriter(data, nameProvider,
-                        lhsVars, tempVarCounters,
-                        evalSb.getCurrentIndent());
-                arg2Writer.apply(k.klist().items().get(1));
-
-                arg2Writer.writeEvalCalls(evalSb);
-                evalSb.writeIndent().append(orVarName).append(" = ");
-                arg2Writer.writeReturnValue(evalSb);
-                evalSb.newLine();
-                evalSb.endOneBlock();
-
-                // restore
-                assert currentSb == evalSb;
-                currentSb = backupSb;
-
-                evalCalls.add(evalSb.toString()); // eval call
-                currentSb.append(orVarName); // this is the actual result, we output the name of the variable
+                currentSb.append(") || (");
+                apply(k.klist().items().get(1));
+                currentSb.append(")");
                 return;
             case "BOOL.not":
                 assert k.klist().items().size() == 1;

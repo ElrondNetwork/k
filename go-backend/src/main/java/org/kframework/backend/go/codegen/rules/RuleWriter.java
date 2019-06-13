@@ -25,6 +25,7 @@ import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.VisitK;
+import org.kframework.unparser.ToKast;
 import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.HashSet;
@@ -106,16 +107,16 @@ public class RuleWriter {
             // output requires
             boolean requiresContainsIf = false;
             if (!requires.equals(BooleanUtils.TRUE)) {
-                sb.appendIndentedLine("// REQUIRES");
+                sb.appendIndentedLine("// REQUIRES ", ToKast.apply(requires));
                 RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
                         accumLhsVars.vars(), tempVarCounters,
-                        sb.getCurrentIndent(), "if ".length());
+                        sb.getCurrentIndent());
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
                 sb.writeIndent().append("if ");
-                requiresContainsIf = true;
                 sideCondVisitor.writeReturnValue(sb);
                 sb.beginBlock();
+                requiresContainsIf = true;
             } else if (requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
                 // just a comment, so we know what happened
                 sb.appendIndentedLine("// REQUIRES precomputed " + requires.att().get(PrecomputePredicates.COMMENT_KEY));
