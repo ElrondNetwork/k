@@ -27,10 +27,21 @@ type tracePrettyDebug struct {
 	interpreter *Interpreter
 }
 
+func directoryExists(dirName string) bool {
+	_, err := os.Stat(dirName)
+	return !os.IsNotExist(err)
+}
+
 func (t *tracePrettyDebug) initialize() {
 	formattedNow := time.Now().Format("20060102150405")
-	t.dirName = "trace_" + formattedNow
+	dirNameBase := "trace_" + formattedNow
+	t.dirName = dirNameBase
 	var err error
+	retry := 0
+	for directoryExists(t.dirName) && retry < 5 {
+		retry++
+		t.dirName = fmt.Sprintf(dirNameBase+"-%d", retry)
+	}
 	err = os.Mkdir(t.dirName, os.ModePerm)
 	if err != nil {
 		fmt.Println("Error while creating trace directory:" + err.Error())
