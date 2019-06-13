@@ -167,10 +167,7 @@ func (stringHooksType) ord(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, inter
 	}
 	asBytes := []byte(str.Value)
 	if len(asBytes) == 0 {
-		// TODO: HACK!!!!
-		// correct implementation should throw invalidArgsResult()
-		// fix after implementing lazy evaluation of && in 'requires' part of rule
-		return m.IntZero, nil
+		return invalidArgsResult()
 	}
 	return m.NewIntFromByte(asBytes[0]), nil
 }
