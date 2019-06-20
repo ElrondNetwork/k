@@ -1,13 +1,14 @@
 // Copyright (c) 2018-2019 K Team. All Rights Reserved.
 package org.kframework.unparser;
 
-import com.google.inject.Inject;
 import com.davekoelle.AlphanumComparator;
+import com.google.inject.Inject;
 import org.kframework.attributes.Att;
 import org.kframework.builtin.Sorts;
 import org.kframework.compile.ExpandMacros;
 import org.kframework.definition.Definition;
 import org.kframework.definition.Module;
+import org.kframework.kompile.CompiledDefinition;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.Assoc;
 import org.kframework.kore.K;
@@ -16,9 +17,9 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.TransformK;
 import org.kframework.main.GlobalOptions;
-import org.kframework.parser.ProductionReference;
 import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.parser.concrete2kore.ParseInModule;
+import org.kframework.parser.ProductionReference;
 import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
@@ -103,22 +104,49 @@ public class KPrint {
     }
 
     public byte[] prettyPrint(Definition def, Module module, K orig, ColorSetting colorize) {
-        K result = abstractTerm(module, orig);
-        switch (options.output) {
+        return prettyPrint(def, module, orig, colorize, options.output);
+    }
+
+    public byte[] prettyPrint(CompiledDefinition def, Module module, K orig) {
+        return prettyPrint(def, module, orig, options.color(tty.stdout, files.getEnv()), options.output);
+    }
+
+    public byte[] prettyPrint(CompiledDefinition def, Module module, K orig, ColorSetting colorize, OutputModes outputMode) {
+        return prettyPrint(def.kompiledDefinition, module, orig, colorize, outputMode);
+    }
+
+    public byte[] prettyPrint(Definition def, Module module, K orig, ColorSetting colorize, OutputModes outputMode) {
+        switch (outputMode) {
             case KAST:
             case NONE:
             case BINARY:
             case JSON:
-                return serialize(result, options.output);
-            case PRETTY: {
-                Module unparsingModule = RuleGrammarGenerator.getCombinedGrammar(module, false).getExtensionModule();
-                return (unparseTerm(result, unparsingModule, colorize) + "\n").getBytes();
-            } case PROGRAM: {
+            case PRETTY:
+                return prettyPrint(module, orig, colorize, outputMode);
+            case PROGRAM: {
+                K result = abstractTerm(module, orig);
                 RuleGrammarGenerator gen = new RuleGrammarGenerator(def);
                 Module unparsingModule = RuleGrammarGenerator.getCombinedGrammar(gen.getProgramsGrammar(module), false).getParsingModule();
                 return (unparseTerm(result, unparsingModule, colorize) + "\n").getBytes();
             } default:
-                throw KEMException.criticalError("Unsupported output mode: " + options.output);
+                throw KEMException.criticalError("Unsupported output mode without a CompiledDefinition: " + outputMode);
+        }
+    }
+
+    public byte[] prettyPrint(Module module, K orig, ColorSetting colorize, OutputModes outputMode) {
+        K result = abstractTerm(module, orig);
+        switch (outputMode) {
+            case KAST:
+            case NONE:
+            case BINARY:
+            case JSON:
+            case LATEX:
+                return serialize(result, outputMode);
+            case PRETTY: {
+                Module unparsingModule = RuleGrammarGenerator.getCombinedGrammar(module, false).getExtensionModule();
+                return (unparseTerm(result, unparsingModule, colorize) + "\n").getBytes();
+            } default:
+                throw KEMException.criticalError("Unsupported output mode without a Definition: " + outputMode);
         }
     }
 
@@ -136,6 +164,8 @@ public class KPrint {
                 return ToBinary.apply(term);
             case JSON:
                 return ToJson.apply(term);
+            case LATEX:
+                return ToLatex.apply(term);
             default:
                 throw KEMException.criticalError("Unsupported serialization mode: " + outputMode);
         }
@@ -150,15 +180,16 @@ public class KPrint {
     }
 
     private String unparseInternal(Module mod, K input, ColorSetting colorize) {
-        ExpandMacros expandMacros = new ExpandMacros(mod, files, kompileOptions, true);
+        ExpandMacros expandMacros = ExpandMacros.forNonSentences(mod, files, kompileOptions, true);
         return Formatter.format(
                 new AddBrackets(mod).addBrackets((ProductionReference) ParseInModule.disambiguateForUnparse(mod, KOREToTreeNodes.apply(KOREToTreeNodes.up(mod, expandMacros.expand(input)), mod))), options.color(tty.stdout, files.getEnv()));
     }
 
     public K abstractTerm(Module mod, K term) {
-        K collectionsSorted = options.noSortCollections ? term              : sortCollections(mod, term);
-        K alphaRenamed      = options.noAlphaRenaming   ? collectionsSorted : alphaRename(collectionsSorted);
-        K squashedTerm      = squashTerms(mod, alphaRenamed);
+        K collectionsSorted = options.noSortCollections    ? term              : sortCollections(mod, term);
+        K alphaRenamed      = options.noAlphaRenaming      ? collectionsSorted : alphaRename(collectionsSorted);
+        K origNames         = options.restoreOriginalNames ? restoreOriginalNameIfPresent(alphaRenamed) : alphaRenamed;
+        K squashedTerm      = squashTerms(mod, origNames);
         K flattenedTerm     = flattenTerms(mod, squashedTerm);
 
         return flattenedTerm;
@@ -204,6 +235,18 @@ public class KPrint {
         }.apply(input);
     }
 
+    private K restoreOriginalNameIfPresent(K input) {
+        return new TransformK() {
+            @Override
+            public K apply(KVariable k) {
+                if (k.att().contains("originalName")) {
+                    return KVariable(k.att().get("originalName"), k.att());
+                }
+                return k;
+            }
+        }.apply(input);
+    }
+
     private K squashTerms(Module mod, K input) {
         return new TransformK() {
             @Override
@@ -223,7 +266,7 @@ public class KPrint {
         if (! termSort.isEmpty()) {
             finalSort = termSort.get();
         }
-        return KToken(kapp.klabel().name(), finalSort);
+        return KApply(kapp.klabel(), KToken(kapp.klabel().name(), finalSort));
     }
 
     private K tokenizeTerm(Module mod, KApply kapp) {
@@ -234,7 +277,7 @@ public class KPrint {
         if (! termSort.isEmpty()) {
             finalSort = termSort.get();
         }
-        return KToken(tokenizedTerm, finalSort);
+        return KApply(kapp.klabel(), KToken(tokenizedTerm, finalSort));
     }
 
     private static K toKASTTerm(Module mod, KApply kapp) {
@@ -251,9 +294,14 @@ public class KPrint {
         return new TransformK() {
             @Override
             public K apply(KApply orig) {
+                K newK = super.apply(orig);
+                if (! (newK instanceof KApply)) {
+                    return newK;
+                }
+                KApply kapp = (KApply) newK;
                 String name = orig.klabel().name();
-                return options.flattenedKLabels.contains(name) ? flattenTerm(mod, orig)
-                     : super.apply(orig) ;
+                return options.flattenedKLabels.contains(name) ? flattenTerm(mod, kapp)
+                     : kapp ;
             }
         }.apply(input);
     }

@@ -16,6 +16,7 @@ import org.kframework.definition.Rule;
 import org.kframework.definition.Sentence;
 import org.kframework.definition.SyntaxSort;
 import org.kframework.kil.Attribute;
+import org.kframework.kil.loader.Constants;
 import org.kframework.kore.*;
 import org.kframework.utils.StringUtil;
 import org.kframework.utils.errorsystem.KEMException;
@@ -119,7 +120,9 @@ public class GenerateSentencesFromConfigDecl {
                             Sort sort = Sort(getSortOfCell(cellName));
                             Option<Set<Production>> initializerProduction = m.productionsFor().get(KLabel(getInitLabel(sort)));
                             if (initializerProduction.isDefined()) {
-                                Set<Production> realProds = stream(initializerProduction.get()).filter(p -> !p.att().contains("recordPrd", Production.class)).collect(Collections.toSet());
+                                Set<Production> realProds = stream(initializerProduction.get())
+                                        .filter(p -> !p.att().contains(Constants.RECORD_PRD, Production.class))
+                                        .collect(Collections.toSet());
                                 if (realProds.size() == 1) { // should be only a single initializer
                                     if (realProds.head().items().size() == 1) {
                                         // XCell ::= "initXCell"
@@ -214,22 +217,6 @@ public class GenerateSentencesFromConfigDecl {
         }
     }
 
-    private static KLabel getProjectLbl(Sort sort, Module m) {
-        KLabel lbl;
-        lbl = KLabel("project:" + sort.toString());
-        return lbl;
-    }
-
-    private static Set<Sentence> genProjection(Sort sort, Module m) {
-        KLabel lbl = getProjectLbl(sort, m);
-        KVariable var = KVariable("K", Att.empty().add(Sort.class, sort));
-        Rule r = Rule(KRewrite(KApply(lbl, var), var), BooleanUtils.TRUE, BooleanUtils.TRUE, Att().add("projection"));
-        if (m.definedKLabels().contains(lbl)) {
-            return Set(r);
-        }
-        return Set(Production(lbl, sort, Seq(Terminal(lbl.name()), Terminal("("), NonTerminal(Sorts.K()), Terminal(")")), Att().add("function").add("projection")), r);
-    }
-
     /**
      * Returns the body of an initializer for a leaf cell: replaces any configuration variables
      * with map lookups in the initialization map.
@@ -258,8 +245,7 @@ public class GenerateSentencesFromConfigDecl {
                     if (sort == null || sort.equals(Sorts.K())) {
                         return KApply(KLabel("Map:lookup"), INIT, k);
                     } else {
-                        h.sentences = (Set<Sentence>) h.sentences.$bar(genProjection(sort, m));
-                        return KApply(getProjectLbl(sort, m), KApply(KLabel("Map:lookup"), INIT, k));
+                        return KApply(GenerateSortProjections.getProjectLbl(sort, m), KApply(KLabel("Map:lookup"), INIT, k));
                     }
                 }
                 return k;
@@ -323,18 +309,21 @@ public class GenerateSentencesFromConfigDecl {
 
         String klabel = "<" + cellName + ">";
         Att att = cellProperties.addAll(configAtt);
+
         StringBuilder format = new StringBuilder();
-        format.append("%1%i");
-        int i;
-        for (i = 2; i < 2 + childSorts.size(); i++) {
-            format.append("%n%").append(i);
+        if (!cellProperties.contains("format")) {
+            format.append("%1%i");
+            int i;
+            for (i = 2; i < 2 + childSorts.size(); i++) {
+                format.append("%n%").append(i);
+            }
+            format.append("%d%n%").append(i);
+            att = att.add("format", format.toString());
         }
-        format.append("%d%n%").append(i);
-        att = att.add("format", format.toString());
+
         // syntax Cell ::= "<cell>" Children... "</cell>" [cell, cellProperties, configDeclAttributes]
         if(!m.definedKLabels().contains(KLabel(klabel)) && multiplicity != Multiplicity.OPTIONAL) {
-            Production cellProduction = Production(KLabel(klabel), sort, immutable(items),
-                    att);
+            Production cellProduction = Production(KLabel(klabel), sort, immutable(items), att);
             sentences.add(cellProduction);
         }
 
@@ -344,11 +333,18 @@ public class GenerateSentencesFromConfigDecl {
         String initLabel = getInitLabel(sort);
         Sentence initializer;
         Rule initializerRule;
+        Sort initSort = sort;
+
+        if (multiplicity == Multiplicity.STAR) {
+            String type = cellProperties.<String>getOptional("type").orElse("Bag");
+            initSort = Sort(sortName + type);
+        }
+
         if (hasConfigurationOrRegularVariable || isStream) {
-            initializer = Production(KLabel(initLabel), sort, Seq(Terminal(initLabel), Terminal("("), NonTerminal(Sorts.Map()), Terminal(")")), Att().add("initializer").add("function").add("noThread"));
+            initializer = Production(KLabel(initLabel), initSort, Seq(Terminal(initLabel), Terminal("("), NonTerminal(Sorts.Map()), Terminal(")")), Att().add("initializer").add("function").add("noThread"));
             initializerRule = Rule(KRewrite(KApply(KLabel(initLabel), INIT), IncompleteCellUtils.make(KLabel("<" + cellName + ">"), false, childInitializer, false)), BooleanUtils.TRUE, ensures == null ? BooleanUtils.TRUE : ensures, Att().add("initializer"));
         } else {
-            initializer = Production(KLabel(initLabel), sort, Seq(Terminal(initLabel)), Att().add("initializer").add("function").add("noThread"));
+            initializer = Production(KLabel(initLabel), initSort, Seq(Terminal(initLabel)), Att().add("initializer").add("function").add("noThread"));
             initializerRule = Rule(KRewrite(KApply(KLabel(initLabel)), IncompleteCellUtils.make(KLabel("<" + cellName + ">"), false, childInitializer, false)), BooleanUtils.TRUE, ensures == null ? BooleanUtils.TRUE : ensures, Att().add("initializer"));
         }
         if (!m.definedKLabels().contains(KLabel(initLabel))) {
@@ -450,13 +446,13 @@ public class GenerateSentencesFromConfigDecl {
                         NonTerminal(childSorts.get(0)),
                         Terminal(","),
                         NonTerminal(sort),
-                        Terminal(")")), Att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY));
+                        Terminal(")")), Att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY).add("format", "%5"));
             } else {
                 bagElement = Production(KLabel(bagSort.name() + "Item"), bagSort, Seq(
                         Terminal(bagSort.name() + "Item"),
                         Terminal("("),
                         NonTerminal(sort),
-                        Terminal(")")), Att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY));
+                        Terminal(")")), Att().add(Attribute.HOOK_KEY, elementHook).add(Attribute.FUNCTION_KEY).add("format", "%3"));
             }
             Sentence bagUnit = Production(KLabel("." + bagSort.name()), bagSort, Seq(Terminal("." + bagSort.name())), Att().add(Attribute.HOOK_KEY, unitHook).add(Attribute.FUNCTION_KEY));
             Sentence bag = Production(KLabel("_" + bagSort + "_"), bagSort, Seq(NonTerminal(bagSort), NonTerminal(bagSort)),

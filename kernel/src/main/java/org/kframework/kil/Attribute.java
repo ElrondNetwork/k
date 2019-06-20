@@ -25,6 +25,8 @@ public class Attribute<T> extends ASTNode {
     public static final String PROJECTION_KEY = "proj";
     public static final String UNIT_KEY = "unit";
     public static final String PREDICATE_KEY = "predicate";
+    public static final String KORE_KEY = "kore";
+    public static final String ML_BINDER_KEY = "mlBinder";
     public static final String ANYWHERE_KEY = Constants.ANYWHERE;
     public static final String PATTERN_KEY = "pattern";
     public static final String PATTERN_FOLDING_KEY = "pattern-folding";
@@ -34,10 +36,12 @@ public class Attribute<T> extends ASTNode {
     public static final String LEMMA_KEY = "lemma";
     public static final String TRUSTED_KEY = "trusted";
     public static final String MATCHING_KEY = "matching";
+    public static final String INJECTIVE_KEY = "injective";
 
     public static final String BITWIDTH_KEY = "bitwidth";
     public static final String EXPONENT_KEY = "exponent";
     public static final String SIGNIFICAND_KEY = "significand";
+    public static final String SMTHOOK_KEY = "smt-hook";
     public static final String SMTLIB_KEY = "smtlib";
     public static final String SMT_LEMMA_KEY = "smt-lemma";
     public static final String SMT_PRELUDE_KEY = "smt-prelude";

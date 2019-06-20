@@ -6,7 +6,12 @@ import org.kframework.parser.kore.implementation.DefaultBuilders
 import org.kframework.utils.StringUtil
 
 /** Parsing error exception. */
-case class ParseError(msg: String) extends Exception(msg) // ParseError.msg eq Exception.detailMessage, i.e., msg() == getMessage()
+case class ParseError(msg: String) extends Exception(msg) { // ParseError.msg eq Exception.detailMessage, i.e., msg() == getMessage()
+  def this(message: String, cause: Throwable) {
+    this(message)
+    initCause(cause)
+  }
+}
 
 /** A parser for [[kore.Pattern]].
   *
@@ -47,10 +52,16 @@ class TextToKore(b: Builders = DefaultBuilders) {
     parse(io.Source.fromFile(file))
   }
 
-  /** Parses the file and returns [[kore.Definition]]. */
+  /** Parses the file and returns [[kore.Pattern]]. */
   @throws(classOf[ParseError])
   def parsePattern(file: java.io.File): Pattern = {
     parsePattern(io.Source.fromFile(file))
+  }
+
+  /** Parses the file and returns [[kore.Pattern]]. */
+  @throws(classOf[ParseError])
+  def parsePattern(str: String): Pattern = {
+    parsePattern(io.Source.fromString(str))
   }
 
   /** Parses from the stream and returns [[kore.Definition]]. */
@@ -60,9 +71,9 @@ class TextToKore(b: Builders = DefaultBuilders) {
       scanner.init(src)
       parseDefinition()
     } catch {
-      case _: java.io.EOFException => throw ParseError("ERROR: Unexpected end of file while parsing")
+      case e: java.io.EOFException => throw new ParseError("ERROR: Unexpected end of file while parsing", e)
       case exc: ParseError => throw exc
-      case exc: Throwable => throw ParseError("ERROR: Unexpected error while parsing: " + exc.getMessage) // shouldn't be reachable
+      case exc: Throwable => throw new ParseError("ERROR: Unexpected error while parsing: " + exc.getMessage, exc) // shouldn't be reachable
     } finally {
       scanner.close()
     }
@@ -75,9 +86,9 @@ class TextToKore(b: Builders = DefaultBuilders) {
       scanner.init(src)
       parsePattern()
     } catch {
-      case _: java.io.EOFException => throw ParseError("ERROR: Unexpected end of file while parsing")
+      case e: java.io.EOFException => throw new ParseError("ERROR: Unexpected end of file while parsing", e)
       case exc: ParseError => throw exc
-      case exc: Throwable => throw ParseError("ERROR: Unexpected error while parsing: " + exc.getMessage) // shouldn't be reachable
+      case exc: Throwable => throw new ParseError("ERROR: Unexpected error while parsing: " + exc.getMessage, exc) // shouldn't be reachable
     } finally {
       scanner.close()
     }
@@ -147,7 +158,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
   private def parseModule(): Module = {
     consumeWithLeadingWhitespaces("module")
     val name = parseId(parsingLevel = objt)
-    val decls = parseDeclarations(Seq())
+    val decls = parseDeclarations(Seq()).reverse
     consumeWithLeadingWhitespaces("endmodule")
     val att = parseAttributes()
     b.Module(name, decls, att)
@@ -189,7 +200,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
            val nameStr = parseId()
            val att = parseAttributes()
            val decl = b.Import(nameStr, att)
-           parseDeclarations(decls :+ decl)
+           parseDeclarations(decl +: decls)
         case ('s', 'o') => // sort declaration
           consume("rt")
           val ctr = parseId(parsingLevel = objt)
@@ -198,7 +209,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
           consumeWithLeadingWhitespaces("}")
           val att = parseAttributes()
           val decl = b.SortDeclaration(params, b.CompoundSort(ctr, params), att)
-          parseDeclarations(decls :+ decl)
+          parseDeclarations(decl +: decls)
         case ('s', 'y') => // symbol declaration
           consume("mbol")
           val ctr = parseId() // previousParsingLevel is set here
@@ -213,7 +224,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
           val returnSort = parseSort(parsingLevel = previousParsingLevel)
           val att = parseAttributes()
           val decl = b.SymbolDeclaration(symbol, argSorts, returnSort, att)
-          parseDeclarations(decls :+ decl)
+          parseDeclarations(decl +: decls)
         case ('h', 'o') => // hook-sort or hook-symbol declaration
           consume("oked-")
           val c1 = scanner.next()
@@ -227,7 +238,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
               consumeWithLeadingWhitespaces("}")
               val att = parseAttributes()
               val decl = b.HookSortDeclaration(params, b.CompoundSort(ctr, params), att)
-              parseDeclarations(decls :+ decl)
+              parseDeclarations(decl +: decls)
             case ('s', 'y') => // hook-symbol
               consume("mbol")
               val ctr = parseId() // previousParsingLevel is set here
@@ -242,7 +253,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
               val returnSort = parseSort(parsingLevel = previousParsingLevel)
               val att = parseAttributes()
               val decl = b.HookSymbolDeclaration(symbol, argSorts, returnSort, att)
-              parseDeclarations(decls :+ decl)
+              parseDeclarations(decl +: decls)
             case (e1, e2) => // error
               throw error("sort, symbol", e1)
           }
@@ -264,7 +275,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
           val rightPattern = parsePattern()
           val att = parseAttributes()
           val decl = b.AliasDeclaration(alias, argSorts, returnSort, leftPattern, rightPattern, att)
-          parseDeclarations(decls :+ decl)
+          parseDeclarations(decl +: decls)
         case ('a', 'x') => // axiom declaration
           consume("iom")
           consumeWithLeadingWhitespaces("{")
@@ -273,7 +284,7 @@ class TextToKore(b: Builders = DefaultBuilders) {
           val pattern = parsePattern()
           val att = parseAttributes()
           val decl = b.AxiomDeclaration(params, pattern, att)
-          parseDeclarations(decls :+ decl)
+          parseDeclarations(decl +: decls)
         case (e1, e2) =>
           throw error("sort, symbol, alias, axiom", e1)
       }

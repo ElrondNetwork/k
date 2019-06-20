@@ -30,12 +30,13 @@ import org.kframework.builtin.Sorts;
 import org.kframework.kil.Attribute;
 import org.kframework.kore.KORE;
 import org.kframework.krun.KRunOptions;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Formatter;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -239,17 +240,18 @@ public class    KILtoSMTLib extends CopyOnWriteTransformer {
      * fresh variables. If the flag is false and untranslatable term is encountered, an exception will be thrown instead.
      */
     private final boolean allowNewVars;
-    private final HashSet<Variable> variables;
-    private final HashMap<Term, Variable> termAbstractionMap;
-    private final HashMap<UninterpretedToken, Integer> tokenEncoding;
+    //All sets/maps are LinkedHashXXX, to avoid non-determinism when iterated and produce consistent logs.
+    private final LinkedHashSet<Variable> variables;
+    private final LinkedHashMap<Term, Variable> termAbstractionMap;
+    private final LinkedHashMap<UninterpretedToken, Integer> tokenEncoding;
 
     private KILtoSMTLib(boolean allowNewVars, GlobalContext global) {
-        this(allowNewVars, global.getDefinition(), global.krunOptions, global, new HashMap<>());
+        this(allowNewVars, global.getDefinition(), global.krunOptions, global, new LinkedHashMap<>());
     }
 
     private KILtoSMTLib(boolean allowNewVars, Definition definition, KRunOptions krunOptions,
                         GlobalContext global) {
-        this(allowNewVars, definition, krunOptions, global, new HashMap<>());
+        this(allowNewVars, definition, krunOptions, global, new LinkedHashMap<>());
     }
 
     /**
@@ -258,14 +260,14 @@ public class    KILtoSMTLib extends CopyOnWriteTransformer {
      *                     substituted. Also, if true, substitutions will be translated into Z3 as equalities.
      */
     private KILtoSMTLib(boolean allowNewVars, Definition definition, KRunOptions krunOptions,
-                        GlobalContext global, HashMap<Term, Variable> termAbstractionMap) {
+                        GlobalContext global, LinkedHashMap<Term, Variable> termAbstractionMap) {
         this.allowNewVars = allowNewVars;
         this.definition = definition;
         this.krunOptions = krunOptions;
         this.globalContext = global;
         this.termAbstractionMap = termAbstractionMap;
-        variables = new HashSet<>();
-        tokenEncoding = new HashMap<>();
+        variables = new LinkedHashSet<>();
+        tokenEncoding = new LinkedHashMap<>();
     }
 
     private SMTLibTerm translate(JavaSymbolicObject object) {
@@ -278,7 +280,7 @@ public class    KILtoSMTLib extends CopyOnWriteTransformer {
     }
 
     private StringBuilder appendSortAndFunctionDeclarations(StringBuilder sb, Set<Variable> variables) {
-        Set<Sort> sorts = new HashSet<>();
+        Set<Sort> sorts = new LinkedHashSet<>();
         List<KLabelConstant> functions = new ArrayList<>();
         for (KLabelConstant kLabel : definition.kLabels()) {
             String smtlib = kLabel.getAttr(Attribute.SMTLIB_KEY);
@@ -422,7 +424,10 @@ public class    KILtoSMTLib extends CopyOnWriteTransformer {
      */
     @Override
     public SMTLibTerm transform(ConjunctiveFormula constraint) {
-        assert constraint.disjunctions().isEmpty() : "disjunctions are not supported by SMT translation";
+        if (!constraint.disjunctions().isEmpty()) {
+            throw KEMException.criticalError(
+                    "disjunctions are not supported by SMT translation for:\n" + constraint.toStringMultiline());
+        }
         Set<Equality> equalities = Sets.newLinkedHashSet(constraint.equalities());
         if (!allowNewVars) {
             constraint.substitution().entrySet().stream()
@@ -479,7 +484,7 @@ public class    KILtoSMTLib extends CopyOnWriteTransformer {
                 variable = Variable.getAnonVariable(term.sort());
                 termAbstractionMap.put(term, variable);
                 if (globalContext.javaExecutionOptions.debugZ3Queries) {
-                    System.err.format("\t%s ::= %s\n", variable.longName(), term);
+                    globalContext.log().format("\t%s ::= %s\n", variable.longName(), term);
                 }
             } else {
                 throw e;

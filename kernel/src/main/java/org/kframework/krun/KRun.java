@@ -17,8 +17,7 @@ import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.krun.modes.ExecutionMode;
 import org.kframework.main.Main;
-import org.kframework.parser.binary.BinaryParser;
-import org.kframework.parser.kore.KoreParser;
+import org.kframework.parser.KRead;
 import org.kframework.rewriter.Rewriter;
 import org.kframework.unparser.KPrint;
 import org.kframework.utils.StringUtil;
@@ -174,7 +173,7 @@ public class KRun {
                 output.put(KToken("$IO", Sorts.KConfigVar()), KToken("\"off\"", Sorts.String()));
             }
         }
-        if (options.global.debug) {
+        if (options.global.debug()) {
             // on the critical path, so don't perform this check because it's slow unless we're debugging.
             checkConfigVars(output.keySet(), compiledDef);
         }
@@ -239,10 +238,6 @@ public class KRun {
         }
 
         byte[] kast = output.stdout != null ? output.stdout : new byte[0];
-        if (BinaryParser.isBinaryKast(kast)) {
-            return BinaryParser.parse(kast);
-        } else {
-            return KoreParser.parse(new String(kast), source);
-        }
+        return KRead.autoDeserialize(kast, source);
     }
 }

@@ -5,6 +5,7 @@ import org.kframework.attributes.Att;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
 import org.kframework.builtin.BooleanUtils;
+import org.kframework.builtin.Sorts;
 import org.kframework.definition.Context;
 import org.kframework.definition.Module;
 import org.kframework.definition.Production;
@@ -14,12 +15,16 @@ import org.kframework.kil.Attribute;
 import org.kframework.kompile.KompileOptions;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
+import org.kframework.kore.KAs;
 import org.kframework.kore.KLabel;
+import org.kframework.kore.KSequence;
 import org.kframework.kore.KToken;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.Sort;
 import org.kframework.kore.TransformK;
+import org.kframework.kore.VisitK;
 import org.kframework.main.GlobalOptions;
+import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
@@ -60,13 +65,27 @@ public class ExpandMacros {
     private final PrintWriter coverage;
     private final FileChannel channel;
     private final boolean reverse;
+    private final ResolveFunctionWithConfig transformer;
 
-    public ExpandMacros(Module mod, FileUtil files, KompileOptions kompileOptions, boolean reverse) {
+    public static ExpandMacros fromMainModule(Module mod, FileUtil files, KompileOptions kompileOptions, boolean reverse) {
+        return new ExpandMacros(mod, files, kompileOptions, reverse, true);
+    }
+
+    public static ExpandMacros forNonSentences(Module mod, FileUtil files, KompileOptions kompileOptions, boolean reverse) {
+        return new ExpandMacros(mod, files, kompileOptions, reverse, false);
+    }
+
+    private ExpandMacros(Module mod, FileUtil files, KompileOptions kompileOptions, boolean reverse, boolean sentences) {
+        this(sentences ? new ResolveFunctionWithConfig(mod, kompileOptions.isKore()) : null, mod, files, kompileOptions, reverse);
+    }
+
+    public ExpandMacros(ResolveFunctionWithConfig transformer, Module mod, FileUtil files, KompileOptions kompileOptions, boolean reverse) {
         this.mod = mod;
         this.reverse = reverse;
         this.cover = kompileOptions.coverage;
         files.resolveKompiled(".").mkdirs();
         macros = stream(mod.rules()).filter(r -> isMacro(r.att(), reverse)).sorted(Comparator.comparing(r -> r.att().contains("owise"))).collect(Collectors.groupingBy(r -> ((KApply)getLeft(r, reverse)).klabel()));
+        this.transformer = transformer;
         if (cover) {
             try {
                 FileOutputStream os = new FileOutputStream(files.resolveKompiled("coverage.txt"), true);
@@ -92,7 +111,37 @@ public class ExpandMacros {
         return att.contains("alias") || (!reverse && att.contains("macro"));
     }
 
+    private Set<KVariable> vars = new HashSet<>();
+
+    void resetVars() {
+        vars.clear();
+    }
+
+    void gatherVars(K term) {
+        new VisitK() {
+            @Override
+            public void apply(KVariable v) {
+                vars.add(v);
+                super.apply(v);
+            }
+        }.apply(term);
+    }
+
+    private int counter = 0;
+    KVariable newDotVariable(Att att) {
+        KVariable newLabel;
+        do {
+            newLabel = KVariable("_" + (counter++), att.add("anonymous"));
+        } while (vars.contains(newLabel));
+        vars.add(newLabel);
+        return newLabel;
+    }
+
     private Rule expand(Rule rule) {
+        resetVars();
+        gatherVars(rule.body());
+        gatherVars(rule.requires());
+        gatherVars(rule.ensures());
         return Rule(expand(rule.body()),
                 expand(rule.requires()),
                 expand(rule.ensures()),
@@ -100,6 +149,9 @@ public class ExpandMacros {
     }
 
     private Context expand(Context context) {
+        resetVars();
+        gatherVars(context.body());
+        gatherVars(context.requires());
         return Context(
                 expand(context.body()),
                 expand(context.requires()),
@@ -145,7 +197,12 @@ public class ExpandMacros {
                             return apply(new TransformK() {
                                 @Override
                                 public K apply(KVariable k) {
-                                    return subst.get(k);
+                                    K result = subst.get(k);
+                                    if (result == null) {
+                                      result = newDotVariable(k.att());
+                                      subst.put(k, result);
+                                    }
+                                    return result;
                                 }
                             }.apply(right));
                         }
@@ -166,9 +223,23 @@ public class ExpandMacros {
         }
     }
 
+    private boolean hasPolyAtt(Production prod, int idx) {
+      if (!prod.att().contains("poly")) {
+        return false;
+      }
+      List<Set<Integer>> poly = RuleGrammarGenerator.computePositions(prod);
+      for (Set<Integer> positions : poly) {
+        if (positions.contains(0) && positions.contains(idx)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+
     private Set<Sort> sort(K k, Rule r) {
         if (k instanceof KVariable) {
-            return Collections.singleton(k.att().get(Sort.class));
+            return Collections.singleton(k.att().getOptional(Sort.class).orElse(null));
         } else if (k instanceof KToken) {
             return Collections.singleton(((KToken)k).sort());
         } else if (k instanceof KApply) {
@@ -178,13 +249,24 @@ public class ExpandMacros {
            }
            Set<Production> prods = new HashSet<>(mutable(mod.productionsFor().apply(kapp.klabel())));
            prods.removeIf(p -> p.arity() != kapp.items().size());
+           Set<Sort> polySorts = new HashSet<>();
            for (int i = 0; i < kapp.items().size(); i++) {
               final int idx = i;
               Set<Sort> sorts = sort(kapp.items().get(idx), r);
-              prods.removeIf(p -> sorts.stream().noneMatch(s -> mod.subsorts().lessThanEq(s, p.nonterminal(idx).sort())));
+              if (prods.stream().anyMatch(p -> hasPolyAtt(p, idx))) {
+                  polySorts.addAll(sorts);
+              }
+              if (!sorts.contains(null)) {
+                  prods.removeIf(p -> !hasPolyAtt(p, idx) && sorts.stream().noneMatch(s -> mod.subsorts().lessThanEq(s, p.nonterminal(idx).sort())));
+              }
            }
            Set<Sort> candidates = prods.stream().map(Production::sort).collect(Collectors.toSet());
+           candidates.addAll(polySorts);
            return candidates;
+        } else if (k instanceof KSequence) {
+            return Collections.singleton(Sorts.K());
+        } else if (k instanceof KAs) {
+            return sort(((KAs)k).pattern(), r);
         } else {
             throw KEMException.compilerError("Cannot compute macros with sort check on terms that are not KApply, KToken, or KVariable.", r);
         }
@@ -197,7 +279,7 @@ public class ExpandMacros {
             } else {
                 if (pattern.att().contains(Sort.class)) {
                     Sort patternSort = pattern.att().get(Sort.class);
-                    if (sort(subject, r).stream().anyMatch(s -> mod.subsorts().lessThanEq(s, patternSort))) {
+                    if (sort(subject, r).stream().anyMatch(s -> s == null || mod.subsorts().lessThanEq(s, patternSort))) {
                         subst.put((KVariable)pattern, subject);
                         return true;
                     } else {
@@ -241,9 +323,9 @@ public class ExpandMacros {
 
     public Sentence expand(Sentence s) {
         if (s instanceof Rule && !s.att().contains("macro") && !s.att().contains("alias")) {
-            return expand((Rule) s);
+            return transformer.resolve(mod, expand((Rule) s));
         } else if (s instanceof Context) {
-            return expand((Context) s);
+            return transformer.resolve(mod, expand((Context) s));
         } else {
             return s;
         }

@@ -6,37 +6,27 @@ import org.kframework.utils.errorsystem.KEMException;
 import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.inject.RequestScoped;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
-import java.io.OutputStream;
+import java.nio.channels.OverlappingFileLockException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @RequestScoped
 public class BinaryLoader {
 
+    private static ReadWriteLock lock = new ReentrantReadWriteLock();
+
     private final KExceptionManager kem;
 
     @Inject
-    public BinaryLoader(
-            KExceptionManager kem) {
+    public BinaryLoader(KExceptionManager kem) {
         this.kem = kem;
-    }
-
-    public void save(File fileName, Object o) throws IOException {
-        File dir = fileName.getAbsoluteFile().getParentFile();
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw KEMException.criticalError("Could not create directory " + dir);
-        }
-        try (OutputStream out = new FileOutputStream(fileName)) {
-            save(out, o);
-        }
     }
 
     public void saveOrDie(File fileName, Object o) {
@@ -44,64 +34,82 @@ public class BinaryLoader {
         if (!dir.exists() && !dir.mkdirs()) {
             throw KEMException.criticalError("Could not create directory " + dir);
         }
-        try (OutputStream out = new FileOutputStream(fileName)) {
-            saveOrDie(out, o, fileName.getAbsolutePath());
+        try (FileOutputStream out = new FileOutputStream(fileName)) {
+            saveSynchronized(out, o);
         } catch (IOException e) {
-            throw KEMException.criticalError("Could not write to " + fileName, e);
+            throw KEMException.criticalError("Could not write to " + fileName.getAbsolutePath(), e);
+        } catch (InterruptedException e) {
+            throw KEMException.criticalError("Interrupted while locking to write " + fileName, e);
         }
     }
 
-    private void saveOrDie(OutputStream out, Object o, String fileName) {
+    /**
+     * Locks the file before writing, so that it cannot be read by another instance of K. If the file is currently in
+     * use, this method will block until lock can be acquired.
+     */
+    public void saveSynchronized(FileOutputStream out, Object o) throws IOException, InterruptedException {
+        //To protect from concurrent access from another thread
+        lock.writeLock().lockInterruptibly();
         try {
-            save(out, o);
-        } catch (IOException e) {
-            throw KEMException.criticalError("Could not write to " + fileName, e);
+            //To protect from concurrent access to same file from another process
+            out.getChannel().lock(); //Lock is released automatically when serializer is closed.
+            try (ObjectOutputStream serializer = new ObjectOutputStream(out)) { //already buffered
+                serializer.writeObject(o);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    public void saveOrDie(OutputStream out, Object o) {
-        saveOrDie(out, o, "output stream");
-    }
-
-    public void save(OutputStream out, Object o) throws IOException {
-        try(ObjectOutputStream serializer
-                = new ObjectOutputStream(new BufferedOutputStream(out))) {
-            serializer.writeObject(o);
+    public Object loadSynchronized(FileInputStream in)
+            throws IOException, ClassNotFoundException, InterruptedException {
+        //To protect from concurrent access from another thread
+        lock.readLock().lockInterruptibly();
+        try {
+            //To protect from concurrent access to same file from another process
+            //Lock is released automatically when serializer is closed.
+            try {
+                in.getChannel().lock(0L, Long.MAX_VALUE, true);
+            } catch (OverlappingFileLockException e) {
+                //We are in Nailgun mode. File lock is not needed.
+            }
+            try (ObjectInputStream deserializer = new ObjectInputStream(in)) { //already buffered
+                Object obj = deserializer.readObject();
+                return obj;
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     public <T> T load(Class<T> cls, File fileName) throws IOException, ClassNotFoundException {
-        return cls.cast(load(fileName));
+        try {
+            return cls.cast(load(fileName));
+        } catch (InterruptedException e) {
+            throw KEMException.criticalError("Interrupted while locking to read " + fileName, e);
+        }
     }
 
-    public <T> T load(Class<T> cls, InputStream in) throws IOException, ClassNotFoundException {
-        return cls.cast(load(in));
+    public <T> T load(Class<T> cls, FileInputStream in)
+            throws IOException, ClassNotFoundException, InterruptedException {
+        return cls.cast(loadSynchronized(in));
     }
 
     public <T> T loadOrDie(Class<T> cls, File fileName) {
-        try (InputStream in = new BufferedInputStream(new FileInputStream(fileName))) {
+        try (FileInputStream in = new FileInputStream(fileName)) {
             return loadOrDie(cls, in, fileName.getAbsolutePath());
         } catch (IOException e) {
             throw KEMException.criticalError("Could not read from " + fileName, e);
         }
     }
 
-    public Object load(InputStream in) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream deserializer
-                = new ObjectInputStream(in)) {
-            Object obj = deserializer.readObject();
-            return obj;
+    public Object load(File fileName) throws IOException, ClassNotFoundException, InterruptedException {
+        try (FileInputStream in = new FileInputStream(fileName)) {
+            return loadSynchronized(in);
         }
     }
 
-    public Object load(File fileName) throws IOException, ClassNotFoundException {
-        try (InputStream in = new BufferedInputStream(new FileInputStream(fileName))) {
-            return load(in);
-        }
-    }
-
-    public <T> T loadOrDie(Class<T> cls, InputStream in, String fileName) {
-
+    public <T> T loadOrDie(Class<T> cls, FileInputStream in, String fileName) {
         try {
             return load(cls, in);
         } catch (ClassNotFoundException e) {
@@ -111,6 +119,8 @@ public class BinaryLoader {
                     + "the latest version of the K tool. Please re-run kompile and try again.", e);
         } catch (IOException e) {
             throw KEMException.criticalError("Could not read from " + fileName, e);
+        } catch (InterruptedException e) {
+            throw KEMException.criticalError("Interrupted while locking to read " + fileName, e);
         }
     }
 }
