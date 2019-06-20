@@ -78,7 +78,15 @@ func (ioHooksType) parseInModule(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.So
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (ioHooksType) system(c m.K,lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (ioHooksType) system(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+	return m.NoResult, &hookNotImplementedError{}
+}
+
+func (ioHooksType) remove(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+	return m.NoResult, &hookNotImplementedError{}
+}
+
+func (ioHooksType) mkstemp(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 

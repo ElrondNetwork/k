@@ -123,7 +123,7 @@ public class DefinitionToGo {
         Function1<Module, Module> generatePredicates = new GenerateSortPredicateRules(false)::gen;
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
-        this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
+        this.expandMacros = ExpandMacros.fromMainModule(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
         this.exitCodePattern = def.exitCodePattern;

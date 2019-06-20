@@ -236,7 +236,7 @@ public class DefinitionToOcamlTempCopy implements Serializable {
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
         ModuleTransformer liftToKSequence = ModuleTransformer.fromSentenceTransformer(new LiftToKSequence()::lift, "lift K into KSequence");
-        this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
+        this.expandMacros = ExpandMacros.fromMainModule(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
         this.threadCellExists = containsThreadCell(def);

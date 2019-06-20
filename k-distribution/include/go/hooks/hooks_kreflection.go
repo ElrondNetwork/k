@@ -70,3 +70,7 @@ func (kreflectionHooksType) getenv(c m.K, lbl m.KLabel, sort m.Sort, config m.K,
 func (kreflectionHooksType) argv(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
+
+func (kreflectionHooksType) parseKAST(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+	return m.NoResult, &hookNotImplementedError{}
+}

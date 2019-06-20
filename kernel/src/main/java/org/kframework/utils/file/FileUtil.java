@@ -168,7 +168,7 @@ public class FileUtil {
     }
 
     public String getKompiledDirectoryName() {
-        return kompiledDir.get().getName();
+        return kompiledDir.getName();
     }
 
     public File resolveDefinitionDirectory(String file) {
