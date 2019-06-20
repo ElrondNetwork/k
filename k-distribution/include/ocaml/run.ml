@@ -55,7 +55,7 @@ let schedule_next_thread (module Def: Plugin.Definition) (step_function: k -> (k
             Some (config, Def.step, (threads, 0, last_resort))
           )
         )
-      | _ -> invalid_arg "mismatched constructor at top of split configuration"
+      | _ -> invalid_arg ("mismatched constructor at top of split configuration: " ^ (print_k config))
   )
 
 let rec take_steps (module Def: Plugin.Definition) (step_function: k -> (k * step_function)) (thread_pool: (k list * int * bool)) (config: k) (depth: int) (n: int) : k * int =
@@ -97,7 +97,7 @@ let rec strat_run (module Def: Plugin.Definition) (config: k) (depth: int) (n: i
 let run (config: k) (depth: int) : k * int =
   let module Def = (val Plugin.get () : Plugin.Definition) in
   let result = strat_run (module Def) config depth 0 in
-  Prelude.IO.flush_logs ();
+  Hooks.IO.flush_logs ();
   result
 
 let rec strat_run_no_thread_opt (module Def: Plugin.Definition) (config: k) (depth: int) (n: int) : k * int =
@@ -108,7 +108,7 @@ let rec strat_run_no_thread_opt (module Def: Plugin.Definition) (config: k) (dep
 let run_no_thread_opt (config: k) (depth: int) : k * int =
   let module Def = (val Plugin.get () : Plugin.Definition) in
   let result = strat_run_no_thread_opt (module Def) config depth 0 in
-  Prelude.IO.flush_logs ();
+  Hooks.IO.flush_logs ();
   result
 
 module Makeconfig =

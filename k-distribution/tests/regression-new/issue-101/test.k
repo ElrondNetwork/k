@@ -2,7 +2,8 @@
 module TEST
     imports DOMAINS
     imports STRATEGY
-    imports BASIC-STRATEGY
+    imports STRATEGY-ABSTRACT
+    imports RULE-TAG-SYNTAX
 
     configuration
       <TEST>
@@ -15,6 +16,6 @@ module TEST
 
     rule <s> ~ S => . ... </s>
     rule symbolicFoo => ?X:Foo
-    rule <k> foo => bar ... </k> [tag(F2B)]
-    rule <k> bar => foo ... </k> [tag(B2F)]
+    rule <k> foo => bar ... </k> [tag(f2b)]
+    rule <k> bar => foo ... </k> [tag(b2f)]
 endmodule

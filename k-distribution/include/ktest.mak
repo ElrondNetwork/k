@@ -8,6 +8,16 @@ KRUN=$(abspath $(MAKEFILE_PATH)/../bin/krun)
 KDEP=$(abspath $(MAKEFILE_PATH)/../bin/kdep)
 # and kprove
 KPROVE=$(abspath $(MAKEFILE_PATH)/../bin/kprove)
+# and kast
+KAST=$(abspath $(MAKEFILE_PATH)/../bin/kast)
+# and keq
+KEQ=$(abspath $(MAKEFILE_PATH)/../bin/keq)
+# and kserver
+KSERVER=$(abspath $(MAKEFILE_PATH)/../bin/kserver)
+# and ksearch
+KSEARCH=$(abspath $(MAKEFILE_PATH)/../bin/krun) --search-all
+# and kast
+KAST=$(abspath $(MAKEFILE_PATH)/../bin/kast)
 # path relative to current definition of test programs
 TESTDIR?=tests
 # path to put -kompiled directory in
@@ -17,6 +27,9 @@ RESULTDIR?=$(TESTDIR)
 # all tests in test directory with matching file extension
 TESTS?=$(wildcard $(TESTDIR)/*.$(EXT))
 PROOF_TESTS?=$(wildcard $(TESTDIR)/*-spec.k)
+SEARCH_TESTS?=$(wildcard $(TESTDIR)/*.$(EXT).search)
+STRAT_TESTS?=$(wildcard $(TESTDIR)/*.strat)
+KAST_TESTS?=$(wildcard $(TESTDIR)/*.kast)
 # default KOMPILE_BACKEND
 KOMPILE_BACKEND?=ocaml
 
@@ -25,19 +38,26 @@ CHECK=| diff -
 .PHONY: kompile krun all clean update-results proofs
 
 # run all tests
-all: kompile krun proofs
+all: kompile krun proofs searches strat kast
 
 # run only kompile
 kompile: $(DEFDIR)/$(DEF)-kompiled/timestamp
 
 $(DEFDIR)/%-kompiled/timestamp: %.k
 	$(KOMPILE) $(KOMPILE_FLAGS) --backend $(KOMPILE_BACKEND) $(DEBUG) $< -d $(DEFDIR)
+
 krun: $(TESTS)
 
 proofs: $(PROOF_TESTS)
 
+searches: $(SEARCH_TESTS)
+
+strat: $(STRAT_TESTS)
+
+kast: $(KAST_TESTS)
+
 # run all tests and regenerate output files
-update-results: krun proofs
+update-results: all
 update-results: CHECK=>
 
 # run a single test. older versions of make run pattern rules in order, so
@@ -51,7 +71,32 @@ else
 endif
 
 %-spec.k: kompile
-	$(KPROVE) $(KPROVE_FLAGS) -d $(DEFDIR) $@ $(CHECK) $@.out
+ifeq ($(TESTDIR),$(RESULTDIR))
+	$(KPROVE) $@ $(KPROVE_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $@.out
+else
+	$(KPROVE) $@ $(KPROVE_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $(RESULTDIR)/$(notdir $@).out
+endif
+
+%.search: kompile
+ifeq ($(TESTDIR),$(RESULTDIR))
+	$(KSEARCH) $@ $(KSEARCH_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $@.out
+else
+	$(KSEARCH) $@ $(KSEARCH_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $(RESULTDIR)/$(notdir $@).out
+endif
+
+%.strat: kompile
+ifeq ($(TESTDIR),$(RESULTDIR))
+	$(KRUN) $@.input $(KRUN_FLAGS) $(DEBUG) -d $(DEFDIR) -cSTRATEGY="$(shell cat $@)" $(CHECK) $@.out
+else
+	$(KRUN) $@.input $(KRUN_FLAGS) $(DEBUG) -d $(DEFDIR) -cSTRATEGY="$(shell cat $@)" $(CHECK) $(RESULT_DIR)/$(notdir $@).out
+endif
+
+%.kast: kompile
+ifeq ($(TESTDIR),$(RESULTDIR))
+	$(KAST) $@ $(KAST_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $@.out
+else
+	$(KAST) $@ $(KAST_FLAGS) $(DEBUG) -d $(DEFDIR) $(CHECK) $(RESULTDIR)/$(notdir $@).out
+endif
 
 clean:
 	rm -rf $(DEFDIR)/$(DEF)-kompiled

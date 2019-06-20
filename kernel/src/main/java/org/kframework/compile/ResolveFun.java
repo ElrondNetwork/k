@@ -6,6 +6,7 @@ import org.kframework.builtin.BooleanUtils;
 import org.kframework.builtin.KLabels;
 import org.kframework.builtin.Sorts;
 import org.kframework.definition.Context;
+import org.kframework.definition.ContextAlias;
 import org.kframework.definition.Module;
 import org.kframework.definition.Production;
 import org.kframework.definition.ProductionItem;
@@ -54,6 +55,11 @@ import static org.kframework.kore.KORE.*;
  */
 public class ResolveFun {
 
+    public ResolveFun(boolean kore) {
+      this.kore = kore;
+    }
+
+    private final boolean kore;
     private final Set<Production> funProds = new HashSet<>();
     private final Set<Rule> funRules = new HashSet<>();
     private Module module;
@@ -106,13 +112,14 @@ public class ResolveFun {
                         nameHint2 = ((KApply) body).klabel().name();
                     }
                     KLabel fun = getUniqueLambdaLabel(nameHint1, nameHint2);
+                    Sort argSort = sort(arg);
                     if (lbl.name().equals("#fun3") || lbl.name().equals("#fun2")) {
-                        funProds.add(funProd(fun, body));
+                        funProds.add(funProd(fun, body, argSort));
                         funRules.add(funRule(fun, body, k.att()));
                     } else {
-                        funProds.add(predProd(fun, body));
+                        funProds.add(predProd(fun, body, argSort));
                         funRules.add(predRule(fun, body, k.att()));
-                        funRules.add(owiseRule(fun, body, k.att()));
+                        funRules.add(owiseRule(fun, body, argSort, k.att()));
                     }
                     List<K> klist = new ArrayList<>();
                     klist.add(apply(arg));
@@ -136,9 +143,8 @@ public class ResolveFun {
         return lambdaRule(fun, k, k, att, x -> BooleanUtils.TRUE);
     }
 
-    private Rule owiseRule(KLabel fun, K k, Att att) {
-        Sort sort = sort(k);
-        return lambdaRule(fun, KApply(KLabel("#SemanticCastTo" + sort.toString()), KVariable("_Owise")), k, att.add("owise"), x -> BooleanUtils.FALSE);
+    private Rule owiseRule(KLabel fun, K k, Sort arg, Att att) {
+        return lambdaRule(fun, KApply(KLabel("#SemanticCastTo" + arg.toString()), KVariable("_Owise")), k, att.add("owise"), x -> BooleanUtils.FALSE);
     }
 
     private Rule lambdaRule(KLabel fun, K body, K closure, Att att, UnaryOperator<K> getRHS) {
@@ -160,20 +166,19 @@ public class ResolveFun {
         return result;
     }
 
-    private Production funProd(KLabel fun, K k) {
-        return lambdaProd(fun, k, sort(RewriteToTop.toRight(k)));
+    private Production funProd(KLabel fun, K k, Sort arg) {
+        return lambdaProd(fun, k, arg, sort(RewriteToTop.toRight(k)));
     }
 
-    private Production predProd(KLabel fun, K k) {
-        return lambdaProd(fun, k, Sorts.Bool());
+    private Production predProd(KLabel fun, K k, Sort arg) {
+        return lambdaProd(fun, k, arg, Sorts.Bool());
     }
 
-    private Production lambdaProd(KLabel fun, K k, Sort rhs) {
+    private Production lambdaProd(KLabel fun, K k, Sort arg, Sort rhs) {
         List<ProductionItem> pis = new ArrayList<>();
-        K left = RewriteToTop.toLeft(k);
         pis.add(Terminal(fun.name()));
         pis.add(Terminal("("));
-        pis.add(NonTerminal(sort(left)));
+        pis.add(NonTerminal(arg));
         for (KVariable var : closure(k)) {
             pis.add(Terminal(","));
             pis.add(NonTerminal(var.att().getOptional(Sort.class).orElse(Sorts.K())));
@@ -193,8 +198,14 @@ public class ResolveFun {
             return Sorts.KItem();
         if (k instanceof KToken)
             return ((KToken) k).sort();
-        if (k instanceof KApply)
-            return k.att().get(Production.class).sort();
+        if (k instanceof KApply) {
+            if (kore) {
+                AddSortInjections inj = new AddSortInjections(module);
+                return inj.sort(k, Sorts.K());
+            } else {
+                return k.att().get(Production.class).sort();
+            }
+        }
         if (k instanceof KVariable)
             return Sorts.K();
         throw KEMException.compilerError("Could not compute sort of term", k);
@@ -207,11 +218,20 @@ public class ResolveFun {
                 context.att());
     }
 
+    private ContextAlias resolve(ContextAlias context) {
+        return new ContextAlias(
+                transform(context.body()),
+                transform(context.requires()),
+                context.att());
+    }
+
     public Sentence resolve(Sentence s) {
         if (s instanceof Rule) {
             return resolve((Rule) s);
         } else if (s instanceof Context) {
             return resolve((Context) s);
+        } else if (s instanceof ContextAlias) {
+            return resolve((ContextAlias) s);
         } else {
             return s;
         }

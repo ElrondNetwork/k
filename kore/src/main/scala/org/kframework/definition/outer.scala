@@ -95,6 +95,8 @@ case class Module(val name: String, val imports: Set[Module], localSentences: Se
 
   lazy val sentences: Set[Sentence] = localSentences | importedSentences
 
+  lazy val labeled: Map[String, Set[Sentence]] = sentences.filter(_.label.isPresent).groupBy(_.label.get)
+
   /** All the imported modules, calculated recursively. */
   lazy val importedModules: Set[Module] = imports | (imports flatMap {
     _.importedModules
@@ -105,6 +107,8 @@ case class Module(val name: String, val imports: Set[Module], localSentences: Se
   lazy val importedModuleNames: Set[String] = importedModules.map(_.name)
 
   lazy val productions: Set[Production] = sentences collect { case p: Production => p }
+
+  lazy val sortedProductions: Seq[Production] = productions.toSeq.sorted
 
   lazy val localProductions: Set[Production] = localSentences collect { case p: Production => p }
 
@@ -198,7 +202,18 @@ case class Module(val name: String, val imports: Set[Module], localSentences: Se
   def isSort(klabel: KLabel, s: Sort) = subsorts.<(sortFor(klabel), s)
 
   lazy val rules: Set[Rule] = sentences collect { case r: Rule => r }
+  lazy val rulesFor: Map[KLabel, Set[Rule]] = rules.groupBy(r => {
+    r.body match {
+      case Unapply.KApply(Unapply.KLabel("#withConfig"), Unapply.KApply(s, _) :: _) => s
+      case Unapply.KApply(Unapply.KLabel("#withConfig"), Unapply.KRewrite(Unapply.KApply(s, _), _) :: _) => s
+      case Unapply.KApply(s, _) => s
+      case Unapply.KRewrite(Unapply.KApply(s, _), _) => s
+      case _ => KORE.KLabel("")
+    }
+  })
   lazy val contexts: Set[Context] = sentences collect { case r: Context => r }
+
+  lazy val sortedRules: Seq[Rule] = rules.toSeq.sorted
 
   lazy val localRules: Set[Rule] = localSentences collect { case r: Rule => r }
 
@@ -318,10 +333,33 @@ case class Context(body: K, requires: K, att: Att = Att.empty) extends Sentence 
   override def withAtt(att: Att) = Context(body, requires, att)
 }
 
+case class ContextAlias(body: K, requires: K, att: Att = Att.empty) extends Sentence with OuterKORE with ContextAliasToString {
+  override val isSyntax = true
+  override val isNonSyntax = false
+  override def withAtt(att: Att) = ContextAlias(body, requires, att)
+}
+
+
 case class Rule(body: K, requires: K, ensures: K, att: Att = Att.empty) extends Sentence with RuleToString with OuterKORE {
   override val isSyntax = false
   override val isNonSyntax = true
   override def withAtt(att: Att) = Rule(body, requires, ensures, att)
+}
+
+object Rule {
+  implicit val ord: Ordering[Rule] = new Ordering[Rule] {
+    def compare(a: Rule, b: Rule): Int = {
+      val c1 = Ordering[K].compare(a.body, b.body)
+      if (c1 == 0) {
+        val c2 = Ordering[K].compare(a.requires, b.requires)
+        if (c2 == 0) {
+          Ordering[K].compare(a.ensures, b.ensures)
+        }
+        c2
+      }
+      c1
+    }
+  }
 }
 
 case class ModuleComment(comment: String, att: Att = Att.empty) extends Sentence with OuterKORE {
@@ -465,6 +503,12 @@ case class Production(klabel: Option[KLabel], sort: Sort, items: Seq[ProductionI
 }
 
 object Production {
+  implicit val ord = new Ordering[Production] {
+    def compare(a: Production, b: Production): Int = {
+      Ordering[Option[String]].compare(a.klabel.map(_.name), b.klabel.map(_.name))
+    }
+  }
+
   def apply(klabel: KLabel, sort: Sort, items: Seq[ProductionItem], att: Att = Att.empty): Production = {
     Production(Some(klabel), sort, items, att)
   }

@@ -19,6 +19,8 @@ import org.kframework.definition.UserList;
 import org.kframework.kil.loader.Constants;
 import org.kframework.kore.Sort;
 import org.kframework.parser.concrete2kore.ParseInModule;
+import org.kframework.utils.file.FileUtil;
+import org.kframework.utils.StringUtil;
 import scala.collection.Seq;
 import scala.Option;
 
@@ -54,7 +56,6 @@ public class RuleGrammarGenerator {
         kSorts.add(Sorts.KLabel());
         kSorts.add(Sorts.KList());
         kSorts.add(Sorts.KItem());
-        kSorts.add(Sort("RuleContent"));
         kSorts.add(Sorts.KConfigVar());
         kSorts.add(Sorts.KString());
     }
@@ -178,6 +179,11 @@ public class RuleGrammarGenerator {
         return kSorts.contains(s) || s.name().startsWith("#");
     }
 
+    /* use this overload if you don't need to profile rule parse times. */
+    public static ParseInModule getCombinedGrammar(Module mod, boolean strict) {
+      return getCombinedGrammar(mod, strict, false, null);
+    }
+
     /**
      * Create the rule parser for the given module.
      * It creates a module which includes the given module and the base K module given to the
@@ -187,7 +193,7 @@ public class RuleGrammarGenerator {
      * @param mod module for which to create the parser.
      * @return parser which applies disambiguation filters by default.
      */
-    public static ParseInModule getCombinedGrammar(Module mod, boolean strict) {
+    public static ParseInModule getCombinedGrammar(Module mod, boolean strict, boolean timing, FileUtil files) {
         Set<Sentence> prods = new HashSet<>();
         Set<Sentence> extensionProds = new HashSet<>();
         Set<Sentence> disambProds;
@@ -195,7 +201,7 @@ public class RuleGrammarGenerator {
         if (mod.importedModuleNames().contains(AUTO_CASTS)) { // create the diamond
             Set<Sentence> temp;
             for (Sort srt : iterable(mod.definedSorts())) {
-                if (!isParserSort(srt)) {
+                if (!isParserSort(srt) || mod.subsorts().directlyLessThan(Sorts.KVariable(), srt)) {
                     // K ::= K "::Sort" | K ":Sort" | K "<:Sort" | K ":>Sort"
                     prods.addAll(makeCasts(Sorts.KBott(), Sorts.K(), srt));
                 }
@@ -245,7 +251,9 @@ public class RuleGrammarGenerator {
                             }
                         }
                     }
-                    prods.add(Production(p.klabel(), returnSort, immutable(pis), p.att().add(Constants.ORIGINAL_PRD, Production.class, p)));
+                    if (!(pis.size() == 1 && pis.get(0) instanceof NonTerminal && ((NonTerminal)pis.get(0)).sort().equals(returnSort))) {
+                        prods.add(Production(p.klabel(), returnSort, immutable(pis), p.att().add(Constants.ORIGINAL_PRD, Production.class, p)));
+                    }
                 }
             }
         }
@@ -382,18 +390,20 @@ public class RuleGrammarGenerator {
         Module extensionM = new Module(mod.name() + "-EXTENSION", Set(mod), immutable(extensionProds), mod.att());
         Module disambM = new Module(mod.name() + "-DISAMB", Set(), immutable(disambProds), mod.att());
         Module parseM = new Module(mod.name() + "-PARSER", Set(), immutable(parseProds), mod.att());
-        return new ParseInModule(mod, extensionM, disambM, parseM, strict);
+        return new ParseInModule(mod, extensionM, disambM, parseM, strict, timing, files);
     }
 
     public static List<Set<Integer>> computePositions(Production p) {
-        return (List<Set<Integer>>) Arrays.asList(p.att().get("poly").split(";"))
-                            .stream().map(l -> Arrays.asList(l.split(",")).stream()
-                                    .map(s -> Integer.valueOf(s.trim())).collect(Collectors.toSet())).collect(Collectors.toList());
+        return StringUtil.computePoly(p.att().get("poly"));
+    }
+
+    public static List<Set<Integer>> computePositions(String p) {
+        return StringUtil.computePoly(p);
     }
 
     private static List<List<Sort>> makeAllSortTuples(int size, Module mod) {
         List<List<Sort>> res = new ArrayList<>();
-        List<Sort> allSorts = stream(mod.definedSorts()).filter(s -> !isParserSort(s)).collect(Collectors.toList());
+        List<Sort> allSorts = stream(mod.definedSorts()).filter(s -> !isParserSort(s) || s.equals(Sorts.KItem())).collect(Collectors.toList());
         makeAllSortTuples(size, size, allSorts, res, new int[size]);
         return res;
     }
@@ -411,10 +421,6 @@ public class RuleGrammarGenerator {
                 makeAllSortTuples(level-1, size, sorts, res, indices);
             }
         }
-    }
-
-    private boolean isExceptionSort(Sort srt) {
-        return kSorts.contains(srt) || srt.name().startsWith("#");
     }
 
     private static Set<Sentence> makeCasts(Sort outerSort, Sort innerSort, Sort castSort) {

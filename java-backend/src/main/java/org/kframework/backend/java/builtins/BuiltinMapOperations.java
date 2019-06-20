@@ -72,9 +72,13 @@ public class BuiltinMapOperations {
     }
 
     public static Term update(Term map, Term key, Term value, TermContext context) {
-        BuiltinMap.Builder builder = BuiltinMap.builder(context.global());
-        builder.put(key, value);
-        return updateAll(map, (BuiltinMap) builder.build(), context);
+        if((map instanceof BuiltinMap) && ((BuiltinMap) map).isConcreteCollection() && key.isConcrete()) {
+            BuiltinMap.Builder builder = BuiltinMap.builder(context.global());
+            builder.put(key, value);
+            return updateAll(map, (BuiltinMap) builder.build(), context);
+        } else {
+            return  null;
+        }
     }
 
     public static Term remove(Term map, Term key, TermContext context) {
@@ -151,6 +155,12 @@ public class BuiltinMapOperations {
         Set<Term> pendingRemoveSet = removeBuiltinSet.elements().stream()
                 .filter(element -> builder.remove(element) == null)
                 .collect(Collectors.toSet());
+
+        // If a non-concrete term cannot be removed, it might be removed later after further evaluation.
+        // Leave this map unevaluated.
+        if (pendingRemoveSet.stream().anyMatch(elem -> !elem.isConcrete())) {
+            return null;
+        }
 
         if (!builtinMap.isConcreteCollection() && !pendingRemoveSet.isEmpty()) {
             return DataStructures.mapRemoveAll(builder.build(), pendingRemoveSet, context);

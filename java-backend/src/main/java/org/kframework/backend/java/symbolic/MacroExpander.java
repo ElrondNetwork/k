@@ -43,7 +43,7 @@ public class MacroExpander extends CopyOnWriteTransformer {
                 definition.definitionData(),
                 kem,
                 definition.ruleTable,
-                definition.automaton);
+                definition.automatons);
         processedDefinition.addKLabelCollection(definition.kLabels());
         for (Rule rule : definition.rules()) {
             processedDefinition.addRule(processRule(rule));
@@ -87,8 +87,7 @@ public class MacroExpander extends CopyOnWriteTransformer {
                 rule.freshConstants(),
                 rule.freshVariables(),
                 processedLookups,
-                rule.att(),
-                rule.globalContext());
+                rule.att());
     }
 
     public Term processTerm(Term term) {
@@ -123,7 +122,8 @@ public class MacroExpander extends CopyOnWriteTransformer {
     private Term applyMacroRule(Term term) {
         for (Rule rule : context.definition().macros()) {
             Map<Variable, Term> solution;
-            List<Substitution<Variable, Term>> matches = PatternMatcher.match(term, rule, context);
+            List<Substitution<Variable, Term>> matches = PatternMatcher.match(term, rule, context,
+                    "applyMacroRule", 1);
             if (matches.isEmpty()) {
                 continue;
             } else {

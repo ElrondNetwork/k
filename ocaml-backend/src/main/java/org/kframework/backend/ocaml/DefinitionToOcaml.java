@@ -1,4 +1,5 @@
 // Copyright (c) 2015-2018 Runtime Verification, Inc. (RV-Match team). All Rights Reserved.
+
 package org.kframework.backend.ocaml;
 
 import com.google.common.base.Joiner;
@@ -68,8 +69,11 @@ import scala.Tuple3;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,10 +84,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -117,7 +119,6 @@ public class DefinitionToOcaml implements Serializable {
         this.sortHooks = defSortHooks;
         this.options = options;
     }
-    public static final Pattern identChar = Pattern.compile("[A-Za-z0-9_]");
 
     public static final ImmutableSet<String> hookNamespaces;
     private transient ImmutableMap<String, Function<String, String>> sortHooks;
@@ -217,7 +218,7 @@ public class DefinitionToOcaml implements Serializable {
         constants = serialized.constants;
         realStepFunctions = serialized.realStepFunctions;
         if (serialized.expandMacros == null) {
-            serialized.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
+            serialized.expandMacros = ExpandMacros.fromMainModule(def.executionModule(), files, kompileOptions, false);
         }
         if (serialized.convertDataStructure == null) {
             serialized.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
@@ -242,7 +243,7 @@ public class DefinitionToOcaml implements Serializable {
         this.convertDataStructure = new ConvertDataStructureToLookup(def.executionModule(), true);
         ModuleTransformer convertLookups = ModuleTransformer.fromSentenceTransformer(convertDataStructure::convert, "convert data structures to lookups");
         ModuleTransformer liftToKSequence = ModuleTransformer.fromSentenceTransformer(new LiftToKSequence()::lift, "lift K into KSequence");
-        this.expandMacros = new ExpandMacros(def.executionModule(), files, kompileOptions, false);
+        this.expandMacros = ExpandMacros.fromMainModule(def.executionModule(), files, kompileOptions, false);
         ModuleTransformer expandMacros = ModuleTransformer.fromSentenceTransformer(this.expandMacros::expand, "expand macro rules");
         ModuleTransformer deconstructInts = ModuleTransformer.fromSentenceTransformer(new DeconstructIntegerAndFloatLiterals()::convert, "remove matches on integer literals in left hand side");
         this.threadCellExists = containsThreadCell(def);
@@ -1175,7 +1176,7 @@ public class DefinitionToOcaml implements Serializable {
 
     public String definition() {
         StringBuilder sb = new StringBuilder();
-        sb.append("open Prelude\nopen Constants\nopen Constants.K\nmodule Def = struct\n");
+        sb.append("open Prelude\nopen Constants\nopen Constants.K\nopen Hooks\nmodule Def = struct\n");
         SetMultimap<KLabel, Rule> functionRules = HashMultimap.create();
         ListMultimap<KLabel, Rule> anywhereRules = ArrayListMultimap.create();
         anywhereKLabels = new HashSet<>();
@@ -1285,7 +1286,7 @@ public class DefinitionToOcaml implements Serializable {
                     sb.append("match c with \n");
                     String namespace = hook.substring(0, hook.indexOf('.'));
                     String function = hook.substring(namespace.length() + 1);
-                    if (hookNamespaces.contains(namespace) || options.hookNamespaces.contains(namespace)) {
+                    if (hookNamespaces.contains(namespace) || kompileOptions.hookNamespaces.contains(namespace)) {
                         sb.append("| _ -> try ").append(namespace).append(".hook_").append(function).append(" c lbl sort config freshFunction");
                         if (mainModule.attributesFor().apply(functionLabel).contains("canTakeSteps")) {
                             sb.append(" eval");
@@ -1869,166 +1870,22 @@ public class DefinitionToOcaml implements Serializable {
         return sb2.toString();
     }
 
-    private static String[] asciiReadableEncoding = new String[] {
-            null,// 00
-            null,// 01
-            null,// 02
-            null,// 03
-            null,// 04
-            null,// 05
-            null,// 06
-            null,// 07
-            null,// 08
-            null,// 09
-            null,// 0a
-            null,// 0b
-            null,// 0c
-            null,// 0d
-            null,// 0e
-            null,// 0f
-            null,// 10
-            null,// 11
-            null,// 12
-            null,// 13
-            null,// 14
-            null,// 15
-            null,// 16
-            null,// 17
-            null,// 18
-            null,// 19
-            null,// 1a
-            null,// 1b
-            null,// 1c
-            null,// 1d
-            null,// 1e
-            null,// 1f
-            "Spce",// 20
-            "Bang",// 21
-            "Quot",// 22
-            "Hash",// 23
-            "Dolr",// 24
-            "Perc",// 25
-            "And",// 26
-            "Apos",// 27
-            "LPar",// 28
-            "RPar",// 29
-            "Star",// 2a
-            "Plus",// 2b
-            "Comm",// 2c
-            "Hyph",// 2d
-            "Stop",// 2e
-            "Slsh",// 2f
-            "0",// 30
-            "1",// 31
-            "2",// 32
-            "3",// 33
-            "4",// 34
-            "5",// 35
-            "6",// 36
-            "7",// 37
-            "8",// 38
-            "9",// 39
-            "Coln",// 3a
-            "SCln",// 3b
-            "_LT_",// 3c
-            "Eqls",// 3d
-            "_GT_",// 3e
-            "Ques",// 3f
-            "_AT_",// 40
-            "A",// 41
-            "B",// 42
-            "C",// 43
-            "D",// 44
-            "E",// 45
-            "F",// 46
-            "G",// 47
-            "H",// 48
-            "I",// 49
-            "J",// 4a
-            "K",// 4b
-            "L",// 4c
-            "M",// 4d
-            "N",// 4e
-            "O",// 4f
-            "P",// 50
-            "Q",// 51
-            "R",// 52
-            "S",// 53
-            "T",// 54
-            "U",// 55
-            "V",// 56
-            "W",// 57
-            "X",// 58
-            "Y",// 59
-            "Z",// 5a
-            "LSqB",// 5b
-            "Bash",// 5c
-            "RSqB",// 5d
-            "Xor_",// 5e
-            "_",// 5f
-            "BQuo",// 60
-            "a",// 61
-            "b",// 62
-            "c",// 63
-            "d",// 64
-            "e",// 65
-            "f",// 66
-            "g",// 67
-            "h",// 68
-            "i",// 69
-            "j",// 6a
-            "k",// 6b
-            "l",// 6c
-            "m",// 6d
-            "n",// 6e
-            "o",// 6f
-            "p",// 70
-            "q",// 71
-            "r",// 72
-            "s",// 73
-            "t",// 74
-            "u",// 75
-            "v",// 76
-            "w",// 77
-            "x",// 78
-            "y",// 79
-            "z",// 7a
-            "LBra",// 7b
-            "Pipe",// 7c
-            "RBra",// 7d
-            "Tild",// 7e
-            null// 7f
-    };
-
-    private static void encodeStringToAlphanumeric(StringBuilder sb, String name) {
-        boolean inIdent = true;
-        for (int i = 0; i < name.length(); i++) {
-            if (identChar.matcher(name).region(i, name.length()).lookingAt()) {
-                if (!inIdent) {
-                    inIdent = true;
-                    sb.append("'");
-                }
-                sb.append(name.charAt(i));
-            } else {
-                if (inIdent) {
-                    inIdent = false;
-                    sb.append("'");
-                }
-                int charAt = (int) name.charAt(i);
-                if (charAt < 128 && asciiReadableEncoding[charAt] != null) {
-                    sb.append(asciiReadableEncoding[charAt]);
-                } else {
-                    sb.append(String.format("%04x", charAt));
-                }
-            }
-        }
-        if (!inIdent) {
-            sb.append("'");
-        }
+    private static String[] asciiReadableEncodingOcamlCalc() {
+        String[] ocamlEncoder = Arrays.copyOf(StringUtil.asciiReadableEncodingDefault, StringUtil.asciiReadableEncodingDefault.length);
+        ocamlEncoder[0x3c] = "_LT_";
+        ocamlEncoder[0x3e] = "_GT_";
+        ocamlEncoder[0x40] = "_AT_";
+        ocamlEncoder[0x5e] = "Xor_";
+        ocamlEncoder[0x5f] = "_";
+        return ocamlEncoder;
     }
 
+    public static final Pattern identChar = Pattern.compile("[A-Za-z0-9_]");
+    public static String[] asciiReadableEncodingOcaml = asciiReadableEncodingOcamlCalc();
 
-
+    private static void encodeStringToAlphanumeric(StringBuilder sb, String name) {
+        StringUtil.encodeStringToAlphanumeric(sb, name, asciiReadableEncodingOcaml, identChar, "'");
+    }
 
     private enum RuleType {
         FUNCTION, ANYWHERE, REGULAR, PATTERN
@@ -2699,8 +2556,19 @@ public class DefinitionToOcaml implements Serializable {
         }
     }
 
-    private void applyVarLhs(KVariable k, StringBuilder sb, VarInfo vars) {
-        String varName = encodeStringToVariable(k.name());
+    private void applyVarLhs(KVariable k, StringBuilder sb, VarInfo vars, boolean inOr) {
+        String varName;
+        if (inOr && k.att().contains("anonymous")) {
+            sb.append("_");
+            return;
+        } else if (inOr) {
+            StringBuilder sb2 = new StringBuilder();
+            sb2.append("var");
+            encodeStringToAlphanumeric(sb2, k.name());
+            varName = sb2.toString();
+        } else {
+            varName = encodeStringToVariable(k.name());
+        }
         vars.vars.put(k, varName);
         Sort s = k.att().getOptional(Sort.class).orElse(Sort(""));
         if (mainModule.sortAttributesFor().contains(s)) {
@@ -2736,6 +2604,7 @@ public class DefinitionToOcaml implements Serializable {
         private boolean inBooleanExp;
         private boolean topAnywherePre;
         private boolean topAnywherePost;
+        private boolean inOr = false;
 
         @Override
         public void apply(KApply k) {
@@ -2756,9 +2625,12 @@ public class DefinitionToOcaml implements Serializable {
             }
             if (k.klabel().equals(KLabels.ML_OR)) {
                 sb.append("((");
+                boolean wasInOr = inOr;
+                inOr = true;
                 apply(k.items().get(0));
                 sb.append(")|(");
                 apply(k.items().get(1));
+                inOr = wasInOr;
                 sb.append("))");
                 return;
             }
@@ -3039,7 +2911,7 @@ public class DefinitionToOcaml implements Serializable {
             if (rhs) {
                 applyVarRhs(k, sb, vars);
             } else {
-                applyVarLhs(k, sb, vars);
+                applyVarLhs(k, sb, vars, inOr);
             }
             if (inBooleanExp) {
                 sb.append("])");

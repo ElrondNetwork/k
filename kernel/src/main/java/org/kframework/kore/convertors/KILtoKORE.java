@@ -18,11 +18,7 @@ import org.kframework.kil.Module;
 import org.kframework.kil.NonTerminal;
 import org.kframework.kil.Production;
 import org.kframework.kil.Terminal;
-import org.kframework.kore.KLabel;
-import org.kframework.kore.Sort;
-import org.kframework.parser.concrete2kore.generator.RuleGrammarGenerator;
 import org.kframework.utils.errorsystem.KEMException;
-import org.kframework.utils.errorsystem.KExceptionManager;
 import scala.Enumeration.Value;
 import scala.Tuple2;
 import scala.collection.Seq;
@@ -189,7 +185,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
         String label = sentence.getLabel();
         if (!label.isEmpty()) {
-            attrs = attrs.add("label", moduleName + "." + label);
+            attrs = attrs.add("label", sentence.getType().equals("alias") ? label : moduleName + "." + label);
         }
 
         return Bubble(sentence.getType(), sentence.getContent(), attrs);
@@ -401,7 +397,7 @@ public class KILtoKORE extends KILTransformation<Object> {
 
                 }).collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
-        return Att().addAll(attributesSet)
+        return Att.from(attributesSet)
                 .addAll(attributesFromLocation(t.getLocation()))
                 .addAll(attributesFromSource(t.getSource()));
     }

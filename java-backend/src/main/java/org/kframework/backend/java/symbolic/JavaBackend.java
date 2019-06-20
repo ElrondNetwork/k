@@ -39,6 +39,8 @@ import java.util.function.Function;
 
 public class JavaBackend implements Backend {
 
+    public static final String MAIN_AUTOMATON = "mainAutomaton";
+
     private final KExceptionManager kem;
     private final FileUtil files;
     private final GlobalOptions globalOptions;
@@ -90,7 +92,10 @@ public class JavaBackend implements Backend {
                 .andThen(DefinitionTransformer.fromSentenceTransformer(JavaBackend::convertListItemToNonFunction, "remove function attribute from ListItem production"))
                 .andThen(DefinitionTransformer.fromSentenceTransformer(new NormalizeAssoc(KORE.c()), "normalize assoc"))
                 .andThen(DefinitionTransformer.from(AddBottomSortForListsWithIdenticalLabels.singleton(), "add bottom sorts for lists"))
-                .andThen(DefinitionTransformer.fromSentenceTransformer((m, s) -> new ExpandMacros(m, files, kompileOptions, false).expand(s), "expand macros"))
+                .andThen(d2 -> {
+                  ResolveFunctionWithConfig transformer = new ResolveFunctionWithConfig(d2, false);
+                  return DefinitionTransformer.fromSentenceTransformer((m, s) -> new ExpandMacros(transformer, m, files, kompileOptions, false).expand(s), "expand macros").apply(d2);
+                })
                 .andThen(DefinitionTransformer.fromSentenceTransformer(new NormalizeAssoc(KORE.c()), "normalize assoc"))
                 .andThen(convertDataStructureToLookup)
                 .andThen(DefinitionTransformer.fromRuleBodyTransformer(JavaBackend::ADTKVariableToSortedVariable, "ADT.KVariable to SortedVariable"))
@@ -100,7 +105,7 @@ public class JavaBackend implements Backend {
                 .andThen(DefinitionTransformer.fromSentenceTransformer(new AddConfigurationRecoveryFlags(), "add refers_THIS_CONFIGURATION_marker"))
                 .andThen(DefinitionTransformer.fromSentenceTransformer(JavaBackend::markSingleVariables, "mark single variables"))
                 .andThen(DefinitionTransformer.from(new AssocCommToAssoc(), "convert AC matching to A matching"))
-                .andThen(DefinitionTransformer.from(new MergeRules(), "merge rules into one rule with or clauses"))
+                .andThen(DefinitionTransformer.from(new MergeRules(MAIN_AUTOMATON, Att.topRule()), "merge regular rules into one rule with or clauses"))
                 .apply(Kompile.defaultSteps(kompileOptions, kem, files).apply(d));
              // .andThen(KoreToMiniToKore::apply) // for serialization/deserialization test
     }
@@ -114,13 +119,17 @@ public class JavaBackend implements Backend {
                 .andThen(ConcretizeCells::transformModule)
                 .andThen(ModuleTransformer.fromRuleBodyTransformer(RewriteToTop::bubbleRewriteToTopInsideCells, "bubble out rewrites below cells"))
                 .andThen(AddBottomSortForListsWithIdenticalLabels.singleton())
-                .andThen(ModuleTransformer.fromSentenceTransformer((mod, s) -> new ExpandMacros(mod, files, kompileOptions, false).expand(s), "expand macros"))
+                .andThen(m2 -> {
+                  ResolveFunctionWithConfig transformer = new ResolveFunctionWithConfig(m2, false);
+                  return ModuleTransformer.fromSentenceTransformer((mod, s) -> new ExpandMacros(transformer, mod, files, kompileOptions, false).expand(s), "expand macros").apply(m2);
+                })
                 .andThen(ModuleTransformer.fromKTransformerWithModuleInfo(convertCellCollections::apply, "convert cell to the underlying collections"))
                 .andThen(ModuleTransformer.fromRuleBodyTransformer(JavaBackend::ADTKVariableToSortedVariable, "ADT.KVariable to SortedVariable"))
                 .andThen(ModuleTransformer.fromRuleBodyTransformer(JavaBackend::convertKSeqToKApply, "kseq to kapply"))
                 .andThen(ModuleTransformer.fromRuleBodyTransformer(NormalizeKSeq.self(), "normalize kseq"))
-                .andThen(mod -> JavaBackend.markRegularRules(def, mod))
+                .andThen(mod -> JavaBackend.markSpecRules(def, mod))
                 .andThen(ModuleTransformer.fromSentenceTransformer(new AddConfigurationRecoveryFlags()::apply, "add refers_THIS_CONFIGURATION_marker"))
+                .andThen(restoreDefinitionModulesTransformer(def))
                 .apply(m);
     }
 
@@ -138,9 +147,9 @@ public class JavaBackend implements Backend {
         return s;
     }
 
-    private static Module markRegularRules(Definition d, Module mod) {
+    private static Module markSpecRules(Definition d, Module mod) {
         ConfigurationInfoFromModule configInfo = new ConfigurationInfoFromModule(d.mainModule());
-        return ModuleTransformer.fromSentenceTransformer(s -> markRegularRules(d, configInfo, s, "specification"), "mark regular rules").apply(mod);
+        return ModuleTransformer.fromSentenceTransformer(s -> markRegularRules(d, configInfo, s, Att.specification()), "mark specification rules").apply(mod);
     }
 
         /**

@@ -29,13 +29,16 @@ import org.kframework.backend.java.kil.TermContext;
 import org.kframework.backend.java.kil.Token;
 import org.kframework.backend.java.kil.Variable;
 import org.kframework.backend.java.util.FormulaContext;
+import org.kframework.backend.java.util.StateLog;
 import org.kframework.backend.java.utils.BitSet;
 import org.kframework.builtin.KLabels;
 import org.kframework.kore.KApply;
+import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -93,7 +96,6 @@ public class FastRuleMatcher {
      */
     public List<RuleMatchResult> matchRulePattern(
             ConstrainedTerm subject,
-            Term pattern,
             BitSet ruleMask,
             boolean narrowing,
             boolean computeOne,
@@ -104,8 +106,17 @@ public class FastRuleMatcher {
         ruleMask.stream().forEach(i -> constraints[i] = ConjunctiveFormula.of(context.global()));
         empty = BitSet.apply(ruleCount);
 
-        BitSet theMatchingRules = matchAndLog(subject.term(), pattern, ruleMask, List(), false);
+        if (global.javaExecutionOptions.logRulesPublic) {
+            System.err.format("\nRegular rule automaton phase, step %d\n" +
+                    "==========================================\n", step);
+        }
+        Term automatonLHS = global.getDefinition().mainAutomaton().leftHandSide();
+        BitSet theMatchingRules = matchAndLog(subject.term(), automatonLHS, ruleMask, List(), false);
 
+        if (global.javaExecutionOptions.logRulesPublic) {
+            System.err.format("\nRegular rule attempting to match phase, step %d\n" +
+                    "==========================================\n", step);
+        }
         List<RuleMatchResult> structuralResults = new ArrayList<>();
         List<RuleMatchResult> transitionResults = new ArrayList<>();
         for (int i = theMatchingRules.nextSetBit(0); i >= 0; i = theMatchingRules.nextSetBit(i + 1)) {
@@ -113,6 +124,10 @@ public class FastRuleMatcher {
             // skip over IO rules when in prove rules
             if (proveFlag && rule.att().contains("stream")) {
                 continue;
+            }
+            if (global.javaExecutionOptions.logRulesPublic) {
+                System.err.format("\nRegular rule: attempting to match: %s %s\n-------------------------\n",
+                        rule.getSource(), rule.getLocation());
             }
 
             // TODO(YilongL): remove TermContext from the signature once
@@ -124,12 +139,13 @@ public class FastRuleMatcher {
             } else {
                 patternConstraint = patternConstraint.addAll(rule.requires());
             }
-            FormulaContext formulaContext = new FormulaContext(FormulaContext.Kind.RegularRule, rule);
+            FormulaContext formulaContext = new FormulaContext(FormulaContext.Kind.RegularRule, rule, context.global());
+            global.stateLog.log(StateLog.LogEvent.RULEATTEMPT, rule.toKRewrite(), subject.term(), subject.constraint());
             List<Triple<ConjunctiveFormula, Boolean, Map<scala.collection.immutable.List<Pair<Integer, Integer>>, Term>>> ruleResults = ConstrainedTerm.evaluateConstraints(
                     constraints[i],
                     subject.constraint(),
                     patternConstraint,
-                    Sets.union(getLeftHandSide(pattern, i).variableSet(), patternConstraint.variableSet()).stream()
+                    Sets.union(getLeftHandSide(automatonLHS, i).variableSet(), patternConstraint.variableSet()).stream()
                             .filter(v -> !v.name().equals(KOREtoBackendKIL.THE_VARIABLE))
                             .collect(Collectors.toSet()),
                     context, formulaContext);
@@ -139,6 +155,14 @@ public class FastRuleMatcher {
                     transitionResults.add(result);
                 } else {
                     structuralResults.add(result);
+                }
+            }
+            if (global.javaExecutionOptions.logRulesPublic) {
+                if (ruleResults.isEmpty()) {
+                    System.err.format("\nRegular rule: matching failed %s %s\n", rule.getSource(), rule.getLocation());
+                } else {
+                    System.err.format("\nRegular rule: matching successful(%d times), %s %s\n",
+                            ruleResults.size(), rule.getSource(), rule.getLocation());
                 }
             }
         }
@@ -218,30 +242,48 @@ public class FastRuleMatcher {
     }
 
     /**
-     * If match fails and --log-basic or above is provided, print a warning message with expected and actual term.
-     * Helps debugging spec issues related to final implication.
+     * If (1) match fails (2) --log-basic or above is provided and (3) logFailures == true,
+     * print a warning message with expected and actual term. Helps debugging spec issues related to final implication.
+     * <p>
+     * If exception is thrown during matching, print the warning message regardless of logFailures value.
      */
     private BitSet matchAndLog(Term subject, Term pattern, BitSet ruleMask,
                                scala.collection.immutable.List<Pair<Integer, Integer>> path,
                                boolean logFailures) {
-        BitSet result = match(subject, pattern, ruleMask, path, logFailures);
+        BitSet result;
+        try {
+            result = match(subject, pattern, ruleMask, path, logFailures);
+        } catch (KEMException e) {
+            addDetailedStackFrame(e, subject, pattern);
+            throw e;
+            // DISABLE EXCEPTION CHECKSTYLE
+        } catch (RuntimeException | AssertionError | StackOverflowError e) {
+            // ENABLE EXCEPTION CHECKSTYLE
+            KEMException newExc = KEMException.criticalError("", e);
+            addDetailedStackFrame(newExc, subject, pattern);
+            throw newExc;
+        }
 
-        final long lengthThreshold = 10000;
         if (logFailures && global.javaExecutionOptions.logBasic && result.isEmpty()) {
-            String subjectStr = subject.toString();
-            subjectStr = subjectStr.substring(0, (int) Math.min(subjectStr.length(), lengthThreshold));
-            if (subjectStr.length() == lengthThreshold) {
-                subjectStr += "...";
-            }
-            String patternStr = pattern.toString();
-            patternStr = patternStr.substring(0, (int) Math.min(patternStr.length(), lengthThreshold));
-            if (patternStr.length() == lengthThreshold) {
-                patternStr += "...";
-            }
             System.err.format("\nFinal implication term not matching\nActual:\n%s\nExpected:\n%s\n",
-                    subjectStr, patternStr);
+                    getLogString(subject), getLogString(pattern));
         }
         return result;
+    }
+
+    private void addDetailedStackFrame(KEMException e, Term subject, Term pattern) {
+        e.exception.formatTraceFrame("while matching rule pattern:\n    Subject: %s\n    Pattern: %s",
+                getLogString(subject), getLogString(pattern));
+    }
+
+    private String getLogString(Term subject) {
+        final long lengthThreshold = 10000;
+        String subjectStr = subject.toString();
+        subjectStr = subjectStr.substring(0, (int) Math.min(subjectStr.length(), lengthThreshold));
+        if (subjectStr.length() == lengthThreshold) {
+            subjectStr += "...";
+        }
+        return subjectStr;
     }
 
     private BitSet match(Term subject, Term pattern, BitSet ruleMask, scala.collection.immutable.List<Pair<Integer, Integer>> path,
@@ -364,8 +406,10 @@ public class FastRuleMatcher {
         } else if (subject instanceof BuiltinSet && pattern instanceof BuiltinSet) {
             return unifySet((BuiltinSet) subject, (BuiltinSet) pattern, ruleMask, path);
         } else {
-            assert subject instanceof KItem || subject instanceof BuiltinList || subject instanceof Token || subject instanceof BuiltinMap : "unexpected class at matching: " + subject.getClass();
-            assert pattern instanceof KItem || pattern instanceof BuiltinList || pattern instanceof Token : "unexpected class at matching: " + pattern.getClass();
+            assert subject instanceof KItem || subject instanceof BuiltinList || subject instanceof Token ||
+                    subject instanceof BuiltinMap : "unexpected subject class at matching: " + subject.getClass();
+            assert pattern instanceof KItem || pattern instanceof BuiltinList || pattern instanceof Token :
+                    "unexpected pattern class at matching: " + pattern.getClass();
             return empty;
         }
     }
@@ -629,7 +673,8 @@ public class FastRuleMatcher {
         while (!queue.isEmpty()) {
             BuiltinMap candidate = queue.remove();
             for (Rule rule : global.getDefinition().patternFoldingRules()) {
-                for (Substitution<Variable, Term> substitution : PatternMatcher.match(candidate, rule, context)) {
+                for (Substitution<Variable, Term> substitution : PatternMatcher.match(candidate, rule, context,
+                        "unifyMap", 1)) {
                     BuiltinMap result = (BuiltinMap) rule.rightHandSide().substituteAndEvaluate(substitution, context);
                     if (foldedMaps.add(result)) {
                         queue.add(result);
@@ -663,7 +708,16 @@ public class FastRuleMatcher {
     }
 
     private BitSet unifyMap(BuiltinMap map, BuiltinMap otherMap, BitSet ruleMask, scala.collection.immutable.List<Pair<Integer, Integer>> path, boolean logFailures) {
-        assert map.collectionFunctions().isEmpty() && otherMap.collectionFunctions().isEmpty();
+        if (!(map.collectionFunctions().isEmpty() && otherMap.collectionFunctions().isEmpty())) {
+            String mapErrorString = "Unevaluated function symbols in Map unification problem between:\n"
+                                  + "\n"
+                                  + "    " + map.toString() + "\n"
+                                  + "\n"
+                                  + "and:\n"
+                                  + "\n"
+                                  + "    " + otherMap.toString() + "\n";
+            throw KEMException.criticalError(mapErrorString);
+        }
 
         Map<Term, Term> entries = map.getEntries();
         Map<Term, Term> otherEntries = otherMap.getEntries();

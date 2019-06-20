@@ -22,6 +22,10 @@ public class PrintOptions {
         this.color = color;
     }
 
+    public PrintOptions(OutputModes output) {
+        this.output = output;
+    }
+
     //TODO(dwightguth): remove in Guice 4.0
     @Inject
     public PrintOptions(Void v) {
@@ -65,7 +69,7 @@ public class PrintOptions {
     public String outputFile;
 
     @Parameter(names={"--output", "-o"}, converter=OutputModeConverter.class,
-            description="How to display krun results. <mode> is either [pretty|program|kast|binary|json|none].")
+            description="How to display krun results. <mode> is either [pretty|program|kast|binary|json|latex|none].")
     public OutputModes output = OutputModes.PRETTY;
 
     public static class OutputModeConverter extends BaseEnumConverter<OutputModes> {
@@ -94,6 +98,9 @@ public class PrintOptions {
 
     @Parameter(names={"--no-alpha-renaming"}, listConverter=StringListConverter.class, description="KLabels to output as KAST tokens.")
     public boolean noAlphaRenaming = false;
+
+    @Parameter(names={"--restore-original-names"}, listConverter=StringListConverter.class, description="Restore original variable names when provided by attributes.")
+    public boolean restoreOriginalNames = false;
 
     @Parameter(names={"--no-sort-collections"}, listConverter=StringListConverter.class, description="Do not sort collections before printing (for speed).")
     public boolean noSortCollections = false;

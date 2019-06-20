@@ -6,14 +6,25 @@ This is a readme file for the developers.
 # Prerequisites
 
 In short:
+
+On Ubuntu:
+
 ```
 git submodule update --init --recursive
-sudo apt-get install build-essential m4 openjdk-8-jdk libgmp-dev libmpfr-dev pkg-config flex z3 libz3-dev maven opam python3 cmake clang-6.0 clang++-6.0 llvm-6.0 zlib1g-dev bison libboost-test-dev libyaml-cpp-dev libjemalloc-dev
-curl https://sh.rustup.rs -sSf | sh
-source $HOME/.cargo/env
-rustup toolchain install 1.28.0
-rustup default 1.28.0
+sudo apt-get install build-essential m4 openjdk-8-jdk libgmp-dev libmpfr-dev pkg-config flex z3 libz3-dev maven opam python3 cmake gcc clang-6.0 clang++-6.0 lld-6.0 llvm-6.0 llvm-6.0-tools zlib1g-dev bison libboost-test-dev libyaml-dev libjemalloc-dev
+llvm-backend/src/main/native/llvm-backend/install-rust
 curl -sSL https://get.haskellstack.org/ | sh
+```
+
+On Arch (from source):
+
+```
+git submodule update --init --recursive
+sudo pacman -S git maven jdk-openjdk cmake boost libyaml jemalloc clang llvm lld zlib gmp mpfr z3 opam curl stack rustup base-devel base python
+export PATH=$PATH:/usr/bin/core_perl
+llvm-backend/src/main/native/llvm-backend/install-rust
+makepkg
+sudo pacman -U kframework-5.0.0-1-x86_64.pkg.tar.xz
 ```
 
 If you install this list of dependencies, continue directly to the Install section.
@@ -50,14 +61,22 @@ You can test if it works by calling `mvn -version` in a Terminal.
 This will provide the information about the JDK Maven is using, in case
 it is the wrong one.
 
-## Rust 1.28 (and Cargo)
+## Rust 1.33 (and Cargo)
 
-To install, go to https://rustup.rs/ and follow the instructions. Then, once rustup is installed, run:
+To install if you don't already have rustup installed, run:
 ```
-source $HOME/.cargo/env
-rustup toolchain install 1.28.0
-rustup default 1.28.0
+llvm-backend/src/main/native/llvm-backend/install-rust
 ```
+
+If you already have rustup installed, you can build rustc 1.33 from source (https://static.rust-lang.org/dist/rustc-1.33.0-src.tar.gz) and install it via:
+
+```
+./configure --llvm-root=/usr/lib/llvm-6.0 --enable-llvm-link-shared
+./x.py build
+rustup toolchain link rust-1.33.0-llvm-6.0 build/x86_64-*/stage2
+```
+
+We do not currently support any of the default rustup toolchains. Note that you will need at least cargo 0.32.0 (which comes with rust 1.31.0) as your default toolchain to build our rust code.
 
 ## Haskell Stack
 
@@ -108,6 +127,42 @@ You are also encouraged to set the environment variable `MAVEN_OPTS` to `-XX:+Ti
 which will significantly speed up the incremental build process.
 
 After running `mvn package` for the first time, you should run ``k-distribution/target/release/k/bin/k-configure-opam; eval `opam config env` ``. This performs first-time setup of the OCAML backend.
+
+## Installing on fresh Windows Subsystem for Linux
+
+1. Install the Ubuntu package from the Windows Store, which as of now is an alias for the Ubuntu LTS 18.04 package. During installation you will be asked to create a new user. 
+2. Download the latest K distribution for Ubuntu Bionic from https://github.com/kframework/k/releases 
+    to a temporary directory, for example `d:\temp` 
+
+3. Open linux bash. For example by running:
+```
+ubuntu1804
+```
+
+4. Run the following commands:
+
+    `$ sudo apt-get update`
+    
+    `$ cd <download dir>`. In our example download dir is `/mnt/d/temp`
+    
+    `$ sudo apt-get install ./kframework_5.0.0_amd64_bionic.deb`
+        This will install ~1.4GB of dependencies and will take some time.
+        K will be installed to `/usr/lib/kframework`
+
+5. Copy the tutorial to some work directory, for example `/mnt/d/k-tutorial`. Otherwise, you won't be able to run the
+examples from default installation dir if you are not `root`:
+
+```    
+$ cp -R /usr/lib/kframework/tutorial /mnt/d/k-tutorial
+```
+
+6. Now you can try to run some programs:
+
+```bash
+$ cd /mnt/d/k-tutorial/2_languages/1_simple/1_untyped
+$ make kompile
+$ krun tests/diverse/factorial.simple
+```
 
 # IDE Setup
 

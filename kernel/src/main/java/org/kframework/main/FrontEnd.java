@@ -9,6 +9,7 @@ import org.kframework.utils.errorsystem.KExceptionManager;
 import org.kframework.utils.file.FileUtil;
 import org.kframework.utils.file.JarInfo;
 
+import com.google.inject.Provider;
 import com.beust.jcommander.ParameterException;
 
 public abstract class FrontEnd {
@@ -19,7 +20,7 @@ public abstract class FrontEnd {
     private final GlobalOptions globalOptions;
     private final String usage, experimentalUsage;
     private final JarInfo jarInfo;
-    private final FileUtil files;
+    private final Provider<FileUtil> files;
 
     public FrontEnd(
             KExceptionManager kem,
@@ -27,7 +28,7 @@ public abstract class FrontEnd {
             String usage,
             String experimentalUsage,
             JarInfo jarInfo,
-            FileUtil files) {
+            Provider<FileUtil> files) {
         this.kem = kem;
         this.globalOptions = globalOptions;
         this.usage = usage;
@@ -59,17 +60,18 @@ public abstract class FrontEnd {
                 } catch (ParameterException e) {
                     throw KEMException.criticalError(e.getMessage(), e);
                 } finally {
-                    files.deleteTempDir(kem);
+                    files.get().deleteTempDir(kem);
                 }
                 kem.print();
             }
         } catch (KEMException e) {
             // terminated with errors, so we need to return nonzero error code.
             retval = 113;
-            if (globalOptions.debug) {
+            if (globalOptions.debug()) {
                 e.printStackTrace();
+            } else {
+                kem.registerThrown(e);
             }
-            kem.registerThrown(e);
             kem.print();
         }
         return retval;

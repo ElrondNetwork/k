@@ -52,14 +52,16 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
     private final scala.collection.Map<KLabel, scala.collection.Set<Production>> productions;
     private final boolean inferSortChecks;
     private final boolean inferCasts;
+    private final boolean isAnywhere;
     private Set<ParseFailedException> warnings = Sets.newHashSet();
     public VariableTypeInferenceFilter(POSet<Sort> subsorts, scala.collection.Set<Sort> sortSet, scala.collection.Map<
-            KLabel, scala.collection.Set<Production>> productions, boolean inferSortChecks, boolean inferCasts) {
+            KLabel, scala.collection.Set<Production>> productions, boolean inferSortChecks, boolean inferCasts, boolean isAnywhere) {
         this.subsorts = subsorts;
         this.sortSet = sortSet;
         this.productions = productions;
         this.inferSortChecks = inferSortChecks;
         this.inferCasts = inferCasts;
+        this.isAnywhere = isAnywhere;
     }
 
     /** Return the set of all known sorts which are a lower bound on
@@ -147,12 +149,12 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
         }
 
         public boolean isAnyVar() {
-            return var.value().equals(ResolveAnonVar.ANON_VAR.name());
+            return var.value().equals(ResolveAnonVar.ANON_VAR.name()) || var.value().equals(ResolveAnonVar.FRESH_ANON_VAR.name());
         }
     }
 
     private static VarKey getVarKey(Constant c) {
-        if (c.value().equals(ResolveAnonVar.ANON_VAR.name())) {
+        if (c.value().equals(ResolveAnonVar.ANON_VAR.name()) || c.value().equals(ResolveAnonVar.FRESH_ANON_VAR.name())) {
             return new VarKey(c); // wildcard values are compared including location
         } else {
             return new VarKey(Constant.apply(c.value(), c.production(), Optional.empty(), Optional.empty()));
@@ -368,13 +370,16 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
         }
     }
 
-    public static boolean isFunctionRule(TermCons tc) {
-        if (tc.production().sort().name().equals("RuleContent")) {
+    public static boolean isFunctionRule(TermCons tc, boolean isAnywhere) {
+        if ((tc.production().sort().name().equals("#RuleContent") || tc.production().sort().name().equals("#RuleBody")) && !(tc.get(0) instanceof TermCons && isFunctionRule((TermCons)tc.get(0), isAnywhere))) {
             ProductionReference child = (ProductionReference) tc.get(0);
+            if (child.production().klabel().isDefined() && child.production().klabel().get().name().equals("#withConfig")) {
+                child = (ProductionReference)((TermCons)child).get(0);
+            }
             if (child.production().klabel().isDefined() && child.production().klabel().get().equals(KLabels.KREWRITE)) {
                 child = (ProductionReference)((TermCons)child).get(0);
             }
-            return child.production().att().contains(Attribute.FUNCTION_KEY);
+            return child.production().att().contains(Attribute.FUNCTION_KEY) || isAnywhere;
         }
         return false;
     }
@@ -384,8 +389,12 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
         case "#ruleNoConditions":
         case "#ruleRequires":
         case "#ruleEnsures":
-        case "#ruleRequiresEnsures": {
+        case "#ruleRequiresEnsures":
+        case "#withConfig": {
             ProductionReference child = (ProductionReference) tc.get(0);
+            if (child.production().klabel().isDefined() && child.production().klabel().get().name().equals("#withConfig")) {
+                child = (ProductionReference)((TermCons)child).get(0);
+            }
             if (child.production().klabel().isDefined() && child.production().klabel().get().equals(KLabels.KREWRITE)) {
                 child = (ProductionReference)((TermCons)child).get(0);
             }
@@ -416,7 +425,7 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                             || tc.production().klabel().get().name().equals("#InnerCast"))) {
                         Term t = tc.get(0);
                         collector = new CollectVariables2(getSortOfCast(tc), VarType.USER).apply(t)._2();
-                    } else if (tc.production().klabel().isDefined() && isFunctionRule(tc) && j == 0) {
+                    } else if (tc.production().klabel().isDefined() && isFunctionRule(tc, isAnywhere) && j == 0) {
                         Term t = tc.get(0);
                         collector = new CollectVariables2(getSortOfCast(tc), VarType.CONTEXT).apply(t)._2();
                         j++;
@@ -469,7 +478,7 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                             && (tc.production().klabel().get().name().equals("#SyntacticCast")
                             || tc.production().klabel().get().name().startsWith("#SemanticCastTo")
                             || tc.production().klabel().get().name().equals("#InnerCast")
-                            || (isFunctionRule(tc)) && j == 0)) {
+                            || (isFunctionRule(tc, isAnywhere)) && j == 0)) {
                         Term t = tc.get(0);
                         boolean strictSortEquality = tc.production().klabel().get().name().equals("#SyntacticCast") || tc.production().klabel().get().name().equals("#InnerCast");
                         Either<Set<ParseFailedException>, Term> rez = new ApplyTypeCheck2(getSortOfCast(tc), true, strictSortEquality, strictSortEquality && inferSortChecks).apply(t);
@@ -517,7 +526,7 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
             public Either<java.util.Set<ParseFailedException>, Term> apply(Constant c) {
                 if (c.production().sort().equals(Sorts.KVariable())) {
                     Sort declared = decl.get(getVarKey(c));
-                    if (declared != null && !(declared.equals(Sorts.K()) && subsorts.lessThanEq(sort, Sorts.KList()))) { // if the declared/inferred sort is K, make sure it can fit in the context (ex. is not a KLabel)
+                    if (declared != null) {
                         if ((!strictSortEquality && !subsorts.lessThanEq(declared, sort)) || (strictSortEquality && !declared.equals(sort))) {
                             String msg = "Unexpected sort " + declared + " for term " + c.value() + ". Expected " + sort + ".";
                             KException kex = new KException(KException.ExceptionType.ERROR, KException.KExceptionGroup.CRITICAL, msg, c.source().orElse(null), c.location().orElse(null));
@@ -641,7 +650,7 @@ public class VariableTypeInferenceFilter extends SetsGeneralTransformer<ParseFai
                             && (tc.production().klabel().get().name().equals("#SyntacticCast")
                             || tc.production().klabel().get().name().startsWith("#SemanticCastTo")
                             || tc.production().klabel().get().name().equals("#InnerCast"))
-                            || (isFunctionRule(tc) && j == 0)) {
+                            || (isFunctionRule(tc, isAnywhere) && j == 0)) {
                         Term t = tc.get(0);
                         new CollectUndeclaredVariables2(getSortOfCast(tc)).apply(t);
                         j++;
