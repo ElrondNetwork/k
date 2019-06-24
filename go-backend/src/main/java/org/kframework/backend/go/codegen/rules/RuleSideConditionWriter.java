@@ -14,7 +14,7 @@ import org.kframework.kore.KApply;
 import org.kframework.kore.KToken;
 import org.kframework.unparser.ToKast;
 
-public class RuleSideConditionWriter extends RuleRhsWriter {
+public class RuleSideConditionWriter extends RuleRhsWriterBase {
 
     private enum ExpressionType {BOOLEAN, K}
 
@@ -27,6 +27,13 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
                                    TempVarCounters tempVarCounters,
                                    int tabsIndent) {
         super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
+    }
+
+    @Override
+    protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
+        return new RuleSideConditionWriter(data, nameProvider,
+                lhsVars, tempVarCounters,
+                indent);
     }
 
     @Override
@@ -100,9 +107,7 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
 
                     // all evaluations for arg2 have happen in this block,
                     // to avoid executing any of them if arg1 is false
-                    RuleSideConditionWriter arg2Writer = new RuleSideConditionWriter(data, nameProvider,
-                            lhsVars, tempVarCounters,
-                            evalSb.getCurrentIndent());
+                    RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
                     arg2Writer.apply(arg2);
 
                     arg2Writer.writeEvalCalls(evalSb);
@@ -138,9 +143,7 @@ public class RuleSideConditionWriter extends RuleRhsWriter {
 
                 // all evaluations for arg2 have happen in this block,
                 // to avoid executing any of them if arg1 is true
-                RuleSideConditionWriter arg2Writer = new RuleSideConditionWriter(data, nameProvider,
-                        lhsVars, tempVarCounters,
-                        evalSb.getCurrentIndent());
+                RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
                 arg2Writer.apply(k.klist().items().get(1));
 
                 arg2Writer.writeEvalCalls(evalSb);

@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 public class GoStringBuilder {
 
     public static final int FUNCTION_BODY_INDENT = 1;
+    public static final int FUNCTION_MAIN_LOOP_INDENT = 2;
 
     private StringBuilder sb;
     private int tabsIndent = 0; // main indent

@@ -5,6 +5,7 @@ import com.google.common.collect.ComparisonChain;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
@@ -113,10 +114,11 @@ public class StepFunctionGen {
             String funcName = "stepRule" + ruleNum;
 
             sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K) (m.K, error)").beginBlock();
+            sb.appendIndentedLine("matched := false");
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
-                    "step", new FunctionParams(1));
+                    FunctionInfo.systemFunctionInfo("step", 1));
             assert !ruleInfo.alwaysMatches();
 
             sb.appendIndentedLine("return c, noStep");
@@ -130,10 +132,11 @@ public class StepFunctionGen {
             String funcName = "stepLookupRule" + ruleNum;
 
             sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+            sb.appendIndentedLine("matched := false");
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
-                    "stepLookups", new FunctionParams(1));
+                    FunctionInfo.systemFunctionInfo("stepLookups", 1));
             assert !ruleInfo.alwaysMatches();
 
             sb.appendIndentedLine("return c, noStep");

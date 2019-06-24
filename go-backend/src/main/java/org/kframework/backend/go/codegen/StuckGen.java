@@ -4,6 +4,7 @@ package org.kframework.backend.go.codegen;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
@@ -33,20 +34,22 @@ public class StuckGen {
         sb.append(")\n\n");
 
         sb.append("func (i *Interpreter) makeStuck(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.appendIndentedLine("matched := false");
         if (data.makeStuck != null) {
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     data.makeStuck, sb, RuleType.REGULAR, stuckRuleNumber,
-                    "makeStuck", new FunctionParams(1));
+                    FunctionInfo.systemFunctionInfo("makeStuck", 1));
             assert !ruleInfo.alwaysMatches();
         }
         sb.appendIndentedLine("return c, nil");
         sb.endOneBlock().newLine();
 
         sb.append("func (i *Interpreter) makeUnstuck(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.appendIndentedLine("matched := false");
         if (data.makeUnstuck != null) {
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     data.makeUnstuck, sb, RuleType.REGULAR, stuckRuleNumber,
-                    "makeUnstuck", new FunctionParams(1));
+                    FunctionInfo.systemFunctionInfo("makeUnstuck", 1));
             assert !ruleInfo.alwaysMatches();
         }
         sb.appendIndentedLine("return c, nil");

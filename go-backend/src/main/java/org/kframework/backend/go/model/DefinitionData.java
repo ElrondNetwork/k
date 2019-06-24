@@ -18,7 +18,7 @@ public class DefinitionData {
     public final Set<KLabel> anywhereKLabels;
     public final SetMultimap<KLabel, Rule> functionRules;
     public final ListMultimap<KLabel, Rule> anywhereRules;
-    public final Map<KLabel, FunctionParams> functionParams;
+    public final Map<KLabel, FunctionInfo> functionInfoMap;
     public final KLabel topCellInitializer;
     public final Map<KLabel, KLabel> collectionFor;
     public final ConstantKTokens constants;
@@ -31,7 +31,7 @@ public class DefinitionData {
             Set<KLabel> anywhereKLabels,
             SetMultimap<KLabel, Rule> functionRules,
             ListMultimap<KLabel, Rule> anywhereRules,
-            Map<KLabel, FunctionParams> functionParams,
+            Map<KLabel, FunctionInfo> functionInfoMap,
             KLabel topCellInitializer,
             Map<KLabel, KLabel> collectionFor,
             ConstantKTokens constants,
@@ -42,7 +42,7 @@ public class DefinitionData {
         this.anywhereKLabels = anywhereKLabels;
         this.functionRules = functionRules;
         this.anywhereRules = anywhereRules;
-        this.functionParams = functionParams;
+        this.functionInfoMap = functionInfoMap;
         this.topCellInitializer = topCellInitializer;
         this.collectionFor = collectionFor;
         this.constants = constants;

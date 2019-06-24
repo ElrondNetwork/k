@@ -18,6 +18,7 @@ import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.ConstantKTokens;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
+import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
@@ -111,7 +112,7 @@ public class DefinitionToGo {
         return new DefinitionData(mainModule,
                 functions, anywhereKLabels,
                 functionRules, anywhereRules,
-                functionParams, topCellInitializer,
+                functionInfoMap, topCellInitializer,
                 collectionFor, constants,
                 extHookManager,
                 makeStuck, makeUnstuck);
@@ -181,11 +182,24 @@ public class DefinitionToGo {
         klabelRuleMap.putAll(anywhereRules);
 
         // prepare arity/params
-        functionParams = new HashMap<>();
-        for (KLabel label : Sets.union(functions, anywhereKLabels)) {
+        functionInfoMap = new HashMap<>();
+        for (KLabel label : functions) {
             int arity = getArity(label);
-            FunctionParams functionVars = new FunctionParams(arity);
-            functionParams.put(label, functionVars);
+            String functionName;
+            boolean isMemo = mainModule.attributesFor().apply(label).contains("memo");
+            if (isMemo) {
+                functionName = nameProvider.memoFunctionName(label);
+            } else {
+                functionName = nameProvider.evalFunctionName(label);
+            }
+            FunctionInfo functionInfo = FunctionInfo.definitionFunctionInfo(label, functionName, isMemo, arity);
+            functionInfoMap.put(label, functionInfo);
+        }
+        for (KLabel label : anywhereKLabels) {
+            int arity = getArity(label);
+            String functionName = nameProvider.evalFunctionName(label);
+            FunctionInfo functionInfo = FunctionInfo.definitionFunctionInfo(label, functionName, false, arity);
+            functionInfoMap.put(label, functionInfo);
         }
 
         ruleWriter = new RuleWriter(this.definitionData(), nameProvider);
@@ -196,7 +210,7 @@ public class DefinitionToGo {
     Set<KLabel> functions;
     Set<KLabel> anywhereKLabels;
     SetMultimap<KLabel, Rule> klabelRuleMap;
-    Map<KLabel, FunctionParams> functionParams;
+    Map<KLabel, FunctionInfo> functionInfoMap;
 
     public String definition() {
         DirectedGraph<KLabel, Object> dependencies = new DirectedSparseGraph<>();
@@ -220,22 +234,19 @@ public class DefinitionToGo {
         for (KLabel functionLabel : Sets.union(functions, anywhereKLabels)) {
             String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
             if (functions.contains(functionLabel)) {
-                FunctionParams functionVars = functionParams.get(functionLabel);
-
-                String functionName;
-                if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    functionName = nameProvider.memoFunctionName(functionLabel);
-                } else {
-                    functionName = nameProvider.evalFunctionName(functionLabel);
-                }
+                FunctionInfo functionInfo = functionInfoMap.get(functionLabel);
 
                 assert sb.getCurrentIndent() == 0;
 
                 // start typing
                 sb.append("func (i *Interpreter) ");
-                sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+                sb.append(functionInfo.goName);
+                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
+
+                // loop needed for tail recursion
+                sb.writeIndent().append("for true").beginBlock();
+                sb.appendIndentedLine("matched := false");
 
                 // if we print a return under no if, all code that follows is unreachable
                 boolean unreachableCode = false;
@@ -262,7 +273,7 @@ public class DefinitionToGo {
 
                     sb.writeIndent().append("if hookRes, hookErr := ");
                     sb.append(hookCall).append("(");
-                    sb.append(functionVars.callParameters());
+                    sb.append(functionInfo.arguments.callParameters());
                     sb.append("lbl, sort, config");
                     if (!isExternalHook) {
                         sb.append(", i");
@@ -303,6 +314,7 @@ public class DefinitionToGo {
                                 sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
                                 sb.append(" */").newLine();
                             } else {
+                                sb.writeIndent().append("if !matched").beginBlock();
                                 sb.writeIndent().append("// predicate rule: ").append(sortHook).newLine();
                                 sb.writeIndent();
                                 sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
@@ -326,7 +338,7 @@ public class DefinitionToGo {
                         sb.newLine();
                     } else {
                         int ruleNum = ruleCounter.consumeRuleIndex();
-                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleNum, functionName, functionVars);
+                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleNum, functionInfo);
                         if (ruleInfo.alwaysMatches()) {
                             unreachableCode = true;
                         }
@@ -335,18 +347,21 @@ public class DefinitionToGo {
 
                 if (!unreachableCode) {
                     // stuck!
-                    sb.writeIndent().append("return m.NoResult, &stuckError{ms: i.Model, funcName: \"").append(functionName).append("\", args: ");
-                    if (functionVars.arity() == 0) {
+                    sb.writeIndent().append("if !matched").beginBlock();
+                    sb.writeIndent().append("return m.NoResult, &stuckError{ms: i.Model, funcName: \"").append(functionInfo.goName).append("\", args: ");
+                    if (functionInfo.arguments.arity() == 0) {
                         sb.append("nil");
                     } else {
                         sb.append("[]m.K{");
-                        sb.append(functionVars.paramNamesSeparatedByComma());
+                        sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
                         sb.append("}");
                     }
                     sb.append("}").newLine();
                 }
 
-                sb.endAllBlocks(0);
+                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
+                sb.appendIndentedLine("return nil, nil");
+                sb.endOneBlock(); // func
                 sb.newLine();
 
                 // not yet sure if we're keeping these
@@ -355,41 +370,46 @@ public class DefinitionToGo {
                     sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
                     sb.append("(m.InternedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    writeMemoTableAndEval(sb, functionLabel, functionVars);
+                    writeMemoTableAndEval(sb, functionInfo);
                 }
             } else if (anywhereKLabels.contains(functionLabel)) {
-                FunctionParams functionVars = functionParams.get(functionLabel);
-                String functionName = nameProvider.evalFunctionName(functionLabel);
+                FunctionInfo functionInfo = functionInfoMap.get(functionLabel);
 
                 assert sb.getCurrentIndent() == 0;
 
                 // start typing
                 sb.appendIndentedLine("// ANYWHERE");
                 sb.append("func (i *Interpreter) ");
-                sb.append(functionName);
-                sb.append("(").append(functionVars.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+                sb.append(functionInfo.goName);
+                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
                 sb.beginBlock();
+
+                // loop needed for tail recursion
+                sb.writeIndent().append("for true").beginBlock();
+                sb.appendIndentedLine("matched := false");
 
                 // main!
                 List<Rule> rules = anywhereRules.get(functionLabel);
                 for (Rule r : rules) {
                     int ruleNum = ruleCounter.consumeRuleIndex();
-                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleNum, functionName, functionVars);
+                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleNum, functionInfo);
                 }
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
                 sb.writeIndent().append("return &m.KApply{Label: lbl, List: ");
-                if (functionVars.arity() == 0) {
+                if (functionInfo.arguments.arity() == 0) {
                     sb.append("nil");
                 } else {
                     sb.append("[]m.K{");
-                    sb.append(functionVars.paramNamesSeparatedByComma());
+                    sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
                     sb.append("}");
                 }
                 sb.append("}, nil").newLine();
 
-                sb.endAllBlocks(0);
+                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
+                sb.appendIndentedLine("return nil, nil");
+                sb.endOneBlock(); // func
                 sb.newLine();
             }
         }
@@ -397,11 +417,11 @@ public class DefinitionToGo {
         return sb.toString();
     }
 
-    private void writeMemoTableAndEval(GoStringBuilder sb, KLabel functionLabel, FunctionParams functionArgs) {
+    private void writeMemoTableAndEval(GoStringBuilder sb, FunctionInfo functionInfo) {
         // table declaration
-        String tableName = nameProvider.memoTableName(functionLabel);
-        int arity = functionArgs.arity();
-        String evalFunctionName = nameProvider.evalFunctionName(functionLabel);
+        String tableName = nameProvider.memoTableName(functionInfo.label);
+        int arity = functionInfo.arguments.arity();
+        String evalFunctionName = nameProvider.evalFunctionName(functionInfo.label);
         sb.writeIndent().append("var ").append(tableName).append(" = make(map[");
         switch (arity) {
         case 0:
@@ -416,7 +436,7 @@ public class DefinitionToGo {
         // eval function
         sb.append("func (i *Interpreter) ");
         sb.append(evalFunctionName);
-        sb.append("(").append(functionArgs.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+        sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
         sb.beginBlock();
 
         switch (arity) {
@@ -424,7 +444,7 @@ public class DefinitionToGo {
             sb.appendIndentedLine("memoKey, _ := m.MapKey(m.InternedBottom)");
             break;
         case 1:
-            sb.appendIndentedLine("memoKey, _ := m.MapKey(", functionArgs.varName(0), ")");
+            sb.appendIndentedLine("memoKey, _ := m.MapKey(", functionInfo.arguments.varName(0), ")");
             break;
         default:
             for (int i = 1; i <= arity; i++) {
@@ -433,8 +453,8 @@ public class DefinitionToGo {
                 sb.writeIndent().append("if !ok" + i).beginBlock();
                 sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
                 sb.writeIndent().append("return i.");
-                sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
-                sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
+                sb.append(nameProvider.memoFunctionName(functionInfo.label)).append("(");
+                sb.append(functionInfo.arguments.callParameters()).append("config, guard)").newLine();
                 sb.endOneBlock();
             }
             sb.writeIndent().append("memoKey :=[").append(arity).append("]m.KMapKey{");
@@ -453,8 +473,8 @@ public class DefinitionToGo {
         sb.appendIndentedLine("return result, nil");
         sb.endOneBlock();
         sb.writeIndent().append("computation, err := i.");
-        sb.append(nameProvider.memoFunctionName(functionLabel)).append("(");
-        sb.append(functionArgs.callParameters()).append("config, guard)").newLine();
+        sb.append(nameProvider.memoFunctionName(functionInfo.label)).append("(");
+        sb.append(functionInfo.arguments.callParameters()).append("config, guard)").newLine();
         sb.writeIndent().append("if err != nil").beginBlock();
         sb.appendIndentedLine("return m.NoResult, err");
         sb.endOneBlock();

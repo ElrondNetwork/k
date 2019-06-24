@@ -276,7 +276,7 @@ public class RuleLhsWriter extends VisitK {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
         sb.append("if i.Model.Equals(").append(consumeSubject()).append(", ");
-        RuleRhsWriter.appendKTokenRepresentation(sb, k, data, nameProvider);
+        RuleRhsWriterBase.appendKTokenRepresentation(sb, k, data, nameProvider);
         sb.append(")");
         sb.beginBlock(ToKast.apply(k));
     }

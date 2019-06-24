@@ -4,6 +4,7 @@ package org.kframework.backend.go.codegen.rules;
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
 import org.kframework.backend.go.model.RuleInfo;
@@ -45,11 +46,13 @@ public class RuleWriter {
     }
 
     public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, int ruleNum,
-                              String functionName, FunctionParams functionVars) {
+                              FunctionInfo functionInfo) {
         try {
+            int ruleIndent = sb.getCurrentIndent();
+
             sb.appendIndentedLine("// rule #" + ruleNum);
             appendSourceComment(sb, r);
-            sb.append("\t// ");
+            sb.writeIndent().append("// ");
             GoStringUtil.appendRuleComment(sb, r);
             sb.newLine();
 
@@ -81,14 +84,17 @@ public class RuleWriter {
             // also collect vars from lookups
             new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
 
+            // if !matched
+            sb.writeIndent().append("if !matched").beginBlock();
+
             // output main LHS
             sb.writeIndent().append("// LHS").newLine();
             Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
-            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, functionVars,
+            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, functionInfo.arguments,
                     accumLhsVars.vars(),
                     accumRhsVars.vars(),
                     alreadySeenLhsVariables,
-                    true);
+                    false);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) left;
                 lhsWriter.applyTuple(kapp.klist().items());
@@ -98,7 +104,7 @@ public class RuleWriter {
 
             // output lookups
             writeLookups(sb, ruleNum,
-                    functionName, functionVars,
+                    functionInfo,
                     lookups,
                     accumLhsVars.vars(),
                     accumRhsVars.vars(),
@@ -127,16 +133,16 @@ public class RuleWriter {
             traceLine(sb, type, ruleNum, r);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
                     accumLhsVars.vars(), tempVarCounters,
-                    sb.getCurrentIndent(), 0);
+                    sb.getCurrentIndent(),
+                    true, functionInfo);
             rhsWriter.apply(right);
             rhsWriter.writeEvalCalls(sb);
             sb.writeIndent();
-            sb.append("return ");
             rhsWriter.writeReturnValue(sb);
-            sb.append(", nil").newLine();
+            sb.newLine();
 
             // done
-            sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
+            sb.endAllBlocks(ruleIndent);
             sb.newLine();
 
             // return some info regarding the written rule
@@ -152,7 +158,7 @@ public class RuleWriter {
     }
 
     private void writeLookups(GoStringBuilder sb, int ruleNum,
-                              String functionName, FunctionParams functionArgs,
+                              FunctionInfo functionInfo,
                               List<Lookup> lookups,
                               RuleVars lhsVars, RuleVars rhsVars,
                               Set<KVariable> alreadySeenLhsVariables) {
@@ -164,7 +170,7 @@ public class RuleWriter {
 
         int lookupIndex = 0;
         for (Lookup lookup : lookups) {
-            String reapply = "return i." + functionName + "(" + functionArgs.callParameters() + "config, " + ruleNum + ") // reapply";
+            String reapply = "return i." + functionInfo.goName + "(" + functionInfo.arguments.callParameters() + "config, " + ruleNum + ") // reapply";
 
             sb.appendIndentedLine("// lookup:", lookup.comment());
 
@@ -174,7 +180,8 @@ public class RuleWriter {
                     false);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
                     rhsVars, tempVarCounters,
-                    sb.getCurrentIndent(), 0);
+                    sb.getCurrentIndent(),
+                    false, functionInfo);
             rhsWriter.apply(lookup.getRhs());
 
             switch (lookup.getType()) {
@@ -237,7 +244,7 @@ public class RuleWriter {
             GoStringBuilder sb, Lookup lookup,
             String varPrefix, String expectedKType,
             String reapply,
-            RuleLhsWriter lhsWriter, RuleRhsWriter rhsWriter) {
+            RuleLhsWriter lhsWriter, RuleRhsWriterBase rhsWriter) {
 
         String setChoiceVar = varPrefix + "Eval";
         String setVar = varPrefix + "Obj";

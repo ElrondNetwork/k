@@ -16,7 +16,7 @@ import org.kframework.kore.KToken;
  * Old version of the `requires` writer. It lacks short-circuited execution of && and ||,
  * it computes everything every time.
  */
-public class RuleSideConditionWriterEager extends RuleRhsWriter {
+public class RuleSideConditionWriterEager extends RuleRhsWriterBase {
 
     private enum ExpressionType {BOOLEAN, K}
 
@@ -29,6 +29,13 @@ public class RuleSideConditionWriterEager extends RuleRhsWriter {
                                         TempVarCounters tempVarCounters,
                                         int tabsIndent) {
         super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
+    }
+
+    @Override
+    protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
+        return new RuleSideConditionWriterEager(data, nameProvider,
+                lhsVars, tempVarCounters,
+                indent);
     }
 
     @Override

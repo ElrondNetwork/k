@@ -1,12 +1,13 @@
 // Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.model;
 
+import org.kframework.kore.KLabel;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
 public class FunctionParams {
-
     private static final String EVAL_ARG_NAME = "c";
     private final String[] varNames;
 
