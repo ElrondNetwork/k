@@ -34,8 +34,9 @@ public class StuckGen {
         sb.append(")\n\n");
 
         sb.append("func (i *Interpreter) makeStuck(c m.K, config m.K) (m.K, error)").beginBlock();
-        sb.appendIndentedLine("matched := false");
+
         if (data.makeStuck != null) {
+            sb.appendIndentedLine("matched := false");
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     data.makeStuck, sb, RuleType.REGULAR, stuckRuleNumber,
                     FunctionInfo.systemFunctionInfo("makeStuck", 1));
@@ -45,8 +46,9 @@ public class StuckGen {
         sb.endOneBlock().newLine();
 
         sb.append("func (i *Interpreter) makeUnstuck(c m.K, config m.K) (m.K, error)").beginBlock();
-        sb.appendIndentedLine("matched := false");
+
         if (data.makeUnstuck != null) {
+            sb.appendIndentedLine("matched := false");
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     data.makeUnstuck, sb, RuleType.REGULAR, stuckRuleNumber,
                     FunctionInfo.systemFunctionInfo("makeUnstuck", 1));
