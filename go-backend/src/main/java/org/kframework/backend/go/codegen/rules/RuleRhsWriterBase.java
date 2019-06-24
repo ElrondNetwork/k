@@ -129,57 +129,30 @@ public abstract class RuleRhsWriterBase extends VisitK {
         GoStringBuilder backupSb = currentSb;
         currentSb = evalSb; // we trick all nodes below to output to the eval call instead of the return by changing the string builder
 
-        String comment = ToKast.apply(k);
-
         String hook = data.mainModule.attributesFor().apply(k.klabel()).<String>getOptional(Attribute.HOOK_KEY).orElse("");
-        if (hook.equals("KEQUAL.ite")) {
-            // if-then-else hook
-            // if arg0 { arg1 } else { arg2 }
-            // optimization aside, it is important that we avoid evaluating the branch we don't need
-            // because there are cases when evaluating this branch causes the entire execution to fail
-            assert k.klist().items().size() == 3;
-
-            // arg0 (the condition) is treated normally
-            evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", comment);
-            evalSb.writeIndent().append("if m.IsTrue(");
-            apply(k.klist().items().get(0)); // 1st argument, the condition
-            evalSb.append(")").beginBlock("rhs if-then-else");
-
-            // we separate the evaluation of arg1 from the rest
-            // and place its entire evaluation tree in the if block
-            // we need a new writer to avoid mixing arg1's evalCalls with the current ones
-            RuleRhsWriterBase ifBranchWriter = newInstanceWithSameConfig(evalSb.getCurrentIndent());
-            ifBranchWriter.apply(k.klist().items().get(1));
-
-            ifBranchWriter.writeEvalCalls(evalSb);
-            evalSb.writeIndent().append(evalVarName).append(" = ");
-            ifBranchWriter.writeReturnValue(evalSb);
-
-            // } else {
-            evalSb.newLine().endOneBlockNoNewline().append(" else").beginBlock();
-
-            // we separate the evaluation of arg2 from the rest
-            // and place its entire evaluation tree in the else block
-            // we need a new writer to avoid mixing arg2's evalCalls with the current ones
-            RuleRhsWriterBase elseBranchWriter = newInstanceWithSameConfig(evalSb.getCurrentIndent());
-            elseBranchWriter.apply(k.klist().items().get(2));
-
-            elseBranchWriter.writeEvalCalls(evalSb);
-            evalSb.writeIndent().append(evalVarName).append(" = ");
-            elseBranchWriter.writeReturnValue(evalSb);
-
-            // }
-            evalSb.newLine().endOneBlock();
-        } else {
-            // regular eval
+        switch (hook) {
+        case "KEQUAL.ite":
+            shortCircuitedIfThenElse(k, evalVarName, evalSb);
+            break;
+        case "BOOL.and":
+        case "BOOL.andThen":
+            shortCircuitedAnd(k, evalVarName, evalSb);
+            break;
+        case "BOOL.or":
+        case "BOOL.orElse":
+            shortCircuitedOr(k, evalVarName, evalSb);
+            break;
+        default:
+            // no hook
+            // regular eval"KEQUAL.ite"
             // evalX, errX := func <funcName> (...)
             evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
             evalSb.append("i.");
             evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
             if (k.items().size() == 0) { // call parameters
-                evalSb.append("(config, -1) // ").append(comment).newLine();
+                evalSb.append("(config, -1) // ").append(ToKast.apply(k)).newLine();
             } else {
-                evalSb.append("( // ").append(comment);
+                evalSb.append("( // ").append(ToKast.apply(k));
                 evalSb.increaseIndent();
                 for (K item : k.items()) {
                     newlineNext = true;
@@ -193,11 +166,108 @@ public abstract class RuleRhsWriterBase extends VisitK {
             evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
             evalSb.writeIndent().append("return m.NoResult, ").append(errVarName).newLine();
             evalSb.endOneBlock();
+            break;
         }
 
         evalCalls.add(evalSb.toString());
         assert currentSb == evalSb;
         currentSb = backupSb; // restore
+    }
+
+    private void shortCircuitedIfThenElse(KApply k, String evalVarName, GoStringBuilder evalSb) {
+        // if-then-else hook
+        // if arg0 { arg1 } else { arg2 }
+        // optimization aside, it is important that we avoid evaluating the branch we don't need
+        // because there are cases when evaluating this branch causes the entire execution to fail
+        assert k.klist().items().size() == 3;
+
+        // arg0 (the condition) is treated normally
+        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.writeIndent().append("if m.IsTrue(");
+        apply(k.klist().items().get(0)); // 1st argument, the condition
+        evalSb.append(")").beginBlock("rhs if-then-else");
+
+        // we separate the evaluation of arg1 from the rest
+        // and place its entire evaluation tree in the if block
+        // we need a new writer to avoid mixing arg1's evalCalls with the current ones
+        RuleRhsWriterBase ifBranchWriter = newInstanceWithSameConfig(evalSb.getCurrentIndent());
+        ifBranchWriter.apply(k.klist().items().get(1));
+
+        ifBranchWriter.writeEvalCalls(evalSb);
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        ifBranchWriter.writeReturnValue(evalSb);
+
+        // } else {
+        evalSb.newLine().endOneBlockNoNewline().append(" else").beginBlock();
+
+        // we separate the evaluation of arg2 from the rest
+        // and place its entire evaluation tree in the else block
+        // we need a new writer to avoid mixing arg2's evalCalls with the current ones
+        RuleRhsWriterBase elseBranchWriter = newInstanceWithSameConfig(evalSb.getCurrentIndent());
+        elseBranchWriter.apply(k.klist().items().get(2));
+
+        elseBranchWriter.writeEvalCalls(evalSb);
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        elseBranchWriter.writeReturnValue(evalSb);
+
+        // }
+        evalSb.newLine().endOneBlock();
+    }
+
+    private void shortCircuitedAnd(KApply k, String evalVarName, GoStringBuilder evalSb) {
+        // and hook, implemented as:
+        // result = arg1
+        // if result {
+        //   result = arg2
+        // }
+        // optimization aside, it is important that we avoid to unnecessarily evaluate the second argument
+        // because there are cases when evaluating it causes the entire execution to fail
+        assert k.klist().items().size() == 2;
+
+        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        apply(k.klist().items().get(0));
+        evalSb.newLine();
+        evalSb.writeIndent().append("if m.IsTrue(").append(evalVarName).append(")").beginBlock();
+
+        // all evaluations for arg2 need to happen in this block,
+        // to avoid executing any of them if arg1 is false
+        RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
+        arg2Writer.apply(k.klist().items().get(1));
+
+        arg2Writer.writeEvalCalls(evalSb);
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        arg2Writer.writeReturnValue(evalSb);
+        evalSb.newLine();
+        evalSb.endOneBlock();
+    }
+
+    private void shortCircuitedOr(KApply k, String evalVarName, GoStringBuilder evalSb) {
+        // or hook, implemented as:
+        // result = arg1
+        // if !result {
+        //   result = arg2
+        // }
+        // optimization aside, it is important that we avoid to unnecessarily evaluate the second argument
+        // because there are cases when evaluating it causes the entire execution to fail
+        assert k.klist().items().size() == 2;
+
+        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        apply(k.klist().items().get(0));
+        evalSb.newLine();
+        evalSb.writeIndent().append("if !m.IsTrue(").append(evalVarName).append(")").beginBlock();
+
+        // all evaluations for arg2 need to happen in this block,
+        // to avoid executing any of them if arg1 is false
+        RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
+        arg2Writer.apply(k.klist().items().get(1));
+
+        arg2Writer.writeEvalCalls(evalSb);
+        evalSb.writeIndent().append(evalVarName).append(" = ");
+        arg2Writer.writeReturnValue(evalSb);
+        evalSb.newLine();
+        evalSb.endOneBlock();
     }
 
     @Override

@@ -105,7 +105,7 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                     evalSb.newLine();
                     evalSb.writeIndent().append("if ").append(andVarName).beginBlock();
 
-                    // all evaluations for arg2 have happen in this block,
+                    // all evaluations for arg2 need to happen in this block,
                     // to avoid executing any of them if arg1 is false
                     RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
                     arg2Writer.apply(arg2);
