@@ -69,22 +69,22 @@ func (t *tracePrettyDebug) closeTrace() {
 	t.currentFile.Close()
 }
 
-func (t *tracePrettyDebug) traceInitialState(state m.K) {
+func (t *tracePrettyDebug) traceInitialState(state m.KReference) {
 	t.fileWriter.WriteString("initial state:\n\n")
 	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(state))
 }
 
-func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.K) {
+func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.KReference) {
 	t.newTraceFile(fmt.Sprintf("%s_step%d.log", t.dirName, stepNr))
 	t.fileWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
 }
 
-func (t *tracePrettyDebug) traceStepEnd(stepNr int, currentState m.K) {
+func (t *tracePrettyDebug) traceStepEnd(stepNr int, currentState m.KReference) {
 	t.fileWriter.WriteString(fmt.Sprintf("\nstep #%d end; current state:\n\n", stepNr))
 	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(currentState))
 }
 
-func (t *tracePrettyDebug) traceNoStep(stepNr int, currentState m.K) {
+func (t *tracePrettyDebug) traceNoStep(stepNr int, currentState m.KReference) {
 	t.fileWriter.WriteString(fmt.Sprintf("\nstep #%d end, no more steps\n\n", stepNr))
 	t.fileWriter.WriteString(t.interpreter.Model.PrettyPrint(currentState))
 }

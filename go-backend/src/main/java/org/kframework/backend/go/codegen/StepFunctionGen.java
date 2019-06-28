@@ -113,7 +113,7 @@ public class StepFunctionGen {
 
             String funcName = "stepRule" + ruleNum;
 
-            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K) (m.K, error)").beginBlock();
+            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
             sb.appendIndentedLine("matched := false");
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
@@ -131,7 +131,7 @@ public class StepFunctionGen {
 
             String funcName = "stepLookupRule" + ruleNum;
 
-            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
+            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
             sb.appendIndentedLine("matched := false");
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
@@ -145,9 +145,9 @@ public class StepFunctionGen {
     }
 
     private void writeStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func (i *Interpreter) step(c m.K) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
         sb.writeIndent().append("config := c").newLine();
-        sb.appendIndentedLine("var result m.K");
+        sb.appendIndentedLine("var result m.KReference");
         sb.appendIndentedLine("var err error");
         for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
             int ruleNum = entry.getKey();
@@ -166,8 +166,8 @@ public class StepFunctionGen {
     }
 
     private void writeLookupsStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func (i *Interpreter) stepLookups(c m.K, config m.K, guard int) (m.K, error)").beginBlock();
-        sb.appendIndentedLine("var result m.K");
+        sb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
+        sb.appendIndentedLine("var result m.KReference");
         sb.appendIndentedLine("var err error");
         for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
             int ruleNum = entry.getKey();

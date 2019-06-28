@@ -7,12 +7,40 @@ import (
 	"strings"
 )
 
-
-// KPrint ... returns a standard representation of a K item
-func (ms *ModelState) KPrint(k K) string {
+// KPrint returns a standard representation of a K item
+func (ms *ModelState) KPrint(ref KReference) string {
 	var sb strings.Builder
-	k.kprint(ms, &sb)
+	ms.kprintToStringBuilder(&sb, ref)
 	return sb.String()
+}
+
+func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference) {
+	switch ref.refType {
+	case boolRef:
+		kprintKToken(sb, SortBool, fmt.Sprintf("%t", IsTrue(ref)), false)
+	case bottomRef:
+		kprintKApply(ms, sb, LblXhashBottom, []KReference{})
+	case emptyKseqRef:
+		sb.WriteString(".K")
+	case nonEmptyKseqRef:
+		ks := ms.KSequenceToSlice(ref)
+		if len(ks) == 0 {
+			panic("K sequences of length 0 should have type emptyKseqRef, not nonEmptyKseqRef")
+		} else if len(ks) == 1 {
+			ms.kprintToStringBuilder(sb, ks[0])
+		} else {
+			for i, child := range ks {
+				ms.kprintToStringBuilder(sb, child)
+				if i < len(ks)-1 {
+					sb.WriteString(" ~> ")
+				}
+			}
+		}
+	default:
+		// object types
+		obj := ms.getObject(ref)
+		obj.kprint(ms, sb)
+	}
 }
 
 func kprintKLabel(sb *strings.Builder, klabel KLabel) {
@@ -21,15 +49,15 @@ func kprintKLabel(sb *strings.Builder, klabel KLabel) {
 	sb.WriteString("`")
 }
 
-func kprintKApply(ms *ModelState, sb *strings.Builder, label KLabel, children []K) {
+func kprintKApply(ms *ModelState, sb *strings.Builder, label KLabel, children []KReference) {
 	kprintKLabel(sb, label)
 	sb.WriteString("(")
 
 	if len(children) == 0 {
 		sb.WriteString(".KList")
 	} else {
-		for i, childk := range children {
-			childk.kprint(ms, sb)
+		for i, child := range children {
+			ms.kprintToStringBuilder(sb, child)
 			if i < len(children)-1 {
 				sb.WriteString(", ")
 			}
@@ -72,25 +100,25 @@ func (k *KVariable) kprint(ms *ModelState, sb *strings.Builder) {
 
 func (k *Map) kprint(ms *ModelState, sb *strings.Builder) {
 	toK := k.collectionsToK(ms)
-	toK.kprint(ms, sb)
+	ms.kprintToStringBuilder(sb, toK)
 }
 
 func (k *List) kprint(ms *ModelState, sb *strings.Builder) {
 	toK := k.collectionsToK(ms)
-	toK.kprint(ms, sb)
+	ms.kprintToStringBuilder(sb, toK)
 }
 
 func (k *Set) kprint(ms *ModelState, sb *strings.Builder) {
 	toK := k.collectionsToK(ms)
-	toK.kprint(ms, sb)
+	ms.kprintToStringBuilder(sb, toK)
 }
 
 func (k *Array) kprint(ms *ModelState, sb *strings.Builder) {
 	toK := k.collectionsToK(ms)
-	toK.kprint(ms, sb)
+	ms.kprintToStringBuilder(sb, toK)
 }
 
-func (k *Int) kprint(ms *ModelState, sb *strings.Builder) {
+func (k *BigInt) kprint(ms *ModelState, sb *strings.Builder) {
 	kprintKToken(sb, SortInt, k.Value.String(), false)
 }
 
@@ -112,28 +140,4 @@ func (k *StringBuffer) kprint(ms *ModelState, sb *strings.Builder) {
 
 func (k *Bytes) kprint(ms *ModelState, sb *strings.Builder) {
 	kprintKToken(sb, SortBytes, string(k.Value), true)
-}
-
-func (k *Bool) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, SortBool, fmt.Sprintf("%t", k.Value), false)
-}
-
-func (k *Bottom) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKApply(ms, sb, LblXhashBottom, []K{})
-}
-
-func (k KSequence) kprint(ms *ModelState, sb *strings.Builder) {
-	ks := ms.KSequenceToSlice(k)
-	if len(ks) == 0 {
-		sb.WriteString(".K")
-	} else if len(ks) == 1 {
-		ks[0].kprint(ms, sb)
-	} else {
-		for i, childk := range ks {
-			childk.kprint(ms, sb)
-			if i < len(ks)-1 {
-				sb.WriteString(" ~> ")
-			}
-		}
-	}
 }

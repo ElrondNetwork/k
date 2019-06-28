@@ -1,4 +1,7 @@
-%COMMENT%
+%COMMENT%type ksequenceContainer struct {
+	firstKsHead int
+	slice       []KReference
+}
 
 package %PACKAGE_MODEL%
 
@@ -8,20 +11,13 @@ import (
 )
 
 // K defines a K entity
-type K interface {
-	equals(ms *ModelState, other K) bool
-	deepCopy(ms *ModelState) K
+type KObject interface {
+	equals(ms *ModelState, other KObject) bool
+	deepCopy(ms *ModelState) KReference
 	structPrint(ms *ModelState, sb *strings.Builder, indent int)
 	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
 	kprint(ms *ModelState, sb *strings.Builder)
-	collectionsToK(ms *ModelState) K
-}
-
-// KSequence ... a sequence of K items
-// see util_kseq.go for implementation details
-type KSequence struct {
-	sequenceIndex int
-	headIndex     int
+	collectionsToK(ms *ModelState) KReference
 }
 
 // KItem ...
@@ -31,7 +27,7 @@ type KItem interface {
 // KApply ... a type of KItem, TODO: document
 type KApply struct {
 	Label KLabel
-	List  []K
+	List  []KReference
 }
 
 // InjectedKLabel ... a type of KItem, TODO: document

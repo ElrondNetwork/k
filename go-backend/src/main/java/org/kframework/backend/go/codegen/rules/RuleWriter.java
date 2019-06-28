@@ -192,7 +192,7 @@ public class RuleWriter {
                 rhsWriter.writeReturnValue(sb);
 
                 sb.newLine();
-                sb.writeIndent().append("if _, isBottom := ").append(matchVar).append(".(*m.Bottom); isBottom").beginBlock();
+                sb.writeIndent().append("if m.IsBottom(").append(matchVar).append(")").beginBlock();
                 sb.writeIndent().append(reapply).newLine();
                 sb.endOneBlock();
 
@@ -217,7 +217,7 @@ public class RuleWriter {
                         false);
                 writeChoiceLookup(
                         sb, lookup,
-                        "setChoice" + lookupIndex, "m.Set",
+                        "setChoice" + lookupIndex, "GetSetObject",
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -228,7 +228,7 @@ public class RuleWriter {
                         false);
                 writeChoiceLookup(
                         sb, lookup,
-                        "mapChoice" + lookupIndex, "m.Map",
+                        "mapChoice" + lookupIndex, "GetMapObject",
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -260,17 +260,18 @@ public class RuleWriter {
         sb.newLine();
 
         sb.writeIndent()
-                .append(setVar).append(", ").append(isSetVar).append(" := ")
-                .append(setChoiceVar).append(".(*").append(expectedKType).append(")").newLine();
+                .append(setVar).append(", ").append(isSetVar).append(" := i.Model.")
+                .append(expectedKType).append("(")
+                .append(setChoiceVar).append(")").newLine();
         sb.writeIndent().append("if !").append(isSetVar).beginBlock();
         sb.writeIndent().append(reapply).newLine();
         sb.endOneBlock();
 
-        sb.appendIndentedLine("var ", choiceVar, " m.K = m.InternedBottom");
+        sb.appendIndentedLine("var ", choiceVar, " m.KReference = m.InternedBottom");
         int forIndent = sb.getCurrentIndent();
         sb.writeIndent().append("for ").append(choiceKeyVar).append(" := range ").append(setVar).append(".Data").beginBlock();
         sb.appendIndentedLine("var ", errVar, " error");
-        sb.appendIndentedLine(choiceKeyKItem, ", ", errVar, " := ", choiceKeyVar, ".ToKItem()");
+        sb.appendIndentedLine(choiceKeyKItem, ", ", errVar, " := i.Model.ToKItem(", choiceKeyVar, ")");
         sb.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
         sb.appendIndentedLine("return m.NoResult, ", errVar);
         sb.endOneBlock();
@@ -292,7 +293,7 @@ public class RuleWriter {
         // it can also be done without this function, but then the RHS must assign the result to choice var instead of returning
         int funcIndent = sb.getCurrentIndent();
         sb.writeIndent().append(choiceVar).append(", ").append(errVar).append(" = ");
-        sb.append("func() (m.K, error)").beginBlock();
+        sb.append("func() (m.KReference, error)").beginBlock();
 
         sb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
             s.newLine();

@@ -33,7 +33,7 @@ public class StuckGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        sb.append("func (i *Interpreter) makeStuck(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) makeStuck(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
 
         if (data.makeStuck != null) {
             sb.appendIndentedLine("matched := false");
@@ -45,7 +45,7 @@ public class StuckGen {
         sb.appendIndentedLine("return c, nil");
         sb.endOneBlock().newLine();
 
-        sb.append("func (i *Interpreter) makeUnstuck(c m.K, config m.K) (m.K, error)").beginBlock();
+        sb.append("func (i *Interpreter) makeUnstuck(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
 
         if (data.makeUnstuck != null) {
             sb.appendIndentedLine("matched := false");

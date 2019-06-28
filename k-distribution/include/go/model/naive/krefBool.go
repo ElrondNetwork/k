@@ -8,8 +8,17 @@ var BoolTrue = &Bool{Value: true}
 // BoolFalse ... K boolean value with value false
 var BoolFalse = &Bool{Value: false}
 
-// ToBool ... Convert Go bool to K Bool
-func ToBool(b bool) *Bool {
+// CastKApply yields the cast object for a Bool reference, if possible.
+func (ms *ModelState) CastToBool(ref KReference) (*Bool, bool) {
+	cast, typeOk := ref.(*Bool)
+	if !typeOk {
+		return nil, false
+	}
+	return cast, true
+}
+
+// ToKBool ... Convert Go bool to K Bool
+func ToKBool(b bool) KReference {
 	if b {
 		return BoolTrue
 	}
@@ -17,7 +26,7 @@ func ToBool(b bool) *Bool {
 }
 
 // IsTrue ... Checks if argument is identical to the K Bool with the value true
-func IsTrue(c K) bool {
+func IsTrue(c KReference) bool {
 	if b, typeOk := c.(*Bool); typeOk {
 		return b.Value
 	}

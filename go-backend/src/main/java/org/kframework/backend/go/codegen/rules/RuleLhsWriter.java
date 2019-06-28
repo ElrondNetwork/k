@@ -121,11 +121,12 @@ public class RuleLhsWriter extends VisitK {
         return null;
     }
 
-    private void lhsTypeIf(String castVar, String subject, String type) {
+    private void lhsTypeIf(String castVar, String subject, String castFunction) {
         handleExpressionType(ExpressionType.IF);
         sb.writeIndent();
-        sb.append("if ").append(castVar).append(", t := ");
-        sb.append(subject).append(".(").append(type).append("); t");
+        sb.append("if ").append(castVar).append(", t := i.Model.");
+        sb.append(castFunction);
+        sb.append("(").append(subject).append("); t");
     }
 
     @Override
@@ -139,13 +140,15 @@ public class RuleLhsWriter extends VisitK {
             //magic down-ness
             String ktVar = "kt" + kitemIndex;
             kitemIndex++;
-            lhsTypeIf(ktVar, consumeSubject(), "*m.KToken");
+            lhsTypeIf(ktVar, consumeSubject(), "GetKTokenObject");
             sb.append(" && ").append(ktVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
             nextSubject = ktVar + ".Value";
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
-            lhsTypeIf("_", consumeSubject(), "*m.Bottom");
+            handleExpressionType(ExpressionType.IF);
+            sb.writeIndent();
+            sb.append("if m.IsBottom(").append(consumeSubject()).append(")");
         } else if (data.functions.contains(k.klabel())) {
             if (data.collectionFor.containsKey(k.klabel())) {
                 KLabel collectionLabel = data.collectionFor.get(k.klabel());
@@ -155,18 +158,56 @@ public class RuleLhsWriter extends VisitK {
                         && !attr.contains(Attribute.IDEMPOTENT_KEY)) {
 
                     // list
-                    String listVar = "list" + kitemIndex;
-                    kitemIndex++;
-                    lhsTypeIf(listVar, consumeSubject(), "*m.List");
                     Sort sort = data.mainModule.sortFor().apply(collectionLabel);
+                    if (k.items().size() == 0) {
+                        // empty list
+                        sb.writeIndent().append("if i.Model.IsEmptyList(");
+                        sb.append(consumeSubject()).append(", ");
+                        sb.append("m.").append(nameProvider.sortVariableName(sort)).append(", ");
+                        sb.append("m.").append(nameProvider.klabelVariableName(collectionLabel));
+                        sb.append(")");
+                        sb.beginBlock("empty list ", ToKast.apply(k));
+                    } else if (k.items().size() == 2) {
+                        String headVar = "listHead" + kitemIndex;
+                        String tailVar = "listTail" + kitemIndex;
+                        kitemIndex++;
+                        sb.writeIndent().append("if ok, ");
+                        sb.append(headVar).append(", ").append(tailVar);
+                        sb.append(" := i.Model.ListSplitHeadTail(");
+                        sb.append(consumeSubject()).append(", ");
+                        sb.append("m.").append(nameProvider.sortVariableName(sort)).append(", ");
+                        sb.append("m.").append(nameProvider.klabelVariableName(collectionLabel));
+                        sb.append("); ok");
+                        sb.beginBlock("empty list ", ToKast.apply(k));
 
-                    sb.append(" && ").append(listVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
-                    sb.append(" && ").append(listVar).append(".Label == m.").append(nameProvider.klabelVariableName(collectionLabel));
-                    sb.beginBlock();
-                    applyListContents(k, listVar + ".Data", listVar, attr);
+                        KApply headListElem = (KApply) k.items().get(0);
+                        boolean isElement = attr.contains("element") && headListElem.klabel().equals(KORE.KLabel(attr.get("element")));
+                        // boolean isWrapElement = !isElement && attr.contains("wrapElement") && kapp.klabel().equals(KORE.KLabel(attr.get("wrapElement")));
+                        if (!isElement) {
+                            throw KEMException.internalError("First argument of list cons a list element type");
+                        }
+                        if (headListElem.klist().size() != 1) {
+                            throw KEMException.internalError("List element should only have 1 argument");
+                        }
+                        nextSubject = headVar;
+                        apply(headListElem.items().get(0)); // not the element itself, but its contents
+
+                        // tail
+                        if (k.items().get(1) instanceof KApply) {
+                            KApply tail = (KApply) k.items().get(1);
+                            nextSubject = tailVar;
+                            apply(tail);
+                        } else if (k.items().get(1) instanceof KVariable) {
+                            KVariable tail = (KVariable) k.items().get(1);
+                            nextSubject = tailVar;
+                            apply(tail);
+                        } else {
+                            throw KEMException.internalError("Second argument of list cons should be either a KApply of a KVariable, representing the tail");
+                        }
+                    } else {
+                        throw KEMException.internalError("List KApply should be either of length 0 (empty list), or length 2 (head-tail)");
+                    }
                 }
-            } else {
-                throw new RuntimeException("Unexpected function on LHS.");
             }
         } else {
             KVariable alias = consumeAlias();
@@ -180,13 +221,13 @@ public class RuleLhsWriter extends VisitK {
                 kitemIndex++;
             }
 
-            lhsTypeIf(kappVar, consumeSubject(), "*m.KApply");
-            sb.append(" && ").append(kappVar).append(".Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
-            sb.append(" && len(").append(kappVar).append(".List) == ").append(k.klist().items().size());
+            lhsTypeIf(kappVar, consumeSubject(), "CastKApply");
+            sb.append(" && i.Model.KApplyLabel(").append(kappVar).append(") == m.").append(nameProvider.klabelVariableName(k.klabel()));
+            sb.append(" && i.Model.KApplyArity(").append(kappVar).append(") == ").append(k.klist().items().size());
             sb.beginBlock(ToKast.apply(k), aliasComment);
             int i = 0;
             for (K item : k.klist().items()) {
-                nextSubject = kappVar + ".List[" + i + "]";
+                nextSubject = "i.Model.KApplyArg(" + kappVar + ", " + i + ")";
                 apply(item);
                 i++;
             }
@@ -196,6 +237,7 @@ public class RuleLhsWriter extends VisitK {
     /**
      * Writes LHS for list contents, by recursively splitting it into head and tail
      */
+    @Deprecated
     private void applyListContents(KApply k, String dataVarName, String originalListVar, Att attr) {
         if (k.items().size() == 0) {
             // empty list
@@ -234,7 +276,7 @@ public class RuleLhsWriter extends VisitK {
                 KVariable tail = (KVariable) k.items().get(1);
                 String tailVar = "lisTail" + kitemIndex;
                 kitemIndex++;
-                sb.appendIndentedLine("var ", tailVar, " m.K");
+                sb.appendIndentedLine("var ", tailVar, " m.KReference");
                 sb.appendIndentedLine(tailVar, " = &m.List { Sort: ", originalListVar, ".Sort, Label: ", originalListVar, ".Label, Data: ", originalListVar, ".Data[1:] }");
                 // TODO: signal that nextSubject is already defined as list via a type enum (values: K, List, etc.)
                 // and suppress type checking if type is already known
@@ -297,28 +339,21 @@ public class RuleLhsWriter extends VisitK {
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
             String hook = data.mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-            if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook)) {
-                // these ones don't need to get passed a sort name
-                // but if the variable doesn't appear on the RHS, we must make it '_'
+            if (GoBuiltin.LHS_KVARIABLE_HOOKS.contains(hook)) {
+                String subject = consumeSubject();
+                String sortName = "m." + nameProvider.sortVariableName(s);
+                String ifClause = GoBuiltin.PREDICATE_IFS.get(hook).apply(subject, sortName);
                 handleExpressionType(ExpressionType.IF);
-                sb.writeIndent();
-                String pattern = GoBuiltin.SORT_VAR_HOOKS_1.get(hook);
+                sb.writeIndent().append(ifClause);
+                sb.beginBlock("lhs KVariable with hook:" + hook);
+
                 boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
                         || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
-                String declarationVarName = varNeeded ? varName : "_";
-                sb.append(String.format(pattern,
-                        declarationVarName, consumeSubject()));
-                sb.beginBlock("lhs KVariable with hook:" + hook);
-                return;
-            } else if (GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook)) {
-                // these ones need to get passed a sort name
-                // since the variable is used in the condition, we never have to make it '_'
-                handleExpressionType(ExpressionType.IF);
-                sb.writeIndent();
-                String pattern = GoBuiltin.SORT_VAR_HOOKS_2.get(hook);
-                sb.append(String.format(pattern,
-                        varName, consumeSubject(), nameProvider.sortVariableName(s)));
-                sb.beginBlock("lhs KVariable with hook:" + hook);
+                if (varNeeded) {
+                    sb.appendIndentedLine(varName, " := ", subject, " // ", ToKast.apply((K) k));
+                } else {
+                    sb.appendIndentedLine("// unused variable: ", ToKast.apply((K) k));
+                }
                 return;
             }
         }
@@ -364,7 +399,7 @@ public class RuleLhsWriter extends VisitK {
             kitemIndex++;
             sb.writeIndent().append("if ok, ");
             sb.append(kseqHead).append(", ");
-            sb.append(kseqTail).append(" := i.Model.TrySplitToHeadTail(").append(consumeSubject()).append("); ok");
+            sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(consumeSubject()).append("); ok");
             sb.beginBlock(ToKast.apply(k));
             nextSubject = kseqHead;
             apply(k.items().get(0));
@@ -372,28 +407,34 @@ public class RuleLhsWriter extends VisitK {
             apply(k.items().get(1));
             return;
         default:
-            // must match KSequence
-            String kseqVar = "kseq" + kitemIndex;
+            String kseqVarBase = "kseq" + kitemIndex;
             kitemIndex++;
-            lhsTypeIf(kseqVar, consumeSubject(), "m.KSequence");
+
             int nrHeads = k.items().size() - 1;
-            sb.append(" && i.Model.KSequenceLength(").append(kseqVar).append(") >= ").append(nrHeads);
-            sb.beginBlock("lhs KSequence size:" + k.items().size());
+            String subject = consumeSubject();
+            sb.writeIndent().append("if i.Model.IsNonEmptyKSequenceMinimumLength(");
+            sb.append(subject).append(", ").append(nrHeads).append(")");
+            sb.beginBlock(ToKast.apply(k));
             // heads
             for (int i = 0; i < nrHeads; i++) {
-                nextSubject = "i.Model.KSequenceGet(" + kseqVar + ", " + i + ")";
+                String headVar = kseqVarBase + "Head" + (i + 1);
+                sb.appendIndentedLine(headVar + " := i.Model.KSequenceGet(", subject + ", " + i + ") // ", ToKast.apply(k.items().get(i)));
+                nextSubject = headVar;
                 apply(k.items().get(i));
             }
             // tail
-            nextSubject = "i.Model.KSequenceSub(" + kseqVar + ", " + nrHeads + ")"; // slice with the rest, can be empty
-            apply(k.items().get(nrHeads)); // last element
+            K tail = k.items().get(nrHeads);
+            String tailVar = kseqVarBase + "Tail";
+            sb.appendIndentedLine(tailVar + " := i.Model.KSequenceSub(" + subject + ", " + nrHeads + ") // ", ToKast.apply(tail));
+            nextSubject = tailVar; // slice with the rest, can be empty
+            apply(tail); // last element
             return;
         }
     }
 
     @Override
     public void apply(InjectedKLabel k) {
-        lhsTypeIf("ikl", consumeSubject(), "*m.InjectedKLabel");
+        lhsTypeIf("ikl", consumeSubject(), "CastInjectedKLabel");
         sb.append(" && ikl.Label == m.").append(nameProvider.klabelVariableName(k.klabel()));
         sb.beginBlock();
     }

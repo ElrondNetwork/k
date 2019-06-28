@@ -87,12 +87,12 @@ public abstract class RuleRhsWriterBase extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            currentSb.append("&m.KToken{Sort: m.").append(nameProvider.sortVariableName(sort));
-            currentSb.append(", Value:");
+            currentSb.append("i.Model.NewKToken(m.").append(nameProvider.sortVariableName(sort));
+            currentSb.append(", ");
             apply(value);
-            currentSb.append("}");
+            currentSb.append(")");
         } else if (k.klabel().name().equals("#Bottom")) {
-            currentSb.append("&m.Bottom{}");
+            currentSb.append("m.InternedBottom");
         } else if (data.functions.contains(k.klabel()) || data.anywhereKLabels.contains(k.klabel())) {
             applyKApplyExecute(k);
         } else {
@@ -102,8 +102,8 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("&m.KApply{Label: m.").append(nameProvider.klabelVariableName(k.klabel()));
-        currentSb.append(", List: []m.K{ // as-is ").append(k.klabel().name());
+        currentSb.append("i.Model.NewKApply(m.").append(nameProvider.klabelVariableName(k.klabel()));
+        currentSb.append(", // as-is ").append(k.klabel().name());
         currentSb.increaseIndent();
         for (K item : k.klist().items()) {
             newlineNext = true;
@@ -113,7 +113,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         currentSb.decreaseIndent();
         currentSb.newLine();
         currentSb.writeIndent();
-        currentSb.append("}}");
+        currentSb.append(")");
     }
 
     protected void applyKApplyExecute(KApply k) {
@@ -182,7 +182,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         assert k.klist().items().size() == 3;
 
         // arg0 (the condition) is treated normally
-        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
         evalSb.writeIndent().append("if m.IsTrue(");
         apply(k.klist().items().get(0)); // 1st argument, the condition
         evalSb.append(")").beginBlock("rhs if-then-else");
@@ -224,7 +224,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         // because there are cases when evaluating it causes the entire execution to fail
         assert k.klist().items().size() == 2;
 
-        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
         evalSb.writeIndent().append(evalVarName).append(" = ");
         apply(k.klist().items().get(0));
         evalSb.newLine();
@@ -252,14 +252,14 @@ public abstract class RuleRhsWriterBase extends VisitK {
         // because there are cases when evaluating it causes the entire execution to fail
         assert k.klist().items().size() == 2;
 
-        evalSb.appendIndentedLine("var ", evalVarName, " m.K // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
         evalSb.writeIndent().append(evalVarName).append(" = ");
         apply(k.klist().items().get(0));
         evalSb.newLine();
         evalSb.writeIndent().append("if !m.IsTrue(").append(evalVarName).append(")").beginBlock();
 
         // all evaluations for arg2 need to happen in this block,
-        // to avoid executing any of them if arg1 is false
+        // to avoid executing any of them if arg1 is true
         RuleRhsWriterBase arg2Writer = newInstanceWithSameConfig(evalSb.getCurrentIndent());
         arg2Writer.apply(k.klist().items().get(1));
 
@@ -321,7 +321,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
                     return;
                 }
                 String ivarName = nameProvider.constVariableName("Int", k.s());
-                String ivalue = "m.NewIntFromString(\"" + k.s() + "\")";
+                String ivalue = "m.NewIntConstant(\"" + k.s() + "\")";
                 data.constants.intConstants.put(ivarName, ivalue);
                 sb.append(ivarName);
                 return;
@@ -336,7 +336,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
                 String unquotedStr = StringUtil.unquoteKString(k.s());
                 String goStr = GoStringUtil.enquoteString(unquotedStr);
                 String svarName = nameProvider.constVariableName("String", k.s());
-                String svalue = "m.NewString(" + k.s() + ")";
+                String svalue = "m.NewStringConstant(" + k.s() + ")";
                 data.constants.stringConstants.put(svarName, svalue);
                 sb.append(svarName);
                 return;
@@ -354,10 +354,10 @@ public abstract class RuleRhsWriterBase extends VisitK {
         String ktvarName = nameProvider.constVariableName(
                 "KToken",
                 nameProvider.sortVariableName(k.sort()) + k.s());
-        String ktvalue = "&m.KToken{Sort: m." + nameProvider.sortVariableName(k.sort()) +
-                ", Value: " + GoStringUtil.enquoteString(k.s()) + "}";
+        String ktvalue = "m.NewKTokenConstant(m." + nameProvider.sortVariableName(k.sort()) +
+                ", " + GoStringUtil.enquoteString(k.s()) + ")";
         data.constants.tokenConstants.put(ktvarName, ktvalue);
-        sb.append(ktvalue);
+        sb.append(ktvarName);
     }
 
     @Override
@@ -422,9 +422,9 @@ public abstract class RuleRhsWriterBase extends VisitK {
     @Override
     public void apply(InjectedKLabel k) {
         start();
-        currentSb.append("&m.InjectedKLabel{Label: m.");
+        currentSb.append("m.NewInjectedKLabel(");
         currentSb.append(nameProvider.klabelVariableName(k.klabel()));
-        currentSb.append("}");
+        currentSb.append(")");
         end();
     }
 

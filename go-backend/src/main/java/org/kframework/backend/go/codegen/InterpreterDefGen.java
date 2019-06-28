@@ -59,7 +59,7 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("Model         *m.ModelState");
         sb.appendIndentedLine("currentStep   int");
         sb.appendIndentedLine("MaxSteps      int");
-        sb.appendIndentedLine("state         m.K");
+        sb.appendIndentedLine("state         m.KReference");
         sb.appendIndentedLine("traceHandlers []traceHandler");
         sb.appendIndentedLine("Verbose       bool");
 
@@ -85,7 +85,7 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("Model:         model,");
         sb.appendIndentedLine("MaxSteps:      0,");
         sb.appendIndentedLine("currentStep:   -1, // meaning that no processing started yet");
-        sb.appendIndentedLine("state:         nil,");
+        sb.appendIndentedLine("state:         m.NullReference,");
         sb.appendIndentedLine("traceHandlers: nil,");
         sb.appendIndentedLine("Verbose:       false,");
         for (FieldDefinition field : fields) {

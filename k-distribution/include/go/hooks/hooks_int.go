@@ -11,97 +11,100 @@ type intHooksType int
 
 const intHooks intHooksType = 0
 
-func (intHooksType) eq(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+var bigIntZero = big.NewInt(0)
+var bigIntOne = big.NewInt(1)
+
+func (intHooksType) eq(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) == 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) == 0), nil
 }
 
-func (intHooksType) ne(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) ne(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) != 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) != 0), nil
 }
 
-func (intHooksType) le(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) le(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) <= 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) <= 0), nil
 }
 
-func (intHooksType) lt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) lt(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) < 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) < 0), nil
 }
 
-func (intHooksType) ge(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) ge(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) >= 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) >= 0), nil
 }
 
-func (intHooksType) gt(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) gt(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	return m.ToBool(i1.Value.Cmp(i2.Value) > 0), nil
+	return m.ToKBool(i1.Value.Cmp(i2.Value) > 0), nil
 }
 
-func (intHooksType) add(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) add(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Add(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) sub(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) sub(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Sub(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) mul(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) mul(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Mul(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
 // Integer division. The result is truncated towards zero and obeys the rule of signs.
-func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (t intHooksType) tdiv(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -123,14 +126,14 @@ func (t intHooksType) tdiv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K
 	if !resultPositive {
 		z.Neg(&z)
 	}
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
 // Integer remainder. The result of rem a b has the sign of a, and its absolute value is strictly smaller than the absolute value of b.
 // The result satisfies the equality a = b * div a b + rem a b.
-func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (t intHooksType) tmod(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -145,13 +148,13 @@ func (t intHooksType) tmod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K
 	if i1.IsNegative() {
 		z.Neg(&z)
 	}
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
 // Euclidian division
-func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) ediv(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -160,50 +163,50 @@ func (intHooksType) ediv(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, 
 	}
 	var z big.Int
 	z.Div(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
 // Euclidian remainder
-func (intHooksType) emod(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) emod(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	if i2.Value.Cmp(m.IntZero.Value) == 0 {
+	if i2.Value.Sign() == 0 {
 		return m.NoResult, &hookDivisionByZeroError{}
 	}
 	var z big.Int
 	z.Mod(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) pow(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) pow(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Exp(i1.Value, i2.Value, nil)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) powmod(c1 m.K, c2 m.K, c3 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
-	i3, ok3 := c3.(*m.Int)
+func (intHooksType) powmod(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
+	i3, ok3 := interpreter.Model.GetBigIntObject(c3)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Exp(i1.Value, i2.Value, i3.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) shl(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -213,12 +216,12 @@ func (intHooksType) shl(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, i
 	}
 	var z big.Int
 	z.Lsh(i1.Value, arg2)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) shr(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -228,65 +231,65 @@ func (intHooksType) shr(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, i
 	}
 	var z big.Int
 	z.Rsh(i1.Value, arg2)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) and(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) and(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.And(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) or(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) or(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Or(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) xor(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) xor(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Xor(i1.Value, i2.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) not(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i, ok := c.(*m.Int)
+func (intHooksType) not(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i, ok := interpreter.Model.GetBigIntObject(c)
 	if !ok {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Not(i.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) abs(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i, ok := c.(*m.Int)
+func (intHooksType) abs(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i, ok := interpreter.Model.GetBigIntObject(c)
 	if !ok {
 		return invalidArgsResult()
 	}
 	var z big.Int
 	z.Abs(i.Value)
-	return m.NewInt(&z), nil
+	return interpreter.Model.FromBigInt(&z), nil
 }
 
-func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) max(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -296,9 +299,9 @@ func (intHooksType) max(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, i
 	return c2, nil
 }
 
-func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	i1, ok1 := c1.(*m.Int)
-	i2, ok2 := c2.(*m.Int)
+func (intHooksType) min(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	i1, ok1 := interpreter.Model.GetBigIntObject(c1)
+	i2, ok2 := interpreter.Model.GetBigIntObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
@@ -308,8 +311,8 @@ func (intHooksType) min(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, i
 	return c1, nil
 }
 
-func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	bigi, ok := karg.(*m.Int)
+func (intHooksType) log2(karg m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	bigi, ok := interpreter.Model.GetBigIntObject(karg)
 	if !ok {
 		return invalidArgsResult()
 	}
@@ -323,14 +326,14 @@ func (intHooksType) log2(karg m.K, lbl m.KLabel, sort m.Sort, config m.K, interp
 		leadingByte = leadingByte >> 1
 		nrBytes++
 	}
-	return m.NewIntFromInt(nrBytes + (len(bytes)-1)*8 - 1), nil
+	return interpreter.Model.FromInt(nrBytes + (len(bytes)-1)*8 - 1), nil
 }
 
-func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (intHooksType) bitRange(argI m.KReference, argOffset m.KReference, argLen m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	// rule bitRangeInt(I::Int, IDX::Int, LEN::Int) => (I >>Int IDX) modInt (1 <<Int LEN)
-	ki, ok1 := argI.(*m.Int)
-	koff, ok2 := argOffset.(*m.Int)
-	klen, ok3 := argLen.(*m.Int)
+	ki, ok1 := interpreter.Model.GetBigIntObject(argI)
+	koff, ok2 := interpreter.Model.GetBigIntObject(argOffset)
+	klen, ok3 := interpreter.Model.GetBigIntObject(argLen)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -376,14 +379,14 @@ func (intHooksType) bitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, 
 
 	result := new(big.Int)
 	result.SetBytes(resultBytes)
-	return &m.Int{Value: result}, nil
+	return interpreter.Model.FromBigInt(result), nil
 }
 
-func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (intHooksType) signExtendBitRange(argI m.KReference, argOffset m.KReference, argLen m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	// rule signExtendBitRangeInt(I::Int, IDX::Int, LEN::Int) => (bitRangeInt(I, IDX, LEN) +Int (1 <<Int (LEN -Int 1))) modInt (1 <<Int LEN) -Int (1 <<Int (LEN -Int 1))
-	ki, ok1 := argI.(*m.Int)
-	koff, ok2 := argOffset.(*m.Int)
-	klen, ok3 := argLen.(*m.Int)
+	ki, ok1 := interpreter.Model.GetBigIntObject(argI)
+	koff, ok2 := interpreter.Model.GetBigIntObject(argOffset)
+	klen, ok3 := interpreter.Model.GetBigIntObject(argLen)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -428,13 +431,13 @@ func (intHooksType) signExtendBitRange(argI m.K, argOffset m.K, argLen m.K, lbl 
 	}
 
 	result := m.TwosComplementBytesToBigInt(resultBytes)
-	return &m.Int{Value: result}, nil
+	return interpreter.Model.FromBigInt(result), nil
 }
 
-func (intHooksType) rand(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (intHooksType) rand(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }
 
-func (intHooksType) srand(c m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (intHooksType) srand(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	return m.NoResult, &hookNotImplementedError{}
 }

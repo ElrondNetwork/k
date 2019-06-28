@@ -12,6 +12,6 @@ func (i *Interpreter) GetNrSteps() int {
 }
 
 // GetLastState yields the current (last) state of the interpreter
-func (i *Interpreter) GetState() m.K {
+func (i *Interpreter) GetState() m.KReference {
      return i.state
 }

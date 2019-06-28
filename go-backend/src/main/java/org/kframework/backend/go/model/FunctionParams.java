@@ -39,7 +39,7 @@ public class FunctionParams {
         StringBuilder sb = new StringBuilder();
         for (String v : varNames) {
             sb.append(v);
-            sb.append(" m.K, ");
+            sb.append(" m.KReference, ");
         }
         return sb.toString();
     }

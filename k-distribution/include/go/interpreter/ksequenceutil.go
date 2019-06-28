@@ -1,6 +1,0 @@
-%COMMENT%
-
-package %PACKAGE_INTERPRETER%
-
-
-

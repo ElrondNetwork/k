@@ -49,17 +49,18 @@ func (i *Interpreter) ExecuteSimple(kdir string, execFile string) {
 
 // Execute interprets the program with the structure
 func (i *Interpreter) Execute(kastMap map[string][]byte) error {
-	kConfigMap := make(map[m.KMapKey]m.K)
+	kConfigMap := make(map[m.KMapKey]m.KReference)
 	for key, kastValue := range kastMap {
-		ktoken := m.KToken{Sort: m.SortKConfigVar, Value: "$" + key}
+		ktokenRef := i.Model.NewKToken(m.SortKConfigVar, "$"+key)
+		ktokenKey, _ := i.Model.MapKey(ktokenRef)
 		parsedValue := koreparser.Parse(kastValue)
 		kValue := i.convertParserModelToKModel(parsedValue)
-		kConfigMap[ktoken] = kValue
+		kConfigMap[ktokenKey] = kValue
 	}
 
 	// top cell initialization
-	kmap := &m.Map{Sort: m.SortMap, Label: m.KLabelForMap, Data: kConfigMap}
-	evalK := &m.KApply{Label: TopCellInitializer, List: []m.K{kmap}}
+	kmap := i.Model.NewMap(m.SortMap, m.KLabelForMap, kConfigMap)
+	evalK := i.Model.NewKApply(TopCellInitializer, kmap)
 	kinit, err := i.Eval(evalK, m.InternedBottom)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -76,7 +77,7 @@ func (i *Interpreter) Execute(kastMap map[string][]byte) error {
 }
 
 // TakeStepsNoThread executes as many steps as possible given the starting configuration
-func (i *Interpreter) TakeStepsNoThread(k m.K) error {
+func (i *Interpreter) TakeStepsNoThread(k m.KReference) error {
 	i.initializeTrace()
 	defer i.closeTrace()
 

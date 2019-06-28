@@ -36,8 +36,8 @@ public class EvalFunctionGen {
 
 
         sb.appendIndentedLine("// Eval ... evaluates a KApply item based on its label and arguments");
-        sb.append("func (i *Interpreter) Eval(c m.K, config m.K) (m.K, error)").beginBlock();
-        sb.writeIndent().append("kapp, isKapply := c.(*m.KApply)\n");
+        sb.append("func (i *Interpreter) Eval(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
+        sb.writeIndent().append("kapp, isKapply := i.Model.GetKApplyObject(c)\n");
         sb.writeIndent().append("if !isKapply").beginBlock();
         sb.writeIndent().append("return c, nil").newLine();
         sb.endOneBlock();

@@ -32,6 +32,9 @@ public class GoOptions implements Serializable {
     @Parameter(names="--go-src-path", description="Specify the location of $GOPATH/src. It is needed to resolve generated import paths.")
     public String goSrcPath;
 
+    @Parameter(names="--naive", description="Generates a version of the K model that is easier to understand, but very slow and memory intensive.")
+    public boolean naive;
+
     // TODO: clean up
     //@Parameter(names="--no-link-prelude", description="Do not link interpreter binaries against constants.cmx and prelude.cmx. Do not use this if you don't know what you're doing.")
     public boolean noLinkPrelude;

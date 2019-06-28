@@ -30,7 +30,7 @@ public class FreshFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        sb.append("func (i *Interpreter) freshFunction (s m.Sort, config m.K, counter int) (m.K, error) {\n");
+        sb.append("func (i *Interpreter) freshFunction (s m.Sort, config m.KReference, counter int) (m.KReference, error) {\n");
         sb.append("\tswitch s {\n");
         for (Sort sort : iterable(data.mainModule.freshFunctionFor().keys())) {
             sb.append("\t\tcase m.").append(nameProvider.sortVariableName(sort));
@@ -38,7 +38,7 @@ public class FreshFunctionGen {
             sb.append("\t\t\treturn i.");
             KLabel freshFunction = data.mainModule.freshFunctionFor().apply(sort);
             sb.append(nameProvider.evalFunctionName(freshFunction));
-            sb.append("(m.NewIntFromInt(counter), config, -1)\n");
+            sb.append("(i.Model.FromInt(counter), config, -1)\n");
         }
         sb.append("\t\tdefault:\n");
         sb.append("\t\t\tpanic(\"Cannot find fresh function for sort \" + s.Name())\n");

@@ -19,7 +19,6 @@ import org.kframework.backend.go.model.ConstantKTokens;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionHookName;
 import org.kframework.backend.go.model.FunctionInfo;
-import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
@@ -230,6 +229,7 @@ public class DefinitionToGo {
         Set<KLabel> constants = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
 
         RuleCounter ruleCounter = new RuleCounter();
+        int memoCounter = 0;
 
         for (KLabel functionLabel : Sets.union(functions, anywhereKLabels)) {
             String hook = mainModule.attributesFor().get(functionLabel).getOrElse(() -> Att()).<String>getOptional(Attribute.HOOK_KEY).orElse(".");
@@ -241,7 +241,7 @@ public class DefinitionToGo {
                 // start typing
                 sb.append("func (i *Interpreter) ");
                 sb.append(functionInfo.goName);
-                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.KReference, guard int) (m.KReference, error)");
                 sb.beginBlock();
 
                 // loop needed for tail recursion
@@ -275,7 +275,9 @@ public class DefinitionToGo {
                     sb.append(hookCall).append("(");
                     sb.append(functionInfo.arguments.callParameters());
                     sb.append("lbl, sort, config");
-                    if (!isExternalHook) {
+                    if (isExternalHook) {
+                        sb.append(", i.Model");
+                    } else {
                         sb.append(", i");
                     }
                     sb.append("); hookErr == nil");
@@ -306,18 +308,22 @@ public class DefinitionToGo {
 
                     for (Sort sort : sorts) {
                         String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
-                        if (GoBuiltin.PREDICATE_RULES.containsKey(sortHook)) {
+                        if (GoBuiltin.PREDICATE_IFS.containsKey(sortHook)) {
                             String sortName = "m." + nameProvider.sortVariableName(sort);
+                            String ifClause = GoBuiltin.PREDICATE_IFS.get(sortHook).apply("c", sortName);
                             if (unreachableCode) {
-                                sb.writeIndent().append("// unreachable predicate rule: ").append(sortHook).newLine();
                                 sb.writeIndent().append("/* ");
-                                sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
-                                sb.append(" */").newLine();
+                                sb.append(ifClause);
+                                sb.beginBlock("// unreachable predicate rule: ", sortHook);
+                                sb.appendIndentedLine("return m.BoolTrue, nil");
+                                sb.endOneBlockNoNewline().append(" */").newLine();
                             } else {
                                 sb.writeIndent().append("if !matched").beginBlock();
-                                sb.writeIndent().append("// predicate rule: ").append(sortHook).newLine();
                                 sb.writeIndent();
-                                sb.append(GoBuiltin.PREDICATE_RULES.get(sortHook).apply(sortName));
+                                sb.append(ifClause);
+                                sb.beginBlock("// predicate rule: ", sortHook);
+                                sb.appendIndentedLine("return m.BoolTrue, nil");
+                                sb.endOneBlock();
                                 sb.newLine();
 
                                 if (sortHook.equals("K.K") || sortHook.equals("K.KItem")) {
@@ -352,7 +358,7 @@ public class DefinitionToGo {
                     if (functionInfo.arguments.arity() == 0) {
                         sb.append("nil");
                     } else {
-                        sb.append("[]m.K{");
+                        sb.append("[]m.KReference{");
                         sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
                         sb.append("}");
                     }
@@ -360,7 +366,7 @@ public class DefinitionToGo {
                 }
 
                 sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
-                sb.appendIndentedLine("return nil, nil");
+                sb.appendIndentedLine("return m.NullReference, nil");
                 sb.endOneBlock(); // func
                 sb.newLine();
 
@@ -370,7 +376,8 @@ public class DefinitionToGo {
                     sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
                     sb.append("(m.InternedBottom)\n\n");
                 } else if (mainModule.attributesFor().apply(functionLabel).contains("memo")) {
-                    writeMemoTableAndEval(sb, functionInfo);
+                    writeMemoTableAndEval(sb, functionInfo, memoCounter);
+                    memoCounter++;
                 }
             } else if (anywhereKLabels.contains(functionLabel)) {
                 FunctionInfo functionInfo = functionInfoMap.get(functionLabel);
@@ -381,7 +388,7 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("// ANYWHERE");
                 sb.append("func (i *Interpreter) ");
                 sb.append(functionInfo.goName);
-                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+                sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.KReference, guard int) (m.KReference, error)");
                 sb.beginBlock();
 
                 // loop needed for tail recursion
@@ -397,18 +404,17 @@ public class DefinitionToGo {
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
-                sb.writeIndent().append("return &m.KApply{Label: lbl, List: ");
-                if (functionInfo.arguments.arity() == 0) {
-                    sb.append("nil");
+                if (functionInfo.arguments.arity() > 0) {
+                    sb.writeIndent().append("return i.Model.KApply0Ref(lbl)");
                 } else {
-                    sb.append("[]m.K{");
+                    sb.writeIndent().append("return i.Model.NewKApply(lbl, ");
                     sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
-                    sb.append("}");
+                    sb.append(")");
                 }
-                sb.append("}, nil").newLine();
+                sb.append(", nil").newLine();
 
                 sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
-                sb.appendIndentedLine("return nil, nil");
+                sb.appendIndentedLine("return m.NullReference, nil");
                 sb.endOneBlock(); // func
                 sb.newLine();
             }
@@ -417,68 +423,52 @@ public class DefinitionToGo {
         return sb.toString();
     }
 
-    private void writeMemoTableAndEval(GoStringBuilder sb, FunctionInfo functionInfo) {
-        // table declaration
+    private void writeMemoTableAndEval(GoStringBuilder sb, FunctionInfo functionInfo, int memoCounter) {
+        // table index declaration
         String tableName = nameProvider.memoTableName(functionInfo.label);
         int arity = functionInfo.arguments.arity();
         String evalFunctionName = nameProvider.evalFunctionName(functionInfo.label);
-        sb.writeIndent().append("var ").append(tableName).append(" = make(map[");
-        switch (arity) {
-        case 0:
-        case 1:
-            sb.append("m.KMapKey");
-            break;
-        default:
-            sb.append("[").append(arity).append("]m.KMapKey");
-        }
-        sb.append("]m.K)").newLine().newLine();
+        sb.appendIndentedLine("const ", tableName, " m.MemoTable = " + memoCounter);
+        sb.newLine();
 
         // eval function
         sb.append("func (i *Interpreter) ");
         sb.append(evalFunctionName);
-        sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.K, guard int) (m.K, error)");
+        sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.KReference, guard int) (m.KReference, error)");
         sb.beginBlock();
 
-        switch (arity) {
-        case 0:
-            sb.appendIndentedLine("memoKey, _ := m.MapKey(m.InternedBottom)");
-            break;
-        case 1:
-            sb.appendIndentedLine("memoKey, _ := m.MapKey(", functionInfo.arguments.varName(0), ")");
-            break;
-        default:
-            for (int i = 1; i <= arity; i++) {
-                // launch a warning, compute, return result without memoization
-                sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.MapKey(c" + i + ")");
-                sb.writeIndent().append("if !ok" + i).beginBlock();
-                sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
-                sb.writeIndent().append("return i.");
-                sb.append(nameProvider.memoFunctionName(functionInfo.label)).append("(");
-                sb.append(functionInfo.arguments.callParameters()).append("config, guard)").newLine();
-                sb.endOneBlock();
-            }
-            sb.writeIndent().append("memoKey :=[").append(arity).append("]m.KMapKey{");
-            for (int i = 1; i <= arity; i++) {
-                sb.append("c" + i + "AsKey");
-                if (i < arity) {
-                    sb.append(", ");
-                }
-            }
-            sb.append("}");
-            break;
+        for (int i = 1; i <= arity; i++) {
+            // launch a warning, compute, return result without memoization
+            sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := i.Model.MapKey(c" + i + ")");
+            sb.writeIndent().append("if !ok" + i).beginBlock();
+            sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
+            sb.writeIndent().append("return i.");
+            sb.append(nameProvider.memoFunctionName(functionInfo.label)).append("(");
+            sb.append(functionInfo.arguments.callParameters()).append("config, guard)").newLine();
+            sb.endOneBlock();
         }
-        sb.newLine();
 
-        sb.writeIndent().append("if result, found := ").append(tableName).append("[memoKey]; found").beginBlock();
+        sb.writeIndent().append("result, found := i.Model.GetMemoizedValue(memoTableCmem");
+        for (int i = 1; i <= arity; i++) {
+            sb.append(", c" + i + "AsKey");
+        }
+        sb.append(")").newLine();
+        sb.writeIndent().append("if found").beginBlock();
         sb.appendIndentedLine("return result, nil");
         sb.endOneBlock();
+
         sb.writeIndent().append("computation, err := i.");
         sb.append(nameProvider.memoFunctionName(functionInfo.label)).append("(");
         sb.append(functionInfo.arguments.callParameters()).append("config, guard)").newLine();
         sb.writeIndent().append("if err != nil").beginBlock();
         sb.appendIndentedLine("return m.NoResult, err");
         sb.endOneBlock();
-        sb.writeIndent().append(tableName).append("[memoKey] = computation").newLine();
+
+        sb.writeIndent().append("i.Model.SetMemoizedValue(computation, memoTableCmem");
+        for (int i = 1; i <= arity; i++) {
+            sb.append(", c" + i + "AsKey");
+        }
+        sb.append(")").newLine();
         sb.appendIndentedLine("return computation, nil");
         sb.endOneBlock();
         sb.newLine();

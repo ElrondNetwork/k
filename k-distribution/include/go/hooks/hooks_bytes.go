@@ -20,14 +20,14 @@ func reverseBytes(bytes []byte) []byte {
 	return revBytes
 }
 
-func (bytesHooksType) empty(lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
+func (bytesHooksType) empty(lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	return m.BytesEmpty, nil
 }
 
-func (bytesHooksType) bytes2int(argBytes m.K, argEndian m.K, argSigned m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok1 := argBytes.(*m.Bytes)
-	kappEndian, ok2 := argEndian.(*m.KApply)
-	kappSigned, ok3 := argSigned.(*m.KApply)
+func (bytesHooksType) bytes2int(argBytes m.KReference, argEndian m.KReference, argSigned m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok1 := interpreter.Model.GetBytesObject(argBytes)
+	kappEndian, ok2 := interpreter.Model.GetKApplyObject(argEndian)
+	kappSigned, ok3 := interpreter.Model.GetKApplyObject(argSigned)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -80,17 +80,17 @@ func (bytesHooksType) bytes2int(argBytes m.K, argEndian m.K, argSigned m.K, lbl 
 
 	if negative {
 		// complete 2's complement transformation
-		result.Add(result, m.IntOne.Value)
+		result.Add(result, bigIntOne)
 		result.Neg(result)
 	}
 
-	return &m.Int{Value: result}, nil
+	return interpreter.Model.FromBigInt(result), nil
 }
 
-func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	klen, ok1 := argLen.(*m.Int)
-	kint, ok2 := argI.(*m.Int)
-	kappEndian, ok3 := argEndian.(*m.KApply)
+func (bytesHooksType) int2bytes(argLen m.KReference, argI m.KReference, argEndian m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	klen, ok1 := interpreter.Model.GetBigIntObject(argLen)
+	kint, ok2 := interpreter.Model.GetBigIntObject(argI)
+	kappEndian, ok3 := interpreter.Model.GetKApplyObject(argEndian)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -118,7 +118,7 @@ func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabe
 	if kint.Value.Sign() < 0 {
 		// compute 2's complement
 		kintPlus1 := big.NewInt(0)
-		kintPlus1.Add(kint.Value, m.IntOne.Value) // add 1
+		kintPlus1.Add(kint.Value, bigIntOne) // add 1
 		kintPlus1Bytes := kintPlus1.Bytes()
 		offset := len(kintPlus1Bytes) - resLen
 		resultBytes = make([]byte, resLen)
@@ -151,29 +151,29 @@ func (bytesHooksType) int2bytes(argLen m.K, argI m.K, argEndian m.K, lbl m.KLabe
 		}
 	}
 
-	return &m.Bytes{Value: resultBytes}, nil
+	return interpreter.Model.NewBytes(resultBytes), nil
 }
 
-func (bytesHooksType) bytes2string(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok := arg.(*m.Bytes)
+func (bytesHooksType) bytes2string(arg m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok := interpreter.Model.GetBytesObject(arg)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return m.NewString(string(kbytes.Value)), nil
+	return interpreter.Model.NewString(string(kbytes.Value)), nil
 }
 
-func (bytesHooksType) string2bytes(arg m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kstr, ok := arg.(*m.String)
+func (bytesHooksType) string2bytes(arg m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kstr, ok := interpreter.Model.GetStringObject(arg)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return &m.Bytes{Value: []byte(kstr.Value)}, nil
+	return interpreter.Model.NewBytes([]byte(kstr.Value)), nil
 }
 
-func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok1 := argBytes.(*m.Bytes)
-	koff1, ok2 := argOffset1.(*m.Int)
-	koff2, ok3 := argOffset2.(*m.Int)
+func (bytesHooksType) substr(argBytes m.KReference, argOffset1 m.KReference, argOffset2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok1 := interpreter.Model.GetBytesObject(argBytes)
+	koff1, ok2 := interpreter.Model.GetBigIntObject(argOffset1)
+	koff2, ok3 := interpreter.Model.GetBigIntObject(argOffset2)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -191,16 +191,16 @@ func (bytesHooksType) substr(argBytes m.K, argOffset1 m.K, argOffset2 m.K, lbl m
 		return m.BytesEmpty, nil
 	}
 	if offset1 == 0 && offset2 == length {
-		return kbytes, nil
+		return argBytes, nil
 	}
 
-	return &m.Bytes{Value: kbytes.Value[offset1:offset2]}, nil
+	return interpreter.Model.NewBytes(kbytes.Value[offset1:offset2]), nil
 }
 
-func (bytesHooksType) replaceAt(argBytes m.K, argOffset m.K, argReplacement m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok1 := argBytes.(*m.Bytes)
-	koff, ok2 := argOffset.(*m.Int)
-	krepl, ok3 := argReplacement.(*m.Bytes)
+func (bytesHooksType) replaceAt(argBytes m.KReference, argOffset m.KReference, argReplacement m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok1 := interpreter.Model.GetBytesObject(argBytes)
+	koff, ok2 := interpreter.Model.GetBigIntObject(argOffset)
+	krepl, ok3 := interpreter.Model.GetBytesObject(argReplacement)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -215,21 +215,21 @@ func (bytesHooksType) replaceAt(argBytes m.K, argOffset m.K, argReplacement m.K,
 	copy(result, kbytes.Value)
 	copy(result[offset:], krepl.Value)
 
-	return &m.Bytes{Value: result}, nil
+	return interpreter.Model.NewBytes(result), nil
 }
 
-func (bytesHooksType) length(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok := argBytes.(*m.Bytes)
+func (bytesHooksType) length(argBytes m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok := interpreter.Model.GetBytesObject(argBytes)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return m.NewIntFromInt(len(kbytes.Value)), nil
+	return interpreter.Model.FromInt(len(kbytes.Value)), nil
 }
 
-func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok1 := argBytes.(*m.Bytes)
-	klen, ok2 := argLen.(*m.Int)
-	kwith, ok3 := argWith.(*m.Int)
+func (bytesHooksType) padRight(argBytes m.KReference, argLen m.KReference, argWith m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok1 := interpreter.Model.GetBytesObject(argBytes)
+	klen, ok2 := interpreter.Model.GetBigIntObject(argLen)
+	kwith, ok3 := interpreter.Model.GetBigIntObject(argWith)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -238,7 +238,7 @@ func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLab
 		return invalidArgsResult()
 	}
 	if length <= len(kbytes.Value) {
-		return kbytes, nil
+		return argBytes, nil
 	}
 
 	padByte, padByteOk := kwith.ToByte()
@@ -254,13 +254,13 @@ func (bytesHooksType) padRight(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLab
 		result[i] = padByte
 	}
 
-	return &m.Bytes{Value: result}, nil
+	return interpreter.Model.NewBytes(result), nil
 }
 
-func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok1 := argBytes.(*m.Bytes)
-	klen, ok2 := argLen.(*m.Int)
-	kwith, ok3 := argWith.(*m.Int)
+func (bytesHooksType) padLeft(argBytes m.KReference, argLen m.KReference, argWith m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok1 := interpreter.Model.GetBytesObject(argBytes)
+	klen, ok2 := interpreter.Model.GetBigIntObject(argLen)
+	kwith, ok3 := interpreter.Model.GetBigIntObject(argWith)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -269,7 +269,7 @@ func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabe
 		return invalidArgsResult()
 	}
 	if length <= len(kbytes.Value) {
-		return kbytes, nil
+		return argBytes, nil
 	}
 
 	padByte, padByteOk := kwith.ToByte()
@@ -288,11 +288,11 @@ func (bytesHooksType) padLeft(argBytes m.K, argLen m.K, argWith m.K, lbl m.KLabe
 		}
 	}
 
-	return &m.Bytes{Value: result}, nil
+	return interpreter.Model.NewBytes(result), nil
 }
 
-func (bytesHooksType) reverse(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes, ok := argBytes.(*m.Bytes)
+func (bytesHooksType) reverse(argBytes m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes, ok := interpreter.Model.GetBytesObject(argBytes)
 	if !ok {
 		return invalidArgsResult()
 	}
@@ -301,21 +301,21 @@ func (bytesHooksType) reverse(argBytes m.K, lbl m.KLabel, sort m.Sort, config m.
 		return m.BytesEmpty, nil
 	}
 	revBytes := reverseBytes(kbytes.Value)
-	return &m.Bytes{Value: revBytes}, nil
+	return interpreter.Model.NewBytes(revBytes), nil
 }
 
-func (bytesHooksType) concat(c1 m.K, c2 m.K, lbl m.KLabel, sort m.Sort, config m.K, interpreter *Interpreter) (m.K, error) {
-	kbytes1, ok1 := c1.(*m.Bytes)
-	kbytes2, ok2 := c2.(*m.Bytes)
+func (bytesHooksType) concat(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	kbytes1, ok1 := interpreter.Model.GetBytesObject(c1)
+	kbytes2, ok2 := interpreter.Model.GetBytesObject(c2)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
 	if kbytes2.IsEmpty() {
-		return kbytes1, nil
+		return c1, nil
 	}
 	if kbytes1.IsEmpty() {
-		return kbytes2, nil
+		return c2, nil
 	}
 
-	return &m.Bytes{Value: append(kbytes1.Value, kbytes2.Value...)}, nil
+	return interpreter.Model.NewBytes(append(kbytes1.Value, kbytes2.Value...)), nil
 }

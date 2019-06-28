@@ -77,10 +77,10 @@ public class GoBackend implements Backend {
             DefinitionData data = def.definitionData();
 
             // temporary, for convenience and comparison
-            files.saveToKompiled("constants.ml", ocamlDef.constants());
-            files.saveToKompiled("realdef.ml", ocamlDef.definition());
-            String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
-            files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
+//            files.saveToKompiled("constants.ml", ocamlDef.constants());
+//            files.saveToKompiled("realdef.ml", ocamlDef.definition());
+//            String execution_pmg_ocaml = ocamlDef.ocamlCompile(compiledDefinition.topCellInitializer, compiledDefinition.exitCodePattern, options.dumpExitCode);
+//            files.saveToKompiled("execution_pgm.ml", execution_pmg_ocaml);
 
             // generate: model
             packageManager.saveToPackage(packageManager.modelPackage, "klabel.go",
@@ -128,15 +128,24 @@ public class GoBackend implements Backend {
 
             // copy: model
             for (String fileName : Arrays.asList(
-                    "data.go", "kmodel.go",
-                    "error.go",
-                    "deepcopy.go", "equals.go",
-                    "dynarray.go", "kmapkey.go", "collectionstok.go",
-                    "kprint.go", "prettyprint.go", "structprint.go", "printutil.go",
-                    "util.go", "util_bool.go", "util_collections.go", "util_int.go", "util_kseq.go")) {
-                packageManager.copyFileToPackage(
-                        files.resolveKBase("include/go/model/" + fileName),
-                        packageManager.modelPackage, fileName);
+                    "collectionsToK.go", "collectionsUtil.go",
+                    "data.go", "dataKSequence.go", "dataKApply.go",
+                    "dataBool.go", "dataCollections.go", "dataInt.go", "dataString.go",
+                    "deepCopy.go", "dynArray.go",
+                    "equals.go", "error.go",
+                    "kmapkey.go",
+                    "kobjects.go",
+                    "kref.go", "krefNew.go", "krefGet.go",
+                    "printK.go", "printPretty.go", "printUtil.go")) {
+                if (options.naive) {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/model/naive/" + fileName),
+                            packageManager.modelPackage, fileName);
+                } else {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/model/" + fileName),
+                            packageManager.modelPackage, fileName);
+                }
             }
 
             // copy: interpreter

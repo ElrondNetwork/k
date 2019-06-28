@@ -24,7 +24,7 @@ public class ConstantsGen {
 
         sb.append("import (\n");
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
-        sb.append(")\n\n");
+        sb.append(")").newLine().newLine();
 
         sb.appendIndentedLine("// Int constants");
         for (Map.Entry<String, String> entry : constants.intConstants.entrySet()) {

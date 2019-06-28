@@ -59,7 +59,7 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
 
             currentSb.append("return ");
             super.apply(k);
-            currentSb.append(" , nil");
+            currentSb.append(", nil");
         } else {
             super.apply(k);
         }

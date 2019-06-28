@@ -2,8 +2,13 @@
 
 package %PACKAGE_MODEL%
 
-// EmptyKSequence ... the KSequence with no elements
-var EmptyKSequence = KSequence{sequenceIndex: 0, headIndex: 0}
+// KSequence is a sequence of K items
+type KSequence struct {
+	ks []KObject
+}
+
+// EmptyKSequence is the KSequence with no elements
+var EmptyKSequence = *KSequence{Ks: nil}
 
 // NewKSequence ... creates new KSequence instance with elements
 func (ms *ModelState) NewKSequence(elements []K) KSequence {
@@ -39,9 +44,9 @@ func (ms *ModelState) KSequenceSub(k KSequence, startPosition int) KSequence {
 	return KSequence{sequenceIndex: k.sequenceIndex, headIndex: k.headIndex + startPosition}
 }
 
-// TrySplitToHeadTail ... extracts first element of a KSequence, extracts the rest, if possible
+// KSequenceSplitHeadTail  extracts first element of a KSequence, extracts the rest, if possible
 // will treat non-KSequence as if they were KSequences of length 1
-func (ms *ModelState) TrySplitToHeadTail(k K) (ok bool, head K, tail K) {
+func (ms *ModelState) KSequenceSplitHeadTail(k K) (ok bool, head K, tail K) {
 	if kseq, isKseq := k.(KSequence); isKseq {
 		seq := ms.allKs[kseq.sequenceIndex]
 		length := len(seq) - kseq.headIndex

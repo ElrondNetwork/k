@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.kore.Sort;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class GoBuiltin {
@@ -33,29 +34,29 @@ public class GoBuiltin {
         GO_FRIENDLY_HOOK_NAMES = builder.build();
     }
 
-    public static final ImmutableMap<String, Function<String, String>> PREDICATE_RULES;
-    private static final String RETURN_BOOL_TRUE_BLOCK = " {\n\t\treturn m.BoolTrue, nil\n\t}";
+    public static final ImmutableMap<String, BiFunction<String, String, String>> PREDICATE_IFS;
 
     static {
-        ImmutableMap.Builder<String, Function<String, String>> builder = ImmutableMap.builder();
-        builder.put("K.K", s -> "return m.BoolTrue, nil");
-        builder.put("K.KItem", s -> "return m.BoolTrue, nil");
-        builder.put("INT.Int", s -> "if _, t := c.(*m.Int); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("FLOAT.Float", s -> "if _, t := c.(*m.Float); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("STRING.String", s -> "if _, t := c.(*m.String); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BYTES.Bytes", s -> "if _, t := c.(*m.Bytes); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BUFFER.StringBuffer", s -> "if _, t := c.(*m.StringBuffer); t" + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("BOOL.Bool", s -> "if _, t := c.(*m.Bool); t " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MINT.MInt", s -> "if _, t := c.(m.MInt); t " + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("MAP.Map", s -> "if mp, t := c.(*m.Map); t && mp.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("SET.Set", s -> "if set, t := c.(*m.Set); t && set.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("LIST.List", s -> "if list, t := c.(*m.List); t && list.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        builder.put("ARRAY.Array", s -> "if arr, t := c.(*m.Array); t && arr.Sort == " + s + RETURN_BOOL_TRUE_BLOCK);
-        PREDICATE_RULES = builder.build();
+        ImmutableMap.Builder<String, BiFunction<String, String, String>> builder = ImmutableMap.builder();
+        builder.put("K.K", (c, s) -> "if true");
+        builder.put("K.KItem", (c, s) -> "if true");
+        builder.put("INT.Int", (c, s) -> "if m.IsInt(" + c + ")");
+        builder.put("FLOAT.Float", (c, s) -> "if m.IsFloat(" + c + ")");
+        builder.put("STRING.String", (c, s) -> "if m.IsString(" + c + ")");
+        builder.put("BYTES.Bytes", (c, s) -> "if m.IsBytes(" + c + ")");
+        builder.put("BUFFER.StringBuffer", (c, s) -> "if m.IsStringBuffer(" + c + ")");
+        builder.put("BOOL.Bool", (c, s) -> "if m.IsBool(" + c + ")");
+        builder.put("MINT.MInt", (c, s) -> "if m.IsMint(" + c + ")");
+        builder.put("MAP.Map", (c, s) -> "if i.Model.IsMap(" + c + ", " + s + ")");
+        builder.put("SET.Set", (c, s) -> "if i.Model.IsSet(" + c + ", " + s + ")");
+        builder.put("LIST.List", (c, s) -> "if i.Model.IsList(" + c + ", " + s + ")");
+        builder.put("ARRAY.Array", (c, s) -> "if i.Model.IsArray(" + c + ", " + s + ")");
+        PREDICATE_IFS = builder.build();
     }
 
 
     public static final ImmutableMap<String, Function<Sort, String>> OCAML_SORT_VAR_HOOKS;
+
     static {
         ImmutableMap.Builder<String, Function<Sort, String>> builder = ImmutableMap.builder();
         builder.put("BOOL.Bool", s -> "Bool _");
@@ -86,17 +87,35 @@ public class GoBuiltin {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         builder.put("BOOL.Bool", "if %1$s, t := %2$s.(*m.Bool); t");
         builder.put("MINT.MInt", "if %1$s, t := %2$s.(m.MInt); t.");
-        builder.put("INT.Int",   "if %1$s, t := %2$s.(*m.Int); t");
-        builder.put("FLOAT.Float",  "if %1$s, t := %2$s.(*m.Float); t");
+        builder.put("INT.Int", "if %1$s, t := %2$s.(*m.Int); t");
+        builder.put("FLOAT.Float", "if %1$s, t := %2$s.(*m.Float); t");
         builder.put("STRING.String", "if %1$s, t := %2$s.(*m.String); t");
         builder.put("BYTES.Bytes", "if %1$s, t := %2$s.(*m.Bytes); t");
-        builder.put("BUFFER.StringBuffer",  "if %1$s, t := %2$s.(*m.StringBuffer); t");
+        builder.put("BUFFER.StringBuffer", "if %1$s, t := %2$s.(*m.StringBuffer); t");
         SORT_VAR_HOOKS_1 = builder.build();
         builder = ImmutableMap.builder();
         builder.put("LIST.List", "if %1$s, t := %2$s.(*m.List); t && %1$s.Sort == m.%3$s");
-        builder.put("ARRAY.Array",  "if %1$s, t := %2$s.(*m.Array); t && %1$s.Sort == m.%3$s");
+        builder.put("ARRAY.Array", "if %1$s, t := %2$s.(*m.Array); t && %1$s.Sort == m.%3$s");
         builder.put("MAP.Map", "if %1$s, t := %2$s.(*m.Map); t && %1$s.Sort == m.%3$s");
-        builder.put("SET.Set",  "if %1$s, t := %2$s.(*m.Set); t && %1$s.Sort == m.%3$s");
+        builder.put("SET.Set", "if %1$s, t := %2$s.(*m.Set); t && %1$s.Sort == m.%3$s");
         SORT_VAR_HOOKS_2 = builder.build();
+    }
+
+    public static final ImmutableSet<String> LHS_KVARIABLE_HOOKS;
+
+    static {
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        builder.add("BOOL.Bool");
+        builder.add("MINT.MInt");
+        builder.add("INT.Int");
+        builder.add("FLOAT.Float");
+        builder.add("STRING.String");
+        builder.add("BYTES.Bytes");
+        builder.add("BUFFER.StringBuffer");
+        builder.add("LIST.List");
+        builder.add("ARRAY.Array");
+        builder.add("MAP.Map");
+        builder.add("SET.Set");
+        LHS_KVARIABLE_HOOKS = builder.build();
     }
 }
