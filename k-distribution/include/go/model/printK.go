@@ -38,7 +38,7 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		}
 	default:
 		// object types
-		obj := ms.getObject(ref)
+		obj := ms.getReferencedObject(ref)
 		obj.kprint(ms, sb)
 	}
 }

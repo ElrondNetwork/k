@@ -28,8 +28,8 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		return ms.ksequenceEquals(ref1, ref2)
 	default:
 		// object types
-		obj1 := ms.getObject(ref1)
-		obj2 := ms.getObject(ref2)
+		obj1 := ms.getReferencedObject(ref1)
+		obj2 := ms.getReferencedObject(ref2)
 		return obj1.equals(ms, obj2)
 	}
 }

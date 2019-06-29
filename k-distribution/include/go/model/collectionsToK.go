@@ -8,7 +8,7 @@ func (ms *ModelState) CollectionsToK(ref KReference) KReference {
 		ks := ms.KSequenceToSlice(ref)
 		newKs := make([]KReference, len(ks))
 		for i, child := range ks {
-			obj := ms.getObject(child)
+			obj := ms.getReferencedObject(child)
 			newKs[i] = obj.collectionsToK(ms)
 		}
 		return ms.NewKSequence(newKs)
@@ -19,7 +19,7 @@ func (ms *ModelState) CollectionsToK(ref KReference) KReference {
 		ref.refType == kapplyRef {
 
 		// object types
-		obj := ms.getObject(ref)
+		obj := ms.getReferencedObject(ref)
 		return obj.collectionsToK(ms)
 	}
 

@@ -26,7 +26,8 @@ type ModelState struct {
 	allKs *ksequenceSliceContainer
 
 	// keeps object types mixed together
-	allObjects []KObject
+	// objects are grouped in chunks
+	allObjects [][]KObject
 
 	// memoTables is a structure containing all memoization maps.
 	// Memoization tables are implemented as maps of maps of maps of ...
@@ -36,27 +37,68 @@ type ModelState struct {
 // constantsModel is another instance of the model, but which only contains a few constants.
 var constantsModel = NewModel()
 
-func (ms *ModelState) getReferencedObject(ref KReference) KObject {
-	index := ref.value1
-	if ref.constantObject {
-		return constantsModel.allObjects[index]
-	}
-	if index >= len(ms.allObjects) {
+const itemIndexBits = 8
+const chunkCapacity = 1 << itemIndexBits
+const itemIndexMask = chunkCapacity - 1
+
+func (ms *ModelState) getObjectAtIndex(index uint32) KObject {
+	chunkIndex := index >> itemIndexBits
+	itemIndex := index & itemIndexMask
+	if chunkIndex >= uint32(len(ms.allObjects)) {
 		panic("trying to reference object beyond allocated objects")
 	}
-	return ms.allObjects[index]
+	chunk := ms.allObjects[chunkIndex]
+	if itemIndex >= uint32(len(chunk)) {
+		panic("trying to reference object beyond allocated objects")
+	}
+	return chunk[itemIndex]
+}
+
+func (ms *ModelState) getReferencedObject(ref KReference) KObject {
+	if ref.constantObject {
+		return constantsModel.getObjectAtIndex(uint32(ref.value1))
+	}
+	return ms.getObjectAtIndex(uint32(ref.value1))
 }
 
 func (ms *ModelState) addObject(obj KObject) KReference {
-	newIndex := len(ms.allObjects)
-	ms.allObjects = append(ms.allObjects, obj)
+	var lastChunk []KObject
+	var lastChunkIndex int
+	if len(ms.allObjects) == 0 {
+		lastChunkIndex = 0
+		lastChunk = make([]KObject, 0, chunkCapacity)
+		ms.allObjects = append(ms.allObjects, nil)
+	} else {
+		lastChunkIndex = len(ms.allObjects) - 1
+		lastChunk = ms.allObjects[lastChunkIndex]
+		if len(lastChunk) == chunkCapacity {
+			lastChunkIndex++
+			lastChunk = make([]KObject, 0, chunkCapacity)
+			ms.allObjects = append(ms.allObjects, nil)
+		}
+	}
+
+	newItemIndex := len(lastChunk)
+	lastChunk = append(lastChunk, obj)
+	ms.allObjects[lastChunkIndex] = lastChunk
+
+	newIndex := (lastChunkIndex << itemIndexBits) | newItemIndex
 	return KReference{refType: obj.referenceType(), constantObject: false, value1: newIndex, value2: 0}
 }
 
 func addConstantObject(obj KObject) KReference {
-	newIndex := len(constantsModel.allObjects)
-	constantsModel.allObjects = append(constantsModel.allObjects, obj)
-	return KReference{refType: obj.referenceType(), constantObject: true, value1: newIndex, value2: 0}
+	ref := constantsModel.addObject(obj)
+	ref.constantObject = true
+	return ref
+}
+
+func (ms *ModelState) countObjects() int {
+	if len(ms.allObjects) == 0 {
+		return 0
+	}
+	nrChunks := len(ms.allObjects)
+	lastChunk := ms.allObjects[nrChunks-1]
+	return ((nrChunks - 1) << itemIndexBits) | len(lastChunk)
 }
 
 // NewModel creates a new blank model.
@@ -86,6 +128,6 @@ func (ms *ModelState) ClearModel() {
 // PrintStats simply prints some statistics to the console.
 // Useful for checking the size of the model data.
 func (ms *ModelState) PrintStats() {
-	fmt.Printf("Nr. objects: %d\n", len(ms.allObjects))
+	fmt.Printf("Nr. objects: %d (%d chunks)\n", ms.countObjects(), len(ms.allObjects))
 	fmt.Printf("Nr. K sequence slices: %d\n", len(ms.allKs.allSlices))
 }

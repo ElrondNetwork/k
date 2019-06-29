@@ -17,8 +17,8 @@ func (ms *ModelState) GetKTokenObject(ref KReference) (*KToken, bool) {
 	if ref.refType != ktokenRef {
 		return nil, false
 	}
-	ms.getObject(ref)
-	obj := ms.getObject(ref)
+	ms.getReferencedObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*KToken)
 	if !typeOk {
 		panic("wrong object type for reference")

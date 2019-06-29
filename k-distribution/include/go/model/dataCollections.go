@@ -86,7 +86,7 @@ func (ms *ModelState) GetListObject(ref KReference) (*List, bool) {
 	if ref.refType != listRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*List)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -134,7 +134,7 @@ func (ms *ModelState) GetMapObject(ref KReference) (*Map, bool) {
 	if ref.refType != mapRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*Map)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -147,7 +147,7 @@ func (ms *ModelState) GetSetObject(ref KReference) (*Set, bool) {
 	if ref.refType != setRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*Set)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -160,7 +160,7 @@ func (ms *ModelState) GetArrayObject(ref KReference) (*Array, bool) {
 	if ref.refType != arrayRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*Array)
 	if !typeOk {
 		panic("wrong object type for reference")

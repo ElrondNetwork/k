@@ -103,7 +103,7 @@ func (ms *ModelState) GetBigIntObject(ref KReference) (*BigInt, bool) {
 	if ref.refType != bigIntRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*BigInt)
 	if !typeOk {
 		panic("wrong object type for reference")

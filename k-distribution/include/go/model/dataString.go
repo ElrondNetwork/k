@@ -57,7 +57,7 @@ func IsStringBuffer(ref KReference) bool {
 // GetBigIntObject yields the cast object for a String reference, if possible.
 func (ms *ModelState) GetStringObject(ref KReference) (*String, bool) {
 	if ref.refType == stringRef {
-		obj := ms.getObject(ref)
+		obj := ms.getReferencedObject(ref)
         castObj, typeOk := obj.(*String)
         if !typeOk {
             panic("wrong object type for reference")
@@ -82,7 +82,7 @@ func (ms *ModelState) GetBytesObject(ref KReference) (*Bytes, bool) {
 	if ref.refType != bytesRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*Bytes)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -95,7 +95,7 @@ func (ms *ModelState) GetStringBufferObject(ref KReference) (*StringBuffer, bool
 	if ref.refType != stringBufferRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*StringBuffer)
 	if !typeOk {
 		panic("wrong object type for reference")

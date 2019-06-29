@@ -44,7 +44,7 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 		}
 	default:
 		// object types
-		obj := ms.getObject(ref)
+		obj := ms.getReferencedObject(ref)
 		obj.prettyPrint(ms, sb, indent)
 	}
 }

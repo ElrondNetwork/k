@@ -24,8 +24,8 @@ func (ms *ModelState) GetFloatObject(ref KReference) (*Float, bool) {
 	if ref.refType != floatRef {
 		return nil, false
 	}
-	ms.getObject(ref)
-	obj := ms.getObject(ref)
+	ms.getReferencedObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*Float)
 	if !typeOk {
 		panic("wrong object type for reference")

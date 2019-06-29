@@ -70,7 +70,7 @@ func (ms *ModelState) GetKApplyObject(ref KReference) (*KApply, bool) {
 	if ref.refType != kapplyRef {
 		return nil, false
 	}
-	obj := ms.getObject(ref)
+	obj := ms.getReferencedObject(ref)
 	castObj, typeOk := obj.(*KApply)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -88,7 +88,7 @@ func (ms *ModelState) NewKApply(label KLabel, arguments ...KReference) KReferenc
 	return ms.addObject(&KApply{Label: label, List: arguments})
 }
 
-// NewIntConstant creates a new integer constant, which is saved statically.
+// NewKApplyConstant creates a new integer constant, which is saved statically.
 // Do not use for anything other than constants, since these never get cleaned up.
 func NewKApplyConstant(label KLabel, arguments ...KReference) KReference {
 	ref := constantsModel.NewKApply(label, arguments...)

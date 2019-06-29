@@ -25,4 +25,8 @@ func main() {
 	}
 
 	i.ExecuteSimple("../", execFileName)
+
+	if (i.Verbose) {
+	    i.Model.PrintStats()
+	}
 }

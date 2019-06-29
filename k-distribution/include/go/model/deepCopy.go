@@ -24,7 +24,7 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 		return ms.NewKSequence(newKs)
 	default:
 		// object types
-		obj := ms.getObject(ref)
+		obj := ms.getReferencedObject(ref)
 		copiedObj := obj.deepCopy(ms)
 		if copiedObj == obj {
 			// if no new instance was created,
