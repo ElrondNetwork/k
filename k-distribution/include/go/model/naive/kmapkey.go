@@ -10,7 +10,18 @@ import (
 
 // KMapKey is a compact representation of a K item to be used as key in a map.
 type KMapKey interface {
-	ToKItem() (KReference, error)
+	toKItem() (KReference, error)
+	String() string
+}
+
+// MapKey converts a K item to a map key, if possible
+func (*ModelState) MapKey(k K) (KMapKey, bool) {
+    return mapKey(k)
+}
+
+// ToKItem converts a map key back to a regular K item
+func (*ModelState) ToKItem(mapKey KMapKey) (KReference, error) {
+	return mapKey.toKItem()
 }
 
 // kmapKeyBasic ... representation of basic types: Int, String, Bool
@@ -31,18 +42,17 @@ type kmapKeyKApply1 struct {
 type kmapBottom struct {
 }
 
-// KUsableAsKey ... A K Item that can be used as key in a map
-type usableAsKey interface {
-	convertToMapKey() (KMapKey, bool)
-}
-
-// MapKey ... converts a K item to a map key, if possible
-func MapKey(k K) (KMapKey, bool) {
+func mapKey(k K) (KMapKey, bool) {
 	uak, implementsInterface := k.(usableAsKey)
 	if !implementsInterface {
 		return kmapBottom{}, false
 	}
 	return uak.convertToMapKey()
+}
+
+// KUsableAsKey ... A K Item that can be used as key in a map
+type usableAsKey interface {
+	convertToMapKey() (KMapKey, bool)
 }
 
 func (k *KToken) convertToMapKey() (KMapKey, bool) {
@@ -54,7 +64,7 @@ func (k *KApply) convertToMapKey() (KMapKey, bool) {
 	case 0:
 		return kmapKeyKApply0{label: k.Label}, true
 	case 1:
-		argAsKey, argOk := MapKey(k.List[0])
+		argAsKey, argOk := mapKey(k.List[0])
 		if !argOk {
 			return kmapBottom{}, false
 		}
@@ -64,7 +74,7 @@ func (k *KApply) convertToMapKey() (KMapKey, bool) {
 	}
 }
 
-func (k *Int) convertToMapKey() (KMapKey, bool) {
+func (k *BigInt) convertToMapKey() (KMapKey, bool) {
 	return kmapKeyBasic{typeName: "Int", value: k.Value.String()}, true
 }
 
@@ -80,16 +90,26 @@ func (k *Bottom) convertToMapKey() (KMapKey, bool) {
 	return kmapBottom{}, true
 }
 
-// String ... string representation of the key
+// String provides a string representation of the key
+func (k KToken) String() string {
+	return fmt.Sprintf("KToken(%s)_%s", k.Sort.Name(), k.Value)
+}
+
+// ToKItem converts a map key back to a regular K item
+func (k KToken) ToKItem() (K, error) {
+	return &k, nil
+}
+
+// String provides a string representation of the key
 func (mapKey kmapKeyBasic) String() string {
 	return fmt.Sprintf("%s_%s", mapKey.typeName, mapKey.value)
 }
 
-// ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapKeyBasic) ToKItem() (K, error) {
+// ToKItem converts a map key back to a regular K item
+func (mapKey kmapKeyBasic) toKItem() (K, error) {
 	switch mapKey.typeName {
 	case "Int":
-		return ParseInt(mapKey.value)
+		return parseInt(mapKey.value)
 	case "Bool":
 		b, err := strconv.ParseBool(mapKey.value)
 		if err != nil {
@@ -97,33 +117,48 @@ func (mapKey kmapKeyBasic) ToKItem() (K, error) {
 		}
 		return ToKBool(b), nil
 	case "String":
-		return NewString(mapKey.value), nil
+		return &String{Value: mapKey.value}, nil
 	default:
 		return NoResult, errors.New("unable to convert KMapKey to K. Unknown type")
 	}
 
 }
 
-// ToKItem ... convert a map key back to a regular K item
-func (k KToken) ToKItem() (K, error) {
+// ToKItem converts a map key back to a regular K item
+func (k KToken) toKItem() (K, error) {
 	return &k, nil
 }
 
-// ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapKeyKApply0) ToKItem() (K, error) {
+// String provides a string representation of the key
+func (mapKey kmapKeyKApply0) String() string {
+	return fmt.Sprintf("KApply(%s)", mapKey.label.Name())
+}
+
+// ToKItem converts a map key back to a regular K item
+func (mapKey kmapKeyKApply0) toKItem() (K, error) {
 	return &KApply{Label: mapKey.label, List: nil}, nil
 }
 
-// ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapKeyKApply1) ToKItem() (K, error) {
-	argKItem, err := mapKey.arg1.ToKItem()
+// String provides a string representation of the key
+func (mapKey kmapKeyKApply1) String() string {
+	return fmt.Sprintf("KApply(%s)_%s", mapKey.label.Name(), mapKey.arg1.String())
+}
+
+// ToKItem converts a map key back to a regular K item
+func (mapKey kmapKeyKApply1) toKItem() (K, error) {
+	argKItem, err := mapKey.arg1.toKItem()
 	if err != nil {
 		return NoResult, err
 	}
 	return &KApply{Label: mapKey.label, List: []K{argKItem}}, nil
 }
 
-// ToKItem ... convert a map key back to a regular K item
-func (mapKey kmapBottom) ToKItem() (K, error) {
+// String provides a string representation of the key
+func (mapKey kmapBottom) String() string {
+	return "Bottom"
+}
+
+// ToKItem converts a map key back to a regular K item
+func (mapKey kmapBottom) toKItem() (K, error) {
 	return InternedBottom, nil
 }

@@ -2,17 +2,26 @@
 
 package %PACKAGE_MODEL%
 
+import (
+    "strings"
+)
+
+// K defines a K entity
+type K interface {
+	equals(other K) bool
+	deepCopy() K
+	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
+	kprint(ms *ModelState, sb *strings.Builder)
+	collectionsToK(ms *ModelState) K
+}
+
 // ModelState holds the state of the executor at a certain moment
 type ModelState struct {
     initialized bool
 
-    // allKs keeps all KSequences into one large 2d structure
-    // all KSequences point to this structure
-    // the first element of allKs should be empty sequence
-    allKs [][]K
-
-    // keeps most object types mixed together
-    otherObjects []K
+	// memoTables is a structure containing all memoization maps.
+	// Memoization tables are implemented as maps of maps of maps of ...
+	memoTables map[MemoTable]interface{}
 }
 
 // Init prepares model for execution
@@ -27,9 +36,6 @@ func (ms *ModelState) Init() {
     if ms.initialized {
         return
     }
-    ms.initialized = true
-    ms.allKs = [][]K{[]K{}}
-    ms.otherObjects = nil
 }
 
 // ClearModel ... clean up any data left from previous executions, to save memory

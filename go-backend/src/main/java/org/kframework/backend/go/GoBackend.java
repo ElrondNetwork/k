@@ -128,18 +128,25 @@ public class GoBackend implements Backend {
 
             // copy: model
             for (String fileName : Arrays.asList(
-                    "collectionsToK.go", "collectionsUtil.go",
+                    "collectionsUtil.go", "dynArray.go",
+                    "error.go", "memo.go",
+                    "printUtil.go")) {
+                // these ones are the same in all implementations
+                packageManager.copyFileToPackage(
+                        files.resolveKBase("include/go/model/" + fileName),
+                        packageManager.modelPackage, fileName);
+
+            }
+            for (String fileName : Arrays.asList(
+                    "collectionsToK.go",
                     "data.go",
                     "dataBool.go", "dataCollections.go", "dataInt.go",
                     "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
-                    "dataString.go",
-                    "dataOthers.go",
-                    "deepCopy.go", "dynArray.go",
-                    "equals.go", "error.go",
+                    "dataString.go", "dataOthers.go",
+                    "deepCopy.go", "equals.go",
                     "kmapkey.go",
                     "kref.go",
-                    "memo.go",
-                    "printK.go", "printPretty.go", "printUtil.go")) {
+                    "printK.go", "printPretty.go")) {
                 if (options.naive) {
                     packageManager.copyFileToPackage(
                             files.resolveKBase("include/go/model/naive/" + fileName),
