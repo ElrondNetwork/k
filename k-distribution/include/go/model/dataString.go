@@ -6,6 +6,33 @@ import (
     "strings"
 )
 
+// String is a KObject that contains a string
+type String struct {
+	Value string
+}
+
+func (*String) referenceType() kreferenceType {
+	return stringRef
+}
+
+// Bytes is a KObject that contains a slice of bytes
+type Bytes struct {
+	Value []byte
+}
+
+func (*Bytes) referenceType() kreferenceType {
+	return bytesRef
+}
+
+// StringBuffer is a KObject that contains a string buffer
+type StringBuffer struct {
+	Value strings.Builder
+}
+
+func (*StringBuffer) referenceType() kreferenceType {
+	return stringBufferRef
+}
+
 // StringEmpty is a reference to an empty string
 var StringEmpty = addConstantObject(&String{Value: ""})
 
@@ -89,7 +116,27 @@ func NewStringConstant(s string) KReference {
 	return ref
 }
 
+// NewBytes creates a new K string object from a Go string
+func (ms *ModelState) NewBytes(value []byte) KReference {
+	return ms.addObject(&Bytes{Value: value})
+}
+
 // NewStringBuffer creates a new object and returns the reference.
 func (ms *ModelState) NewStringBuffer() KReference {
 	return ms.addObject(&StringBuffer{Value: strings.Builder{}})
+}
+
+// IsEmpty returns true if Bytes is the empty byte slice
+func (k *Bytes) IsEmpty() bool {
+	return len(k.Value) == 0
+}
+
+// String yields a Go string representation of the K String
+func (k *String) String() string {
+	return k.Value
+}
+
+// IsEmpty returns true if it is the empty string
+func (k *String) IsEmpty() bool {
+	return len(k.Value) == 0
 }

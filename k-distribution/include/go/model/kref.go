@@ -41,23 +41,5 @@ type KReference struct {
 // NullReference is the zero-value of KReference. It doesn't point to anything.
 var NullReference = KReference{refType: nullRef, value1: 0, value2: 0}
 
-// InternedBottom is usually used as a dummy object
-var InternedBottom = KReference{refType: bottomRef, value1: 0, value2: 0}
-
 // NoResult is the result when a function returns an error
 var NoResult = InternedBottom
-
-// IsEmpty ... returns true if Bytes is the empty byte slice
-func (k *Bytes) IsEmpty() bool {
-	return len(k.Value) == 0
-}
-
-// String ... Yields a Go string representation of the K String
-func (k *String) String() string {
-	return k.Value
-}
-
-// IsEmpty ... returns true if it is the empty string
-func (k *String) IsEmpty() bool {
-	return len(k.Value) == 0
-}

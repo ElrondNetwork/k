@@ -7,6 +7,15 @@ import (
 	"math/big"
 )
 
+// BigInt is a KObject representing a big int in K
+type BigInt struct {
+	Value *big.Int
+}
+
+func (*BigInt) referenceType() kreferenceType {
+	return bigIntRef
+}
+
 // IsInt returns true if reference points to an integer
 func IsInt(ref KReference) bool {
     return ref.refType == smallIntRef || ref.refType == bigIntRef

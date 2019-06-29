@@ -129,13 +129,16 @@ public class GoBackend implements Backend {
             // copy: model
             for (String fileName : Arrays.asList(
                     "collectionsToK.go", "collectionsUtil.go",
-                    "data.go", "dataKSequence.go", "dataKApply.go",
-                    "dataBool.go", "dataCollections.go", "dataInt.go", "dataString.go",
+                    "data.go",
+                    "dataBool.go", "dataCollections.go", "dataInt.go",
+                    "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
+                    "dataString.go",
+                    "dataOthers.go",
                     "deepCopy.go", "dynArray.go",
                     "equals.go", "error.go",
                     "kmapkey.go",
-                    "kobjects.go",
-                    "kref.go", "krefNew.go", "krefGet.go",
+                    "kref.go",
+                    "memo.go",
                     "printK.go", "printPretty.go", "printUtil.go")) {
                 if (options.naive) {
                     packageManager.copyFileToPackage(

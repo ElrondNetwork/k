@@ -2,6 +2,49 @@
 
 package %PACKAGE_MODEL%
 
+// Map is a KObject representing a map in K
+type Map struct {
+	Sort  Sort
+	Label KLabel
+	Data  map[KMapKey]KReference
+}
+
+func (*Map) referenceType() kreferenceType {
+	return mapRef
+}
+
+// Set is a KObject representing a set in K
+type Set struct {
+	Sort  Sort
+	Label KLabel
+	Data  map[KMapKey]bool
+}
+
+func (*Set) referenceType() kreferenceType {
+	return setRef
+}
+
+// List is a KObject representing a list in K
+type List struct {
+	Sort  Sort
+	Label KLabel
+	Data  []KReference
+}
+
+func (*List) referenceType() kreferenceType {
+	return listRef
+}
+
+// Array is a KObject holding an array that can grow
+type Array struct {
+	Sort Sort
+	Data *DynamicArray
+}
+
+func (*Array) referenceType() kreferenceType {
+	return arrayRef
+}
+
 // IsMap returns true if reference points to a map with given sort
 func (ms *ModelState) IsMap(ref KReference, expectedSort Sort) bool {
 	obj, typeOk := ms.GetMapObject(ref)
@@ -123,4 +166,24 @@ func (ms *ModelState) GetArrayObject(ref KReference) (*Array, bool) {
 		panic("wrong object type for reference")
 	}
 	return castObj, true
+}
+
+// NewList creates a new object and returns the reference.
+func (ms *ModelState) NewList(sort Sort, label KLabel, value []KReference) KReference {
+	return ms.addObject(&List{Sort: sort, Label: label, Data: value})
+}
+
+// NewMap creates a new object and returns the reference.
+func (ms *ModelState) NewMap(sort Sort, label KLabel, value map[KMapKey]KReference) KReference {
+	return ms.addObject(&Map{Sort: sort, Label: label, Data: value})
+}
+
+// NewSet creates a new object and returns the reference.
+func (ms *ModelState) NewSet(sort Sort, label KLabel, value map[KMapKey]bool) KReference {
+	return ms.addObject(&Set{Sort: sort, Label: label, Data: value})
+}
+
+// NewArray creates a new object and returns the reference.
+func (ms *ModelState) NewArray(sort Sort, value *DynamicArray) KReference {
+	return ms.addObject(&Array{Sort: sort, Data: value})
 }
