@@ -22,7 +22,7 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 	case bottomRef:
 		sb.WriteString("Bottom")
 	case emptyKseqRef:
-		sb.WriteString(" .K")
+		sb.WriteString(" .K ")
 	case nonEmptyKseqRef:
 		ks := ms.KSequenceToSlice(ref)
 		if len(ks) == 0 {
