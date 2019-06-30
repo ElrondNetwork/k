@@ -40,7 +40,7 @@ func (t *tracePrettyDebug) initialize() {
 	retry := 0
 	for directoryExists(t.dirName) && retry < 5 {
 		retry++
-		t.dirName = fmt.Sprintf(dirNameBase+"-%d", retry)
+		t.dirName = fmt.Sprintf("%s-%d", dirNameBase, retry)
 	}
 	err = os.Mkdir(t.dirName, os.ModePerm)
 	if err != nil {
@@ -75,7 +75,8 @@ func (t *tracePrettyDebug) traceInitialState(state m.KReference) {
 }
 
 func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.KReference) {
-	t.newTraceFile(fmt.Sprintf("%s_step%d.log", t.dirName, stepNr))
+	//t.newTraceFile(fmt.Sprintf("%s_step%6d.log", t.dirName, stepNr))
+	t.newTraceFile(fmt.Sprintf("step%6d.log", stepNr))
 	t.fileWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
 }
 

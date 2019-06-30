@@ -8,6 +8,49 @@ type KApply struct {
 	List  []KReference
 }
 
+type KApplyReferenceAndObject struct {
+    obj *KApply
+}
+
+// GetReference retrieves the references, but also increments the reference count.
+func (ro KApplyReferenceAndObject) GetReference() KReference {
+	return ro.obj
+}
+
+// Arg ...
+func (ro KApplyReferenceAndObject) Arg(i int) KReference {
+	return ro.obj.List[i]
+}
+
+// Label ...
+func (ro KApplyReferenceAndObject) Label() KLabel {
+	return ro.obj.Label
+}
+
+// Arity ...
+func (ro KApplyReferenceAndObject) Arity() int {
+	return len(ro.obj.List)
+}
+
+// ReleaseKApply matches a KApply, then signals that the reference is no longer needed.
+func (ms *ModelState) ReleaseKApply(ref KReference) (KApplyReferenceAndObject, bool) {
+	ro, typeOk := ms.MatchKApply(ref)
+	if !typeOk {
+		return ro, false
+	}
+	//ro.obj.nrReferences--
+	return ro, true
+}
+
+// MatchKApply matches a KApply, but does not release the reference.
+func (ms *ModelState) MatchKApply(ref KReference) (KApplyReferenceAndObject, bool) {
+	obj, typeOk := ms.GetKApplyObject(ref)
+	if !typeOk {
+		return KApplyReferenceAndObject{obj: nil}, false
+	}
+	return KApplyReferenceAndObject{obj: obj}, true
+}
+
 // CastKApply returns true if argument is a KApply item.
 // Also returns argument, for convenience.
 func (ms *ModelState) CastKApply(ref KReference) (KReference, bool) {
@@ -78,6 +121,25 @@ func (ms *ModelState) KApply0Ref(label KLabel) KReference {
 // NewKApply creates a new object.
 func (ms *ModelState) NewKApply(label KLabel, arguments ...KReference) KReference {
 	return &KApply{Label: label, List: arguments}
+}
+
+// ReuseKApply takes an existing KApply object that is no longer needed and replaces its arguments.
+func (ms *ModelState) ReuseKApply(rreuseRo KApplyReferenceAndObject, label KLabel, arguments ...KReference) KReference {
+	/*reuseKapp, typeOk := reuseObj.(*KApply)
+	if !typeOk {
+		panic("wrong object type for reference")
+	}
+	if reuseKapp.Label != label {
+	    panic("wrong reuse object provided to ReuseKApply, Label mismatch")
+	}
+	if len(arguments) != len(reuseKapp.List) {
+	     panic("wrong reuse object provided to ReuseKApply, arity mismatch")
+	}
+	for i, arg := range arguments {
+	    reuseKapp.List[i] = arg
+	}
+	return reuseObj*/
+	return ms.NewKApply(label, arguments...)
 }
 
 // NewKApplyConstant creates a new object.

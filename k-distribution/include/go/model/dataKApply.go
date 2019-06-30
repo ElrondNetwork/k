@@ -4,12 +4,61 @@ package %PACKAGE_MODEL%
 
 // KApply is a KObject representing a KApply item in K
 type KApply struct {
-	Label KLabel
-	List  []KReference
+	Label        KLabel
+	List         []KReference
+	nrReferences int
 }
 
 func (*KApply) referenceType() kreferenceType {
 	return kapplyRef
+}
+
+// KApplyReferenceAndObject is used in the rules to hold both the reference and the object itself.
+// We keep it as a value type, for the duration of the rule match. Should be short-lived.
+type KApplyReferenceAndObject struct {
+	ref KReference
+	obj *KApply
+}
+
+// GetReference retrieves the references, but also increments the reference count.
+func (ro KApplyReferenceAndObject) GetReference() KReference {
+	ro.obj.nrReferences++
+	return ro.ref
+}
+
+// Arg ...
+func (ro KApplyReferenceAndObject) Arg(i int) KReference {
+	return ro.obj.List[i]
+}
+
+// Label ...
+func (ro KApplyReferenceAndObject) Label() KLabel {
+	return ro.obj.Label
+}
+
+// Arity ...
+func (ro KApplyReferenceAndObject) Arity() int {
+	return len(ro.obj.List)
+}
+
+// ReleaseKApply signals that the state that the KApply was part of is no longer needed,
+// we can decrement nrReferences.
+func (ms *ModelState) ReleaseKApply(ro KApplyReferenceAndObject) {
+	if ro.ref.constantObject {
+	    return
+	}
+    if ro.obj.nrReferences > 0 {
+        ro.obj.nrReferences--
+    }
+}
+
+// MatchKApply matches a KApply, but does not release the reference.
+func (ms *ModelState) MatchKApply(ref KReference) (KApplyReferenceAndObject, bool) {
+	obj, typeOk := ms.GetKApplyObject(ref)
+	if !typeOk {
+		return KApplyReferenceAndObject{ref: NullReference, obj: nil}, false
+	}
+	return KApplyReferenceAndObject{ref: ref, obj: obj}, true
 }
 
 // CastKApply returns true if argument is a KApply item.
@@ -80,12 +129,38 @@ func (ms *ModelState) GetKApplyObject(ref KReference) (*KApply, bool) {
 
 // KApply0Ref yields a reference to a KApply with 0 arguments.
 func (ms *ModelState) KApply0Ref(label KLabel) KReference {
-	return ms.addObject(&KApply{Label: label, List: nil})
+	return ms.addObject(&KApply{Label: label, List: nil, nrReferences: 1})
 }
 
 // NewKApply creates a new object and returns the reference.
 func (ms *ModelState) NewKApply(label KLabel, arguments ...KReference) KReference {
-	return ms.addObject(&KApply{Label: label, List: arguments})
+	return ms.addObject(&KApply{Label: label, List: arguments, nrReferences: 1})
+}
+
+// ReuseKApply takes an existing KApply object that is no longer needed and replaces its arguments.
+func (ms *ModelState) ReuseKApply(reuseRo KApplyReferenceAndObject, label KLabel, arguments ...KReference) KReference {
+	if reuseRo.ref.refType != kapplyRef {
+		panic("wrong reuse object type provided to ReuseKApply")
+	}
+	if reuseRo.obj.Label != label {
+		panic("wrong reuse object provided to ReuseKApply, Label mismatch")
+	}
+	if len(arguments) != len(reuseRo.obj.List) {
+		panic("wrong reuse object provided to ReuseKApply, arity mismatch")
+	}
+	if reuseRo.ref.constantObject || reuseRo.obj.nrReferences > 0 {
+		// cannot reuse objects that are still in use elsewhere
+		return ms.NewKApply(label, arguments...)
+	}
+
+	// the reuse itself
+	reuseRo.obj.nrReferences = 1
+	for i, arg := range arguments {
+		reuseRo.obj.List[i] = arg
+	}
+
+	return reuseRo.ref
+
 }
 
 // NewKApplyConstant creates a new integer constant, which is saved statically.

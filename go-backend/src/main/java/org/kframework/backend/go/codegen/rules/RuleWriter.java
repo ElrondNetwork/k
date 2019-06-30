@@ -9,6 +9,7 @@ import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
+import org.kframework.backend.go.model.RuleVarContainer;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.AccumulateRuleVars;
@@ -38,7 +39,6 @@ public class RuleWriter {
 
     private final DefinitionData data;
     private final GoNameProvider nameProvider;
-    private final TempVarCounters tempVarCounters = new TempVarCounters();
 
     public RuleWriter(DefinitionData data, GoNameProvider nameProvider) {
         this.data = data;
@@ -77,9 +77,15 @@ public class RuleWriter {
 
             // check which variables are actually used in requires or in rhs
             // note: this has to happen *after* PrecomputePredicates does its job
+            AccumulateRuleVars accumRequiresVars = new AccumulateRuleVars(nameProvider);
+            accumRequiresVars.apply(requires);
             AccumulateRuleVars accumRhsVars = new AccumulateRuleVars(nameProvider);
-            accumRhsVars.apply(requires);
             accumRhsVars.apply(right);
+
+            RuleVarContainer vars = new RuleVarContainer(
+                    accumLhsVars.vars(),
+                    accumRequiresVars.vars(),
+                    accumRhsVars.vars());
 
             // also collect vars from lookups
             new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
@@ -89,11 +95,9 @@ public class RuleWriter {
 
             // output main LHS
             sb.writeIndent().append("// LHS").newLine();
-            Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
             RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, functionInfo.arguments,
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars(),
-                    alreadySeenLhsVariables,
+                    vars,
+                    type == RuleType.REGULAR,
                     false);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
                 KApply kapp = (KApply) left;
@@ -106,16 +110,14 @@ public class RuleWriter {
             writeLookups(sb, ruleNum,
                     functionInfo,
                     lookups,
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars(),
-                    alreadySeenLhsVariables);
+                    vars);
 
             // output requires
             boolean requiresContainsIf = false;
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES ", ToKast.apply(requires));
                 RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
-                        accumLhsVars.vars(), tempVarCounters,
+                        vars,
                         sb.getCurrentIndent());
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
@@ -128,11 +130,20 @@ public class RuleWriter {
                 sb.appendIndentedLine("// REQUIRES precomputed " + requires.att().get(PrecomputePredicates.COMMENT_KEY));
             }
 
+            // release references
+            if (type == RuleType.REGULAR) {
+                sb.appendIndentedLine("// release references");
+                for (String kappVar : vars.kapplyVariableNames) {
+                    sb.appendIndentedLine("i.Model.ReleaseKApply(", kappVar, ")");
+                }
+            }
+
             // output RHS
             sb.appendIndentedLine("// RHS");
             traceLine(sb, type, ruleNum, r);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                    accumLhsVars.vars(), tempVarCounters,
+                    vars,
+                    true,
                     sb.getCurrentIndent(),
                     true, functionInfo);
             rhsWriter.apply(right);
@@ -160,8 +171,7 @@ public class RuleWriter {
     private void writeLookups(GoStringBuilder sb, int ruleNum,
                               FunctionInfo functionInfo,
                               List<Lookup> lookups,
-                              RuleVars lhsVars, RuleVars rhsVars,
-                              Set<KVariable> alreadySeenLhsVariables) {
+                              RuleVarContainer vars) {
         if (lookups.isEmpty()) {
             return;
         }
@@ -175,11 +185,12 @@ public class RuleWriter {
             sb.appendIndentedLine("// lookup:", lookup.comment());
 
             RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
-                    lhsVars, rhsVars,
-                    alreadySeenLhsVariables,
+                    vars,
+                    false,
                     false);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                    rhsVars, tempVarCounters,
+                    vars,
+                    false,
                     sb.getCurrentIndent(),
                     false, functionInfo);
             rhsWriter.apply(lookup.getRhs());
@@ -212,8 +223,8 @@ public class RuleWriter {
                 break;
             case SETCHOICE:
                 lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
-                        lhsVars, rhsVars,
-                        alreadySeenLhsVariables,
+                        vars,
+                        false,
                         false);
                 writeChoiceLookup(
                         sb, lookup,
@@ -223,8 +234,8 @@ public class RuleWriter {
                 break;
             case MAPCHOICE:
                 lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
-                        lhsVars, rhsVars,
-                        alreadySeenLhsVariables,
+                        vars,
+                        false,
                         false);
                 writeChoiceLookup(
                         sb, lookup,

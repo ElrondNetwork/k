@@ -2,6 +2,7 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.RuleVarContainer;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.PrecomputePredicates;
@@ -25,16 +26,15 @@ public class RuleSideConditionWriterEager extends RuleRhsWriterBase {
 
     public RuleSideConditionWriterEager(DefinitionData data,
                                         GoNameProvider nameProvider,
-                                        RuleVars lhsVars,
-                                        TempVarCounters tempVarCounters,
+                                        RuleVarContainer vars,
                                         int tabsIndent) {
-        super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
+        super(data, nameProvider, vars, false, tabsIndent, "if ".length());
     }
 
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleSideConditionWriterEager(data, nameProvider,
-                lhsVars, tempVarCounters,
+                vars,
                 indent);
     }
 

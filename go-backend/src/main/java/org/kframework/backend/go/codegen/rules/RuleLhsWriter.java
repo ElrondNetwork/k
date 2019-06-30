@@ -5,6 +5,8 @@ import org.kframework.attributes.Att;
 import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
+import org.kframework.backend.go.model.KApplySignature;
+import org.kframework.backend.go.model.RuleVarContainer;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -31,19 +33,11 @@ import java.util.Set;
 public class RuleLhsWriter extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
+    private final RuleVarContainer vars;
     private final GoNameProvider nameProvider;
     private final FunctionParams functionVars;
-    private final RuleVars lhsVars;
-    private final RuleVars rhsVars;
 
-    /**
-     * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
-     * This structure keeps track of that.
-     */
-    private final Set<KVariable> alreadySeenVariables;
     private final boolean startWithScopeBlockIfNecessary;
-
-    private int kitemIndex = 0;
 
     public enum ExpressionType {IF, STATEMENT, NOTHING}
 
@@ -77,16 +71,14 @@ public class RuleLhsWriter extends VisitK {
                          DefinitionData data,
                          GoNameProvider nameProvider,
                          FunctionParams functionVars,
-                         RuleVars lhsVars, RuleVars rhsVars,
-                         Set<KVariable> alreadySeenVariables,
+                         RuleVarContainer vars,
+                         boolean allowItemRelease,
                          boolean startWithScopeBlockIfNecessary) {
         this.sb = sb;
         this.data = data;
         this.nameProvider = nameProvider;
         this.functionVars = functionVars;
-        this.lhsVars = lhsVars;
-        this.rhsVars = rhsVars;
-        this.alreadySeenVariables = alreadySeenVariables;
+        this.vars = vars;
         this.startWithScopeBlockIfNecessary = startWithScopeBlockIfNecessary;
     }
 
@@ -138,8 +130,7 @@ public class RuleLhsWriter extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            String ktVar = "kt" + kitemIndex;
-            kitemIndex++;
+            String ktVar = "kt" + vars.varCounters.consumeLhsVarIndex();
             lhsTypeIf(ktVar, consumeSubject(), "GetKTokenObject");
             sb.append(" && ").append(ktVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
@@ -168,9 +159,9 @@ public class RuleLhsWriter extends VisitK {
                         sb.append(")");
                         sb.beginBlock("empty list ", ToKast.apply(k));
                     } else if (k.items().size() == 2) {
-                        String headVar = "listHead" + kitemIndex;
-                        String tailVar = "listTail" + kitemIndex;
-                        kitemIndex++;
+                        int varIndex = vars.varCounters.consumeLhsVarIndex();
+                        String headVar = "listHead" + varIndex;
+                        String tailVar = "listTail" + varIndex;
                         sb.writeIndent().append("if ok, ");
                         sb.append(headVar).append(", ").append(tailVar);
                         sb.append(" := i.Model.ListSplitHeadTail(");
@@ -214,20 +205,23 @@ public class RuleLhsWriter extends VisitK {
             String kappVar;
             String aliasComment = "";
             if (alias != null) {
-                kappVar = lhsVars.getVarName(alias);
+                kappVar = vars.lhsVars.getVarName(alias);
                 aliasComment = " as " + alias.name();
             } else {
-                kappVar = "kapp" + kitemIndex;
-                kitemIndex++;
+                kappVar = "kapp" + vars.varCounters.consumeLhsVarIndex();
+            }
+            vars.kapplyVariableNames.add(kappVar);
+            if (vars.lhsVars.getKApplySignatureCount(k) == 1) {
+                vars.lhsVars.signatureToKApplyVarName.put(KApplySignature.of(k), kappVar);
             }
 
-            lhsTypeIf(kappVar, consumeSubject(), "CastKApply");
-            sb.append(" && i.Model.KApplyLabel(").append(kappVar).append(") == m.").append(nameProvider.klabelVariableName(k.klabel()));
-            sb.append(" && i.Model.KApplyArity(").append(kappVar).append(") == ").append(k.klist().items().size());
+            lhsTypeIf(kappVar, consumeSubject(), "MatchKApply");
+            sb.append(" && ").append(kappVar).append(".Label() == m.").append(nameProvider.klabelVariableName(k.klabel()));
+            sb.append(" && ").append(kappVar).append(".Arity() == ").append(k.klist().items().size());
             sb.beginBlock(ToKast.apply(k), aliasComment);
             int i = 0;
             for (K item : k.klist().items()) {
-                nextSubject = "i.Model.KApplyArg(" + kappVar + ", " + i + ")";
+                nextSubject = kappVar + ".Arg(" + i + ")";
                 apply(item);
                 i++;
             }
@@ -267,15 +261,13 @@ public class RuleLhsWriter extends VisitK {
             // tail
             if (k.items().get(1) instanceof KApply) {
                 KApply tail = (KApply) k.items().get(1);
-                String tailVar = "listDataTail" + kitemIndex;
-                kitemIndex++;
+                String tailVar = "listDataTail" + vars.varCounters.consumeLhsVarIndex();
                 sb.appendIndentedLine(tailVar, " := ", dataVarName, "[1:] // list tail: ", ToKast.apply(tail));
                 nextSubject = tailVar;
                 applyListContents(tail, tailVar, originalListVar, attr);
             } else if (k.items().get(1) instanceof KVariable) {
                 KVariable tail = (KVariable) k.items().get(1);
-                String tailVar = "lisTail" + kitemIndex;
-                kitemIndex++;
+                String tailVar = "lisTail" + vars.varCounters.consumeLhsVarIndex();
                 sb.appendIndentedLine("var ", tailVar, " m.KReference");
                 sb.appendIndentedLine(tailVar, " = &m.List { Sort: ", originalListVar, ".Sort, Label: ", originalListVar, ".Label, Data: ", originalListVar, ".Data[1:] }");
                 // TODO: signal that nextSubject is already defined as list via a type enum (values: K, List, etc.)
@@ -325,16 +317,16 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(KVariable k) {
-        String varName = lhsVars.getVarName(k);
+        String varName = vars.lhsVars.getVarName(k);
 
-        if (alreadySeenVariables.contains(k)) {
+        if (vars.alreadySeenLhsVariables.contains(k)) {
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
             sb.append("if i.Model.Equals(").append(consumeSubject()).append(", ").append(varName).append(")");
             sb.beginBlock("lhs KVariable, which reappears:" + k.name());
             return;
         }
-        alreadySeenVariables.add(k);
+        vars.alreadySeenLhsVariables.add(k);
 
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
@@ -347,8 +339,9 @@ public class RuleLhsWriter extends VisitK {
                 sb.writeIndent().append(ifClause);
                 sb.beginBlock("lhs KVariable with hook:" + hook);
 
-                boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
-                        || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
+                boolean varNeeded = vars.lhsVars.getVarCount(k) > 1 // needed in LHS, when it reappears
+                        || vars.requiresVars.containsVar(k)  // needed in requires
+                        || vars.rhsVars.containsVar(k);  // needed in RHS
                 if (varNeeded) {
                     sb.appendIndentedLine(varName, " := ", subject, " // ", ToKast.apply((K) k));
                 } else {
@@ -367,7 +360,7 @@ public class RuleLhsWriter extends VisitK {
             sb.writeIndent();
             sb.append("// "); // no code here, it is redundant
             sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
-        } else if (!rhsVars.containsVar(k)) {
+        } else if (!vars.requiresVars.containsVar(k) && !vars.rhsVars.containsVar(k)) {
             handleExpressionType(ExpressionType.NOTHING);
             String subject = consumeSubject();
             sb.writeIndent();
@@ -394,9 +387,9 @@ public class RuleLhsWriter extends VisitK {
             return;
         case 2:
             // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
-            String kseqHead = "kseq" + kitemIndex + "Head";
-            String kseqTail = "kseq" + kitemIndex + "Tail";
-            kitemIndex++;
+            int kseqVarIndex = vars.varCounters.consumeLhsVarIndex();
+            String kseqHead = "kseq" + kseqVarIndex + "Head";
+            String kseqTail = "kseq" + kseqVarIndex + "Tail";
             sb.writeIndent().append("if ok, ");
             sb.append(kseqHead).append(", ");
             sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(consumeSubject()).append("); ok");
@@ -407,8 +400,7 @@ public class RuleLhsWriter extends VisitK {
             apply(k.items().get(1));
             return;
         default:
-            String kseqVarBase = "kseq" + kitemIndex;
-            kitemIndex++;
+            String kseqVarBase = "kseq" + vars.varCounters.consumeLhsVarIndex();
 
             int nrHeads = k.items().size() - 1;
             String subject = consumeSubject();

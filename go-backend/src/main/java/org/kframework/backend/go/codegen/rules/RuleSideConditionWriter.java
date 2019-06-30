@@ -2,6 +2,7 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.RuleVarContainer;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.PrecomputePredicates;
@@ -23,16 +24,15 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
 
     public RuleSideConditionWriter(DefinitionData data,
                                    GoNameProvider nameProvider,
-                                   RuleVars lhsVars,
-                                   TempVarCounters tempVarCounters,
+                                   RuleVarContainer vars,
                                    int tabsIndent) {
-        super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
+        super(data, nameProvider, vars, false, tabsIndent, "if ".length());
     }
 
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleSideConditionWriter(data, nameProvider,
-                lhsVars, tempVarCounters,
+                vars,
                 indent);
     }
 
@@ -98,7 +98,7 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                     currentSb = evalSb;
 
                     // get arg1 evaluation first
-                    String andVarName = "evalAnd" + tempVarCounters.consumeEvalVarIndex();
+                    String andVarName = "evalAnd" + vars.varCounters.consumeEvalVarIndex();
                     evalSb.appendIndentedLine("var ", andVarName, " bool // ", ToKast.apply(k));
                     evalSb.writeIndent().append(andVarName).append(" = ");
                     apply(arg1);
@@ -132,7 +132,7 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                 GoStringBuilder backupSb = currentSb;
                 currentSb = evalSb;
 
-                String orVarName = "evalOr" + tempVarCounters.consumeEvalVarIndex();
+                String orVarName = "evalOr" + vars.varCounters.consumeEvalVarIndex();
                 evalSb.appendIndentedLine("var ", orVarName, " bool // ", ToKast.apply(k));
 
                 // get arg1 evaluation first

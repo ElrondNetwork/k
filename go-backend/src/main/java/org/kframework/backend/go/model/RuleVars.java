@@ -1,6 +1,7 @@
 // Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.model;
 
+import org.kframework.kore.KApply;
 import org.kframework.kore.KLabel;
 import org.kframework.kore.KVariable;
 
@@ -11,6 +12,9 @@ public class RuleVars {
     private final Map<KVariable, String> kVarToName = new HashMap<>();
     private final Map<KVariable, Integer> kVarCount = new HashMap<>();
     public final Map<String, KLabel> listVars = new HashMap<>(); // TEMP
+
+    private final Map<KApplySignature, Integer> signatureToKApplyCount = new HashMap<>();
+    public final Map<KApplySignature, String> signatureToKApplyVarName = new HashMap<>();
 
     public RuleVars() {
     }
@@ -43,5 +47,19 @@ public class RuleVars {
         } else {
             return currentCount;
         }
+    }
+
+    public void incrementKApplySignatureCount(KApply kapp) {
+        KApplySignature signature = KApplySignature.of(kapp);
+        if (!signatureToKApplyCount.containsKey(signature)) {
+            signatureToKApplyCount.put(signature, 1);
+        } else {
+            Integer previousCout = signatureToKApplyCount.get(signature);
+            signatureToKApplyCount.put(signature, previousCout + 1);
+        }
+    }
+
+    public int getKApplySignatureCount(KApply kapp) {
+        return signatureToKApplyCount.getOrDefault(KApplySignature.of(kapp), 0);
     }
 }

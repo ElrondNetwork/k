@@ -3,6 +3,7 @@ package org.kframework.backend.go.processors;
 
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.strings.GoNameProvider;
+import org.kframework.kore.KApply;
 import org.kframework.kore.KVariable;
 import org.kframework.kore.VisitK;
 
@@ -27,5 +28,11 @@ public class AccumulateRuleVars extends VisitK {
         }
         varInfo.putVar(k, varName);
         varInfo.incrementVarCount(k);
+    }
+
+    @Override
+    public void apply(KApply k) {
+        varInfo.incrementKApplySignatureCount(k);
+        super.apply(k);
     }
 }

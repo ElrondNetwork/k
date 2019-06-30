@@ -2,6 +2,8 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
+import org.kframework.backend.go.model.KApplySignature;
+import org.kframework.backend.go.model.RuleVarContainer;
 import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.processors.PrecomputePredicates;
@@ -35,8 +37,8 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
-    protected final RuleVars lhsVars;
-    protected final TempVarCounters tempVarCounters;
+    protected final RuleVarContainer vars;
+    protected final boolean allowReuse;
     protected final int topLevelIndent;
 
     protected boolean newlineNext = false;
@@ -54,15 +56,15 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     public RuleRhsWriterBase(DefinitionData data,
                              GoNameProvider nameProvider,
-                             RuleVars lhsVars,
-                             TempVarCounters tempVarCounters,
+                             RuleVarContainer vars,
+                             boolean allowReuse,
                              int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.nameProvider = nameProvider;
-        this.lhsVars = lhsVars;
-        this.tempVarCounters = tempVarCounters;
+        this.vars = vars;
+        this.allowReuse = allowReuse;
     }
 
     protected abstract RuleRhsWriterBase newInstanceWithSameConfig(int indent);
@@ -102,7 +104,17 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("i.Model.NewKApply(m.").append(nameProvider.klabelVariableName(k.klabel()));
+        if (allowReuse &&
+                vars.lhsVars.getKApplySignatureCount(k) == 1 &&
+                vars.rhsVars.getKApplySignatureCount(k) == 1 ) {
+            // reuse KApply!
+            currentSb.append("i.Model.ReuseKApply(");
+            currentSb.append(vars.lhsVars.signatureToKApplyVarName.get(KApplySignature.of(k)));
+            currentSb.append(", ");
+        } else {
+            currentSb.append("i.Model.NewKApply(");
+        }
+        currentSb.append("m.").append(nameProvider.klabelVariableName(k.klabel()));
         currentSb.append(", // as-is ").append(k.klabel().name());
         currentSb.increaseIndent();
         for (K item : k.klist().items()) {
@@ -117,7 +129,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     protected void applyKApplyExecute(KApply k) {
-        int evalVarIndex = tempVarCounters.consumeEvalVarIndex();
+        int evalVarIndex = vars.varCounters.consumeEvalVarIndex();
         String evalVarName = "eval" + evalVarIndex;
         String errVarName = "err" + evalVarIndex;
 
@@ -363,19 +375,19 @@ public abstract class RuleRhsWriterBase extends VisitK {
     @Override
     public void apply(KVariable v) {
         start();
-        String varName = lhsVars.getVarName(v);
+        String varName = vars.lhsVars.getVarName(v);
         if (varName == null) {
             currentSb.append("/* varName=null */ m.InternedBottom");
             end();
             return;
         }
 
-        if (!lhsVars.containsVar(v) && varName.startsWith("?")) {
+        if (!vars.lhsVars.containsVar(v) && varName.startsWith("?")) {
             throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
-        } else if (!lhsVars.containsVar(v)) {
+        } else if (!vars.lhsVars.containsVar(v)) {
             currentSb.append("panic(\"Stuck!\")");
         } else {
-            KLabel listVar = lhsVars.listVars.get(varName);
+            KLabel listVar = vars.lhsVars.listVars.get(varName);
             if (listVar != null) {
                 Sort sort = data.mainModule.sortFor().apply(listVar);
                 currentSb.append("&m.List{Sort: m.").append(nameProvider.sortVariableName(sort));
@@ -384,7 +396,11 @@ public abstract class RuleRhsWriterBase extends VisitK {
                 //currentSb.append(varOccurrance);
                 currentSb.append(" /* ??? */}");
             } else {
-                currentSb.append(varName);
+                if (vars.kapplyVariableNames.contains(varName)) {
+                    currentSb.append(varName).append(".GetReference()");
+                } else {
+                    currentSb.append(varName);
+                }
             }
         }
         end();
