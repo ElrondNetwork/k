@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"bytes"
@@ -12,8 +12,15 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		// identical references means the same object
 		return true
 	}
+
+	// int types
+	intEquals, isInt := ms.IntEquals(ref1, ref2)
+	if isInt {
+		return intEquals
+	}
+
+	// for non-int types, refTypes should be equal
 	if ref1.refType != ref2.refType {
-		// different types cannot be equal
 		return false
 	}
 

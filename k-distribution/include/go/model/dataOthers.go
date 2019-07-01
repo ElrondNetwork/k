@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 // InternedBottom is usually used as a dummy object
 var InternedBottom = KReference{refType: bottomRef, value1: 0, value2: 0}

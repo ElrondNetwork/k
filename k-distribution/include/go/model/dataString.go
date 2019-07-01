@@ -1,9 +1,9 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
-    "strings"
+	"strings"
 )
 
 // String is a KObject that contains a string
@@ -54,15 +54,15 @@ func IsStringBuffer(ref KReference) bool {
 	return ref.refType == stringBufferRef
 }
 
-// GetBigIntObject yields the cast object for a String reference, if possible.
+// GetStringObject yields the cast object for a String reference, if possible.
 func (ms *ModelState) GetStringObject(ref KReference) (*String, bool) {
 	if ref.refType == stringRef {
 		obj := ms.getReferencedObject(ref)
-        castObj, typeOk := obj.(*String)
-        if !typeOk {
-            panic("wrong object type for reference")
-        }
-        return castObj, true
+		castObj, typeOk := obj.(*String)
+		if !typeOk {
+			panic("wrong object type for reference")
+		}
+		return castObj, true
 	}
 
 	return nil, false

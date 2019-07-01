@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"math/big"
@@ -22,6 +22,10 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 			newKs[i] = ms.DeepCopy(child)
 		}
 		return ms.NewKSequence(newKs)
+	case smallPositiveIntRef:
+		return ref
+	case smallNegativeIntRef:
+		return ref
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)

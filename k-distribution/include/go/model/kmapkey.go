@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"errors"
@@ -25,8 +25,8 @@ func (ms *ModelState) MapKey(ref KReference) (KMapKey, bool) {
 	if str, t := ms.GetString(ref); t {
 		return kmapKeyBasic{typeName: "String", value: str}, true
 	}
-	if bi, t := ms.GetBigIntObject(ref); t {
-		return kmapKeyBasic{typeName: "Int", value: bi.Value.String()}, true
+	if iStr, t := ms.GetIntAsDecimalString(ref); t {
+		return kmapKeyBasic{typeName: "Int", value: iStr}, true
 	}
 	if ktoken, t := ms.GetKTokenObject(ref); t {
 		return *ktoken, true

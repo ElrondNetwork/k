@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"fmt"
@@ -16,6 +16,14 @@ func (ms *ModelState) PrettyPrint(ref KReference) string {
 }
 
 func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KReference, indent int) {
+	// int types
+	intStr, isInt := ms.GetIntAsDecimalString(ref)
+	if isInt {
+		intHex, _ := ms.GetIntToString(ref, 16)
+		sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", intHex, intStr))
+		return
+	}
+
 	switch ref.refType {
 	case boolRef:
 		sb.WriteString(fmt.Sprintf("Bool (%t)", IsTrue(ref)))
@@ -48,7 +56,6 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 		obj.prettyPrint(ms, sb, indent)
 	}
 }
-
 
 func (k *KApply) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	lblName := k.Label.Name()
@@ -205,7 +212,7 @@ func (k *Array) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 }
 
 func (k *BigInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", k.Value.Text(16), k.Value.String()))
+	panic("prettyPrint should not be called for BigInt")
 }
 
 func (k *MInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {

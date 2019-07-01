@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"fmt"
@@ -15,6 +15,13 @@ func (ms *ModelState) KPrint(ref KReference) string {
 }
 
 func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference) {
+	// int types
+	intStr, isInt := ms.GetIntAsDecimalString(ref)
+	if isInt {
+		kprintKToken(sb, SortInt, intStr, false)
+		return
+	}
+
 	switch ref.refType {
 	case boolRef:
 		kprintKToken(sb, SortBool, fmt.Sprintf("%t", IsTrue(ref)), false)
@@ -119,7 +126,7 @@ func (k *Array) kprint(ms *ModelState, sb *strings.Builder) {
 }
 
 func (k *BigInt) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, SortInt, k.Value.String(), false)
+	panic("kprint should not be called for BigInt")
 }
 
 func (k *MInt) kprint(ms *ModelState, sb *strings.Builder) {

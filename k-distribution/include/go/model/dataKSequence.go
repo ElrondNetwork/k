@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 // EmptyKSequence is the KSequence with no elements.
 // To simplify things, it is a separate reference type.
@@ -26,14 +26,14 @@ func (c *ksequenceSliceContainer) addSlice(s *ksequenceSlice) int {
 }
 
 func createNonEmptyKseqRef(sequenceIndex int, headIndex int) KReference {
-	return KReference{refType: nonEmptyKseqRef, value1: sequenceIndex, value2: headIndex}
+	return KReference{refType: nonEmptyKseqRef, value1: uint32(sequenceIndex), value2: uint32(headIndex)}
 }
 
 func nonEmptyKseqRefParse(ref KReference) (ok bool, sliceIndex int, headIndex int) {
 	if ref.refType != nonEmptyKseqRef {
 		return false, 0, 0
 	}
-	return true, ref.value1, ref.value2
+	return true, int(ref.value1), int(ref.value2)
 }
 
 // IsNonEmptyKSequenceMinimumLength returns true for any K sequence with length greater of equal than given argument.

@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 // kreferenceType identifies the type of K item referenced by a KReference
 type kreferenceType byte
@@ -17,7 +17,8 @@ const (
 	setRef
 	listRef
 	arrayRef
-	smallIntRef
+	smallPositiveIntRef
+	smallNegativeIntRef
 	bigIntRef
 	mintRef
 	floatRef
@@ -34,8 +35,8 @@ const (
 type KReference struct {
 	refType        kreferenceType
 	constantObject bool
-	value1         int
-	value2         int
+	value1         uint32
+	value2         uint32
 }
 
 // NullReference is the zero-value of KReference. It doesn't point to anything.

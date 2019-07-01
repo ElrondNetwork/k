@@ -1,6 +1,6 @@
-%COMMENT%
+// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
 
-package %PACKAGE_MODEL%
+package impmodel
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ type ModelState struct {
 var constantsModel = NewModel()
 
 func (ms *ModelState) getReferencedObject(ref KReference) KObject {
-	index := ref.value1
+	index := int(ref.value1)
 	if ref.constantObject {
 		return constantsModel.allObjects[index]
 	}
@@ -50,13 +50,13 @@ func (ms *ModelState) getReferencedObject(ref KReference) KObject {
 func (ms *ModelState) addObject(obj KObject) KReference {
 	newIndex := len(ms.allObjects)
 	ms.allObjects = append(ms.allObjects, obj)
-	return KReference{refType: obj.referenceType(), constantObject: false, value1: newIndex, value2: 0}
+	return KReference{refType: obj.referenceType(), constantObject: false, value1: uint32(newIndex), value2: 0}
 }
 
 func addConstantObject(obj KObject) KReference {
 	newIndex := len(constantsModel.allObjects)
 	constantsModel.allObjects = append(constantsModel.allObjects, obj)
-	return KReference{refType: obj.referenceType(), constantObject: true, value1: newIndex, value2: 0}
+	return KReference{refType: obj.referenceType(), constantObject: true, value1: uint32(newIndex), value2: 0}
 }
 
 // NewModel creates a new blank model.
