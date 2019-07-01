@@ -43,3 +43,8 @@ func (ms *ModelState) ClearModel() {
     ms.initialized = false
     ms.Init()
 }
+
+// PrintStats simply prints some statistics to the console.
+func (ms *ModelState) PrintStats() {
+    // nothing in this version
+}

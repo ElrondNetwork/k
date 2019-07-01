@@ -1,6 +1,6 @@
-// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
+%COMMENT%
 
-package impmodel
+package %PACKAGE_MODEL%
 
 // Map is a KObject representing a map in K
 type Map struct {

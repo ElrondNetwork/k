@@ -23,12 +23,17 @@ func TestParseIntOk(t *testing.T) {
 
 func TestParseIntError(t *testing.T) {
 	interpreter := newTestInterpreter()
-	strs := []string{"abc", "-0", ""}
+	strs := []string{"qwerty", "0r", ""}
 	for _, s := range strs {
 		_, err := interpreter.Model.ParseInt(s)
 		if err == nil {
 			t.Errorf("Error expected when parsing %s", s)
 		}
+
+		_, err16 := interpreter.Model.ParseIntFromBase(s, 16)
+        if err16 == nil {
+            t.Errorf("Error expected when parsing %s", s)
+        }
 	}
 }
 
@@ -267,6 +272,26 @@ func TestIntHooks2(t *testing.T) {
 	assertIntOk(t, "1", z, err, interpreter)
 	interpreter.checkImmutable(t, a, b)
 
+}
+
+func TestIntHooksMod(t *testing.T) {
+	interpreter := newTestInterpreter()
+	var a, b, z m.KReference
+	var err error
+
+    a = interpreter.Model.IntFromString("231584178474632390847141970017375815706539969331281128078915168015826259279869")
+	b = interpreter.Model.FromInt(2)
+	interpreter.backupInput(a, b)
+	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "1", z, err, interpreter)
+	interpreter.checkImmutable(t, a, b)
+
+    a = interpreter.Model.FromInt(-5)
+	b = interpreter.Model.FromInt(3)
+	interpreter.backupInput(a, b)
+	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "-2", z, err, interpreter)
+	interpreter.checkImmutable(t, a, b)
 }
 
 func TestIntHooksPow(t *testing.T) {

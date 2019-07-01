@@ -129,6 +129,7 @@ public class GoBackend implements Backend {
             // copy: model
             for (String fileName : Arrays.asList(
                     "collectionsUtil.go", "dynArray.go",
+                    "dataIntConvert.go", "dataIntBytes.go", "dataIntOperations.go",
                     "error.go", "memo.go",
                     "printUtil.go")) {
                 // these ones are the same in all implementations
@@ -140,7 +141,8 @@ public class GoBackend implements Backend {
             for (String fileName : Arrays.asList(
                     "collectionsToK.go",
                     "data.go",
-                    "dataBool.go", "dataCollections.go", "dataInt.go",
+                    "dataBool.go", "dataCollections.go",
+                    "dataInt.go",
                     "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
                     "dataString.go", "dataOthers.go",
                     "deepCopy.go", "equals.go",

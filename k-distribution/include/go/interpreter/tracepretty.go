@@ -75,8 +75,9 @@ func (t *tracePrettyDebug) traceInitialState(state m.KReference) {
 }
 
 func (t *tracePrettyDebug) traceStepStart(stepNr int, currentState m.KReference) {
-	t.newTraceFile(fmt.Sprintf("%s_step%d.log", t.dirName, stepNr))
-	t.fileWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
+	//t.newTraceFile(fmt.Sprintf("%s_step%06d.log", t.dirName, stepNr))
+    t.newTraceFile(fmt.Sprintf("step%06d.log", stepNr))
+    t.fileWriter.WriteString(fmt.Sprintf("\n\nstep #%d begin\n\n", stepNr))
 }
 
 func (t *tracePrettyDebug) traceStepEnd(stepNr int, currentState m.KReference) {

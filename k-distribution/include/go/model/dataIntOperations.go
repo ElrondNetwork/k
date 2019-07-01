@@ -1,4 +1,4 @@
-package impmodel
+package %PACKAGE_MODEL%
 
 import (
 	"math/big"
@@ -246,21 +246,8 @@ func (ms *ModelState) IntMod(ref1 KReference, ref2 KReference) (KReference, bool
 func (ms *ModelState) IntEuclidianDiv(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		resultPositive := true
-		if big1.Sign() < 0 {
-			resultPositive = !resultPositive
-			big1 = big.NewInt(0).Neg(big1)
-		}
-		if big2.Sign() < 0 {
-			resultPositive = !resultPositive
-			big2 = big.NewInt(0).Neg(big2)
-		}
-
 		var z big.Int
 		z.Div(big1, big2)
-		if !resultPositive {
-			z.Neg(&z)
-		}
 		return ms.FromBigInt(&z), true
 	}
 
@@ -271,20 +258,8 @@ func (ms *ModelState) IntEuclidianDiv(ref1 KReference, ref2 KReference) (KRefere
 func (ms *ModelState) IntEuclidianMod(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		arg1Negative := false
-		if big1.Sign() < 0 {
-			arg1Negative = true
-			big1 = big.NewInt(0).Neg(big1)
-		}
-		if big2.Sign() < 0 {
-			big2 = big.NewInt(0).Neg(big2)
-		}
-
 		var z big.Int
 		z.Mod(big1, big2)
-		if arg1Negative {
-			z.Neg(&z)
-		}
 		return ms.FromBigInt(&z), true
 	}
 

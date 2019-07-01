@@ -1,4 +1,4 @@
-package impmodel
+package %PACKAGE_MODEL%
 
 import (
 	"math/big"

@@ -158,6 +158,7 @@ public class RuleLhsWriter extends VisitK {
                         && !attr.contains(Attribute.IDEMPOTENT_KEY)) {
 
                     // list
+                    handleExpressionType(ExpressionType.IF);
                     Sort sort = data.mainModule.sortFor().apply(collectionLabel);
                     if (k.items().size() == 0) {
                         // empty list

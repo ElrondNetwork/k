@@ -16,7 +16,7 @@ type KMapKey interface {
 
 // MapKey converts a K item to a map key, if possible
 func (*ModelState) MapKey(k K) (KMapKey, bool) {
-    return mapKey(k)
+	return mapKey(k)
 }
 
 // ToKItem converts a map key back to a regular K item
@@ -109,7 +109,11 @@ func (mapKey kmapKeyBasic) String() string {
 func (mapKey kmapKeyBasic) toKItem() (K, error) {
 	switch mapKey.typeName {
 	case "Int":
-		return parseInt(mapKey.value)
+		b, err := parseBigInt(mapKey.value)
+		if err != nil {
+			return IntZero, &parseIntError{parseVal: mapKey.value}
+		}
+		return &BigInt{Value: b}, nil
 	case "Bool":
 		b, err := strconv.ParseBool(mapKey.value)
 		if err != nil {

@@ -4,9 +4,8 @@ package %PACKAGE_INTERPRETER%
 
 import (
 	m "%INCLUDE_MODEL%"
-	"math/big"
-    "strconv"
-    "strings"
+	"strconv"
+	"strings"
 )
 
 type stringHooksType int
@@ -77,12 +76,10 @@ func (stringHooksType) ne(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m
 }
 
 func (stringHooksType) chr(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	i, ok := interpreter.Model.GetBigIntObject(c)
+	b, ok := interpreter.Model.GetByte(c)
 	if !ok {
 		return invalidArgsResult()
 	}
-
-	b := byte(i.Value.Uint64())
 	bytes := []byte{b}
 	return interpreter.Model.NewString(string(bytes)), nil
 }
@@ -90,40 +87,32 @@ func (stringHooksType) chr(c m.KReference, lbl m.KLabel, sort m.Sort, config m.K
 func (stringHooksType) find(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	str, ok1 := interpreter.Model.GetString(c1)
 	substr, ok2 := interpreter.Model.GetString(c2)
-	firstIdx, ok3 := interpreter.Model.GetBigIntObject(c3)
+	firstIdx, ok3 := interpreter.Model.GetPositiveInt(c3)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	if !firstIdx.Value.IsUint64() {
-		return invalidArgsResult()
-	}
-	firstIdxInt := firstIdx.Value.Uint64()
-	if firstIdxInt > uint64(len(str)) {
+	if firstIdx > len(str) {
 		return invalidArgsResult()
 	}
 
-	result := strings.Index(str[firstIdxInt:], substr)
+	result := strings.Index(str[firstIdx:], substr)
 	if result == -1 {
 		return m.IntMinusOne, nil
 	}
-	return interpreter.Model.FromUint64(firstIdxInt + uint64(result)), nil
+	return interpreter.Model.FromInt(firstIdx + result), nil
 }
 
 func (stringHooksType) rfind(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	str, ok1 := interpreter.Model.GetString(c1)
 	substr, ok2 := interpreter.Model.GetString(c2)
-	lastIdx, ok3 := interpreter.Model.GetBigIntObject(c3)
+	lastIdx, ok3 := interpreter.Model.GetPositiveInt(c3)
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	if !lastIdx.Value.IsUint64() {
+	if lastIdx > len(str) {
 		return invalidArgsResult()
 	}
-	lastIdxInt := lastIdx.Value.Uint64()
-	if lastIdxInt > uint64(len(str)) {
-		return invalidArgsResult()
-	}
-	result := strings.LastIndex(str[0:lastIdxInt], substr)
+	result := strings.LastIndex(str[0:lastIdx], substr)
 	if result == -1 {
 		return m.IntMinusOne, nil
 	}
@@ -140,24 +129,19 @@ func (stringHooksType) length(c m.KReference, lbl m.KLabel, sort m.Sort, config 
 
 func (stringHooksType) substr(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	str, ok1 := interpreter.Model.GetString(c1)
-	from, ok2 := interpreter.Model.GetBigIntObject(c2) // from is inclusive
-	to, ok3 := interpreter.Model.GetBigIntObject(c3)   // to is exclusive
+	from, ok2 := interpreter.Model.GetPositiveInt(c2) // from is inclusive
+	to, ok3 := interpreter.Model.GetPositiveInt(c3)   // to is exclusive
 	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	if !from.Value.IsUint64() || !to.Value.IsUint64() {
+	length := len(str)
+	if from > to || from > length {
 		return invalidArgsResult()
 	}
-	fromInt := from.Value.Uint64()
-	toInt := to.Value.Uint64()
-	length := uint64(len(str))
-	if fromInt > toInt || fromInt > length {
-		return invalidArgsResult()
+	if to > length {
+		to = length
 	}
-	if toInt > length {
-		toInt = length
-	}
-	return interpreter.Model.NewString(str[fromInt:toInt]), nil
+	return interpreter.Model.NewString(str[from:to]), nil
 }
 
 func (stringHooksType) ord(arg m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
@@ -173,11 +157,11 @@ func (stringHooksType) ord(arg m.KReference, lbl m.KLabel, sort m.Sort, config m
 }
 
 func (stringHooksType) int2string(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	i, ok := interpreter.Model.GetBigIntObject(c)
+	iStr, ok := interpreter.Model.GetIntAsDecimalString(c)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return interpreter.Model.NewString(i.Value.String()), nil
+	return interpreter.Model.NewString(iStr), nil
 }
 
 func (stringHooksType) string2int(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
@@ -185,41 +169,33 @@ func (stringHooksType) string2int(c m.KReference, lbl m.KLabel, sort m.Sort, con
 }
 
 func (stringHooksType) string2base(kstr m.KReference, kbase m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	str, ok1 := interpreter.Model.GetString(kstr)
-	base, ok2 := interpreter.Model.GetBigIntObject(kbase)
-	if !ok1 || !ok2 {
+	str, strOk := interpreter.Model.GetString(kstr)
+	base, baseOk := interpreter.Model.GetInt(kbase)
+	if !strOk || !baseOk {
 		return invalidArgsResult()
 	}
-	if !base.Value.IsUint64() {
+	if base < 2 || base > 16 {
 		return invalidArgsResult()
 	}
-	baseVal := base.Value.Uint64()
-	if baseVal < 2 || baseVal > 16 {
-		return invalidArgsResult()
+	resultRef, err := interpreter.Model.ParseIntFromBase(str, base)
+	if err != nil {
+		return m.NoResult, err
 	}
-	i := new(big.Int)
-	var parseOk bool
-	i, parseOk = i.SetString(str, int(baseVal))
-	if !parseOk {
-		return invalidArgsResult()
-	}
-	return interpreter.Model.FromBigInt(i), nil
+	return resultRef, nil
 }
 
 func (stringHooksType) base2string(kint m.KReference, kbase m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	i, ok1 := interpreter.Model.GetBigIntObject(kint)
-	base, ok2 := interpreter.Model.GetBigIntObject(kbase)
-	if !ok1 || !ok2 {
+	base, baseOk := interpreter.Model.GetInt(kbase)
+	if !baseOk {
 		return invalidArgsResult()
 	}
-	if !base.Value.IsUint64() {
+	if base < 2 || base > 16 {
 		return invalidArgsResult()
 	}
-	baseVal := base.Value.Uint64()
-	if baseVal < 2 || baseVal > 16 {
+	str, convOk := interpreter.Model.GetIntToString(kint, base)
+	if !convOk {
 		return invalidArgsResult()
 	}
-	str := i.Value.Text(int(baseVal))
 	return interpreter.Model.NewString(str), nil
 }
 
@@ -241,8 +217,8 @@ func (stringHooksType) token2string(c m.KReference, lbl m.KLabel, sort m.Sort, c
 	if k, typeOk := interpreter.Model.GetString(c); typeOk {
 		return interpreter.Model.NewString(k), nil // TODO: should do escaping
 	}
-	if k, typeOk := interpreter.Model.GetBigIntObject(c); typeOk {
-		return interpreter.Model.NewString(k.Value.String()), nil
+	if kIntStr, typeOk := interpreter.Model.GetIntAsDecimalString(c); typeOk {
+		return interpreter.Model.NewString(kIntStr), nil
 	}
 	if _, typeOk := interpreter.Model.GetFloatObject(c); typeOk {
 		return m.NoResult, &hookNotImplementedError{}
@@ -271,15 +247,10 @@ func (stringHooksType) replace(argS m.KReference, argToReplace m.KReference, arg
 	kS, ok1 := interpreter.Model.GetString(argS)
 	kToReplace, ok2 := interpreter.Model.GetString(argToReplace)
 	kReplacement, ok3 := interpreter.Model.GetString(argReplacement)
-	kCount, ok4 := interpreter.Model.GetBigIntObject(argCount)
+	count, ok4 := interpreter.Model.GetPositiveInt(argCount)
 	if !ok1 || !ok2 || !ok3 || !ok4 {
 		return invalidArgsResult()
 	}
-	count, countOk := kCount.ToInt32()
-	if !countOk {
-		return invalidArgsResult()
-	}
-
 	result := strings.Replace(kS, kToReplace, kReplacement, count)
 	return interpreter.Model.NewString(result), nil
 }

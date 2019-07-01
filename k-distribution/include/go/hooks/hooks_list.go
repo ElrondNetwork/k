@@ -52,14 +52,10 @@ func (listHooksType) in(e m.KReference, klist m.KReference, lbl m.KLabel, sort m
 
 func (listHooksType) get(klist m.KReference, kindex m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	l, isList := interpreter.Model.GetListObject(klist)
-	i, isInt := interpreter.Model.GetBigIntObject(kindex)
+	index, isInt := interpreter.Model.GetInt(kindex)
 	if !isList || !isInt {
 		return invalidArgsResult()
 	}
-	if !i.Value.IsInt64() {
-		return invalidArgsResult()
-	}
-	index := int(i.Value.Int64())
 	if index < 0 {
 		index = len(l.Data) + index // count from the end, e.g. -1 is the last element
 	}
@@ -70,15 +66,13 @@ func (listHooksType) get(klist m.KReference, kindex m.KReference, lbl m.KLabel, 
 }
 
 func (listHooksType) listRange(klist m.KReference, start m.KReference, end m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	l, isList := interpreter.Model.GetListObject(klist)
-	si, isInt1 := interpreter.Model.GetBigIntObject(start)
-	ei, isInt2 := interpreter.Model.GetBigIntObject(end)
-	if !isList || !isInt1 || !isInt2 || !si.Value.IsUint64() || !ei.Value.IsUint64() {
+	l, ok1 := interpreter.Model.GetListObject(klist)
+	si, ok2 := interpreter.Model.GetUint(start)
+	ei, ok3 := interpreter.Model.GetUint(end)
+	if !ok1 || !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	siUint := si.Value.Uint64()
-	eiUint := ei.Value.Uint64()
-	return interpreter.Model.NewList(l.Sort, l.Label, l.Data[siUint:eiUint]), nil
+	return interpreter.Model.NewList(l.Sort, l.Label, l.Data[si:ei]), nil
 }
 
 func (listHooksType) size(klist m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {

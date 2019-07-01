@@ -1,6 +1,6 @@
-// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
+%COMMENT%
 
-package impmodel
+package %PACKAGE_MODEL%
 
 // MemoTable is a reference to a memoization table
 type MemoTable int

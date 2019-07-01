@@ -1,6 +1,6 @@
-// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
+%COMMENT%
 
-package impmodel
+package %PACKAGE_MODEL%
 
 // CollectionsToK converts all collections to standard K items, like KApply, KToken, etc.
 func (ms *ModelState) CollectionsToK(ref KReference) KReference {

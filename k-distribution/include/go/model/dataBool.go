@@ -1,6 +1,6 @@
-// File provided by the K Framework Go backend. Timestamp: 2019-06-30 21:44:04.091
+%COMMENT%
 
-package impmodel
+package %PACKAGE_MODEL%
 
 // BoolTrue represents a boolean value with value true
 var BoolTrue = KReference{refType: boolRef, value1: 1, value2: 0}
