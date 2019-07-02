@@ -125,10 +125,6 @@ func (k *Array) kprint(ms *ModelState, sb *strings.Builder) {
 	ms.kprintToStringBuilder(sb, toK)
 }
 
-func (k *BigInt) kprint(ms *ModelState, sb *strings.Builder) {
-	panic("kprint should not be called for BigInt")
-}
-
 func (k *MInt) kprint(ms *ModelState, sb *strings.Builder) {
 	panic("Not implemented")
 }

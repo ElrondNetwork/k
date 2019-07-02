@@ -211,10 +211,6 @@ func (k *Array) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *BigInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	panic("prettyPrint should not be called for BigInt")
-}
-
 func (k *MInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("MInt (%d)", k.Value))
 }

@@ -89,8 +89,8 @@ func (k *Array) kprint(ms *ModelState, sb *strings.Builder) {
 	toK.kprint(ms, sb)
 }
 
-func (k *BigInt) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, SortInt, k.Value.String(), false)
+func (k *bigInt) kprint(ms *ModelState, sb *strings.Builder) {
+	kprintKToken(sb, SortInt, k.bigValue.String(), false)
 }
 
 func (k *MInt) kprint(ms *ModelState, sb *strings.Builder) {

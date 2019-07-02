@@ -134,8 +134,13 @@ func (i *Interpreter) runSteps(maxSteps int) error {
 			return errMaxStepsReached
 		}
 		i.traceStepStart()
-		var err error
-		i.state, err = i.step(i.state)
+		nextState, err := i.step(i.state)
+
+		//recycle!
+		i.Model.MarkInUse(nextState, i.currentStep)
+		i.Model.RecycleUnused(i.state, i.currentStep)
+
+		i.state = nextState
 		if err == nil {
 			i.traceStepEnd()
 			i.currentStep++

@@ -15,6 +15,8 @@ type KObject interface {
 	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
 	kprint(ms *ModelState, sb *strings.Builder)
 	collectionsToK(ms *ModelState) KReference
+	markInUse(ms *ModelState, stepNr int)
+	recycleUnused(ms *ModelState, stepNr int)
 }
 
 // ModelState holds the state of the executor at a certain moment
@@ -24,6 +26,13 @@ type ModelState struct {
 	// allKs keeps all KSequences into one large structure
 	// all KSequences point to this structure
 	allKs *ksequenceSliceContainer
+
+	// keeps big int objects, big int references point here
+	bigInts []*bigInt
+
+	// recycle bin for big ints
+	// works as a stack
+	bigIntRecycleBin []KReference
 
 	// keeps object types mixed together
 	allObjects []KObject
@@ -86,6 +95,9 @@ func (ms *ModelState) ClearModel() {
 // PrintStats simply prints some statistics to the console.
 // Useful for checking the size of the model data.
 func (ms *ModelState) PrintStats() {
+	fmt.Printf("Nr. BigInt objects: %d\n", len(ms.bigInts))
 	fmt.Printf("Nr. objects: %d\n", len(ms.allObjects))
 	fmt.Printf("Nr. K sequence slices: %d\n", len(ms.allKs.allSlices))
+	fmt.Printf("Recycle bin\n")
+	fmt.Printf("     BigInt    %d\n", len(ms.bigIntRecycleBin))
 }

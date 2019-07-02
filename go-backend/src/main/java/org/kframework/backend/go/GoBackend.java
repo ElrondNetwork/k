@@ -148,7 +148,8 @@ public class GoBackend implements Backend {
                     "deepCopy.go", "equals.go",
                     "kmapkey.go",
                     "kref.go",
-                    "printK.go", "printPretty.go")) {
+                    "printK.go", "printPretty.go",
+                    "recycle.go")) {
                 if (options.naive) {
                     packageManager.copyFileToPackage(
                             files.resolveKBase("include/go/model/naive/" + fileName),

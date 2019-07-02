@@ -133,12 +133,12 @@ func (k *Array) equals(arg K) bool {
 	return k.Data.Equals(other.Data)
 }
 
-func (k *BigInt) equals(arg K) bool {
-	other, typeOk := arg.(*BigInt)
+func (k *bigInt) equals(arg K) bool {
+	other, typeOk := arg.(*bigInt)
 	if !typeOk {
 		return false
 	}
-	return k.Value.Cmp(other.Value) == 0
+	return k.bigValue.Cmp(other.bigValue) == 0
 }
 
 func (k *MInt) equals(arg K) bool {

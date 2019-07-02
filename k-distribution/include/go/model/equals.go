@@ -163,14 +163,6 @@ func (k *Array) equals(ms *ModelState, arg KObject) bool {
 	return k.Data.Equals(other.Data)
 }
 
-func (k *BigInt) equals(ms *ModelState, arg KObject) bool {
-	other, typeOk := arg.(*BigInt)
-	if !typeOk {
-		panic("equals between different types should have been handled during reference Equals")
-	}
-	return k.Value.Cmp(other.Value) == 0
-}
-
 func (k *MInt) equals(ms *ModelState, arg KObject) bool {
 	other, typeOk := arg.(*MInt)
 	if !typeOk {

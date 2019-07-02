@@ -76,7 +76,7 @@ func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		return bi.Value, true
+		return bi.bigValue, true
 	}
 	return nil, false
 }
@@ -90,7 +90,7 @@ func (ms *ModelState) IsZero(ref KReference) bool {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		return bi.Value.Sign() == 0
+		return bi.bigValue.Sign() == 0
 	}
 
 	return false
@@ -108,10 +108,10 @@ func (ms *ModelState) GetUint(ref KReference) (uint, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		if !bi.Value.IsUint64() {
+		if !bi.bigValue.IsUint64() {
 			return 0, false
 		}
-		u64 := bi.Value.Uint64()
+		u64 := bi.bigValue.Uint64()
 		if u64 > math.MaxUint32 {
 			return 0, false
 		}
@@ -133,10 +133,10 @@ func (ms *ModelState) GetUint64(ref KReference) (uint64, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		if !bi.Value.IsUint64() {
+		if !bi.bigValue.IsUint64() {
 			return 0, false
 		}
-		return bi.Value.Uint64(), true
+		return bi.bigValue.Uint64(), true
 	}
 
 	return 0, false
@@ -151,10 +151,10 @@ func (ms *ModelState) GetInt(ref KReference) (int, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		if !bi.Value.IsInt64() {
+		if !bi.bigValue.IsInt64() {
 			return 0, false
 		}
-		i64 := bi.Value.Int64()
+		i64 := bi.bigValue.Int64()
 		if i64 >= math.MinInt32 && i64 <= math.MaxInt32 {
 			return int(i64), true
 		}
@@ -176,10 +176,10 @@ func (ms *ModelState) GetPositiveInt(ref KReference) (int, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		if !bi.Value.IsUint64() {
+		if !bi.bigValue.IsUint64() {
 			return 0, false
 		}
-		u64 := bi.Value.Uint64()
+		u64 := bi.bigValue.Uint64()
 		if u64 > math.MaxUint32 {
 			return 0, false
 		}
@@ -201,10 +201,10 @@ func (ms *ModelState) GetByte(ref KReference) (byte, bool) {
 
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		if !bi.Value.IsUint64() {
+		if !bi.bigValue.IsUint64() {
 			return 0, false
 		}
-		u64 := bi.Value.Uint64()
+		u64 := bi.bigValue.Uint64()
 		if u64 > 255 {
 			return 0, false
 		}
@@ -223,7 +223,7 @@ func (ms *ModelState) GetIntAsDecimalString(ref KReference) (string, bool) {
 
 	bigI, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		return bigI.Value.String(), true
+		return bigI.bigValue.String(), true
 	}
 
 	return "", false
@@ -238,7 +238,7 @@ func (ms *ModelState) GetIntToString(ref KReference, base int) (string, bool) {
 
 	bigI, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
-		return bigI.Value.Text(base), true
+		return bigI.bigValue.Text(base), true
 	}
 
 	return "", false

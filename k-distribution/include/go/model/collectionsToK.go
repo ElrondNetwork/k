@@ -133,10 +133,6 @@ func (k *KVariable) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }
 
-func (k *BigInt) collectionsToK(ms *ModelState) KReference {
-	panic("collectionsToK shouldn't be called for this object type")
-}
-
 func (k *MInt) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }

@@ -74,8 +74,8 @@ func (k *KApply) convertToMapKey() (KMapKey, bool) {
 	}
 }
 
-func (k *BigInt) convertToMapKey() (KMapKey, bool) {
-	return kmapKeyBasic{typeName: "Int", value: k.Value.String()}, true
+func (k *bigInt) convertToMapKey() (KMapKey, bool) {
+	return kmapKeyBasic{typeName: "Int", value: k.bigValue.String()}, true
 }
 
 func (k *Bool) convertToMapKey() (KMapKey, bool) {
@@ -113,7 +113,7 @@ func (mapKey kmapKeyBasic) toKItem() (K, error) {
 		if err != nil {
 			return IntZero, &parseIntError{parseVal: mapKey.value}
 		}
-		return &BigInt{Value: b}, nil
+		return &bigInt{bigValue: b}, nil
 	case "Bool":
 		b, err := strconv.ParseBool(mapKey.value)
 		if err != nil {

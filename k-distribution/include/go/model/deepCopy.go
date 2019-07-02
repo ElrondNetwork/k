@@ -26,6 +26,11 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 		return ref
 	case smallNegativeIntRef:
 		return ref
+	case bigIntRef:
+		obj, _ := ms.getBigIntObject(ref)
+		intCopy := big.NewInt(0)
+		intCopy.Set(obj.bigValue)
+		return ms.addBigIntObject(intCopy)
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -89,12 +94,6 @@ func (k *Set) deepCopy(ms *ModelState) KObject {
 
 func (k *Array) deepCopy(ms *ModelState) KObject {
 	return k // TODO: not implemented
-}
-
-func (k *BigInt) deepCopy(ms *ModelState) KObject {
-	intCopy := new(big.Int)
-	intCopy.Set(k.Value)
-	return &BigInt{Value: intCopy}
 }
 
 func (k *MInt) deepCopy(ms *ModelState) KObject {

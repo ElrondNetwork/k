@@ -59,10 +59,10 @@ func (k *Array) deepCopy() K {
 	return k // TODO: not implemented
 }
 
-func (k *BigInt) deepCopy() K {
+func (k *bigInt) deepCopy() K {
 	intCopy := new(big.Int)
-	intCopy.Set(k.Value)
-	return &BigInt{Value: intCopy}
+	intCopy.Set(k.bigValue)
+	return &bigInt{bigValue: intCopy}
 }
 
 func (k *MInt) deepCopy() K {

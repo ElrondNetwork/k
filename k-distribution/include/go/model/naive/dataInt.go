@@ -10,8 +10,8 @@ import (
 var maxSmallIntStringLength = -1
 
 // BigInt is a KObject representing a big int in K
-type BigInt struct {
-	Value *big.Int
+type bigInt struct {
+	bigValue *big.Int
 }
 
 func fitsInSmallIntReference(i int32) bool {
@@ -30,8 +30,8 @@ func getSmallInt(ref KReference) (int32, bool) {
 	return 0, false
 }
 
-func (ms *ModelState) getBigIntObject(ref KReference) (*BigInt, bool) {
-	castObj, typeOk := ref.(*BigInt)
+func (ms *ModelState) getBigIntObject(ref KReference) (*bigInt, bool) {
+	castObj, typeOk := ref.(*bigInt)
 	if !typeOk {
 		return nil, false
 	}
@@ -40,22 +40,22 @@ func (ms *ModelState) getBigIntObject(ref KReference) (*BigInt, bool) {
 
 // IsInt returns true if reference points to an integer
 func IsInt(ref KReference) bool {
-	_, typeOk := ref.(*BigInt)
+	_, typeOk := ref.(*bigInt)
 	return typeOk
 }
 
 // IntZero is a reference to the constant integer 0
-var IntZero = &BigInt{Value: big.NewInt(0)}
+var IntZero = &bigInt{bigValue: big.NewInt(0)}
 
 // IntOne is a reference to the constant integer 1
-var IntOne = &BigInt{Value: big.NewInt(1)}
+var IntOne = &bigInt{bigValue: big.NewInt(1)}
 
 // IntMinusOne is a reference to the constant integer -1
-var IntMinusOne = &BigInt{Value: big.NewInt(-1)}
+var IntMinusOne = &bigInt{bigValue: big.NewInt(-1)}
 
 // FromBigInt provides a reference to an integer (big or small)
 func (ms *ModelState) FromBigInt(bi *big.Int) KReference {
-	return &BigInt{Value: bi}
+	return &bigInt{bigValue: bi}
 }
 
 func parseBigInt(str string) (*big.Int, error) {
@@ -76,7 +76,7 @@ func NewIntConstant(stringRepresentation string) KReference {
 	if err != nil {
 		panic(err)
 	}
-	return &BigInt{Value: b}
+	return &bigInt{bigValue: b}
 }
 
 // FromInt provides a reference to an integer (big or small)
@@ -86,12 +86,12 @@ func (ms *ModelState) FromInt(x int) KReference {
 
 // FromInt64 provides a reference to an integer (big or small)
 func (ms *ModelState) FromInt64(x int64) KReference {
-	return &BigInt{Value: big.NewInt(x)}
+	return &bigInt{bigValue: big.NewInt(x)}
 }
 
 // FromUint64 provides a reference to an integer (big or small)
 func (ms *ModelState) FromUint64(x uint64) KReference {
 	var z big.Int
 	z.SetUint64(x)
-	return &BigInt{Value: &z}
+	return &bigInt{bigValue: &z}
 }

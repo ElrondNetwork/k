@@ -169,8 +169,8 @@ func (k *Array) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	}
 }
 
-func (k *BigInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", k.Value.Text(16), k.Value.String()))
+func (k *bigInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
+	sb.WriteString(fmt.Sprintf("Int (0x%s | %s)", k.bigValue.Text(16), k.bigValue.String()))
 }
 
 func (k *MInt) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {

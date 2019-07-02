@@ -139,7 +139,7 @@ func (k *KVariable) collectionsToK(ms *ModelState) K {
 	return k
 }
 
-func (k *BigInt) collectionsToK(ms *ModelState) K {
+func (k *bigInt) collectionsToK(ms *ModelState) K {
 	return k
 }
 
