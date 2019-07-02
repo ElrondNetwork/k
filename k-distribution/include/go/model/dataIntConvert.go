@@ -69,9 +69,9 @@ func (ms *ModelState) IntFromString(s string) KReference {
 
 // GetBigInt yields a big.Int cast from any K integer object, if possible.
 func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
-	small, isSmall := getSmallInt(ref)
+	bigFromSmall, isSmall := convertSmallIntRefToBigInt(ref)
 	if isSmall {
-		return big.NewInt(int64(small)), true
+		return bigFromSmall, true
 	}
 
 	bi, isBigInt := ms.getBigIntObject(ref)

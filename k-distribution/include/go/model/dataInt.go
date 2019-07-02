@@ -22,6 +22,9 @@ var minSmallMultiplicationInt = -maxSmallMultiplicationInt
 // only attempt to parse as small int strings shorter than this
 var maxSmallIntStringLength = len(fmt.Sprintf("%d", maxSmallIntAsBigInt)) - 2
 
+// contains a big.Int corresponding to every small int constant
+var smallToBigIntConstants map[int32]*big.Int
+
 // bigInt is a KObject representing a big int in K
 type bigInt struct {
 	lastInUse int
@@ -98,6 +101,20 @@ func (ms *ModelState) getBigIntObject(ref KReference) (*bigInt, bool) {
 	return obj, true
 }
 
+func convertSmallIntRefToBigInt(ref KReference) (*big.Int, bool) {
+	small, isSmall := getSmallInt(ref)
+	if isSmall {
+		if ref.constantObject && smallToBigIntConstants != nil {
+			bigIntConstant, found := smallToBigIntConstants[small]
+			if found {
+				return bigIntConstant, true
+			}
+		}
+		return big.NewInt(int64(small)), true
+	}
+	return nil, false
+}
+
 // IsInt returns true if reference points to an integer
 func IsInt(ref KReference) bool {
 	return ref.refType == smallPositiveIntRef || ref.refType == smallNegativeIntRef || ref.refType == bigIntRef
@@ -130,6 +147,17 @@ func (ms *ModelState) FromBigInt(bi *big.Int) KReference {
 func NewIntConstant(stringRepresentation string) KReference {
 	ref := constantsModel.IntFromString(stringRepresentation)
 	ref.constantObject = true
+
+	// if a small constant, also create a big.Int constant
+	// if we don't create them now as constants, they will keep getting created at runtime
+	small, isSmall := getSmallInt(ref)
+	if isSmall {
+		if smallToBigIntConstants == nil {
+			smallToBigIntConstants = make(map[int32]*big.Int)
+		}
+		smallToBigIntConstants[small] = big.NewInt(int64(small))
+	}
+
 	return ref
 }
 
