@@ -345,8 +345,11 @@ func (ms *ModelState) IntAnd(ref1 KReference, ref2 KReference) (KReference, bool
 
 // IntOr returns bitwise or, ref1 | ref2, if types ok
 func (ms *ModelState) IntOr(ref1 KReference, ref2 KReference) (KReference, bool) {
-	if ms.IsZero(ref1) || ms.IsZero(ref2) {
-		return IntZero, true
+	if ms.IsZero(ref1) {
+		return ref2, true
+	}
+	if ms.IsZero(ref2) {
+		return ref1, true
 	}
 
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
@@ -361,10 +364,6 @@ func (ms *ModelState) IntOr(ref1 KReference, ref2 KReference) (KReference, bool)
 
 // IntXor returns bitwise xor, ref1 xor ref2, if types ok
 func (ms *ModelState) IntXor(ref1 KReference, ref2 KReference) (KReference, bool) {
-	if ms.IsZero(ref1) || ms.IsZero(ref2) {
-		return IntZero, true
-	}
-
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
 		var z big.Int

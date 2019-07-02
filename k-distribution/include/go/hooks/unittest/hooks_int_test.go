@@ -242,10 +242,30 @@ func TestIntHooks2(t *testing.T) {
 	assertIntOk(t, "1", z, err, interpreter)
 	interpreter.checkImmutable(t, a, b)
 
+	interpreter.backupInput(a, m.IntZero)
+	z, err = intHooks.and(a, m.IntZero, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "0", z, err, interpreter)
+	interpreter.checkImmutable(t, a, m.IntZero)
+
+	interpreter.backupInput(m.IntZero, b)
+	z, err = intHooks.and(m.IntZero, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "0", z, err, interpreter)
+	interpreter.checkImmutable(t, m.IntZero, b)
+
 	interpreter.backupInput(a, b)
 	z, err = intHooks.or(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
 	assertIntOk(t, "1", z, err, interpreter)
 	interpreter.checkImmutable(t, a, b)
+
+	interpreter.backupInput(a, m.IntZero)
+	z, err = intHooks.or(a, m.IntZero, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "1", z, err, interpreter)
+	interpreter.checkImmutable(t, a, m.IntZero)
+
+	interpreter.backupInput(m.IntZero, b)
+	z, err = intHooks.or(m.IntZero, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	assertIntOk(t, "1", z, err, interpreter)
+	interpreter.checkImmutable(t, m.IntZero, b)
 
 	interpreter.backupInput(a, b)
 	z, err = intHooks.xor(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
