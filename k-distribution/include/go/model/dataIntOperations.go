@@ -163,11 +163,8 @@ func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool
 // IntMul returns ref1 x ref2, if types ok
 func (ms *ModelState) IntMul(ref1 KReference, ref2 KReference) (KReference, bool) {
 	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		result, of := overflow.Mul32(small1, small2)
-		if !of && fitsInSmallIntReference(result) {
-			return smallIntReference(result), true
-		}
+	if smallOk && smallMultiplicationSafe(small1, small2) {
+		return smallIntReference(small1 * small2), true
 	}
 
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)

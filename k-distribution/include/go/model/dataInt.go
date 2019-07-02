@@ -14,6 +14,11 @@ const minSmallInt = math.MinInt32
 var maxSmallIntAsBigInt = big.NewInt(maxSmallInt)
 var minSmallIntAsBigInt = big.NewInt(minSmallInt)
 
+// only attempt to multiply as small int numbers less than the sqrt of this max, by a safety margin
+// otherwise play it safe and perform big.Int multiplication
+var maxSmallMultiplicationInt = int32(math.Sqrt(float64(math.MaxInt32))) - 100
+var minSmallMultiplicationInt = -maxSmallMultiplicationInt
+
 // only attempt to parse as small int strings shorter than this
 var maxSmallIntStringLength = len(fmt.Sprintf("%d", maxSmallIntAsBigInt)) - 2
 
@@ -27,7 +32,12 @@ func (*BigInt) referenceType() kreferenceType {
 }
 
 func fitsInSmallIntReference(i int32) bool {
-	return i > minSmallInt && i < maxSmallInt
+	return i >= minSmallInt && i <= maxSmallInt
+}
+
+func smallMultiplicationSafe(a, b int32) bool {
+	return a >= minSmallMultiplicationInt && a <= maxSmallMultiplicationInt &&
+		b >= minSmallMultiplicationInt && b <= maxSmallMultiplicationInt
 }
 
 func smallIntReference(i int32) KReference {

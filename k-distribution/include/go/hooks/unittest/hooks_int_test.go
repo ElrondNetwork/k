@@ -5,6 +5,7 @@ package %PACKAGE_INTERPRETER%
 import (
 	"fmt"
     m "%INCLUDE_MODEL%"
+    "math"
 	"testing"
 )
 
@@ -31,9 +32,9 @@ func TestParseIntError(t *testing.T) {
 		}
 
 		_, err16 := interpreter.Model.ParseIntFromBase(s, 16)
-        if err16 == nil {
-            t.Errorf("Error expected when parsing %s", s)
-        }
+		if err16 == nil {
+			t.Errorf("Error expected when parsing %s", s)
+		}
 	}
 }
 
@@ -291,7 +292,86 @@ func TestIntHooks2(t *testing.T) {
 	z, err = intHooks.min(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
 	assertIntOk(t, "1", z, err, interpreter)
 	interpreter.checkImmutable(t, a, b)
+}
 
+func testOverflowAddSub(t *testing.T, interpreter *Interpreter, aVal int64) {
+	var z, a m.KReference
+	var expectedStr string
+	var err error
+
+	a = interpreter.Model.FromInt64(aVal)
+	one := interpreter.Model.FromInt(1)
+
+	// a + 1
+	interpreter.backupInput(a, one)
+	z, err = intHooks.add(a, one, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	expectedStr = fmt.Sprintf("%d", aVal+int64(1))
+	assertIntOk(t, expectedStr, z, err, interpreter)
+	interpreter.checkImmutable(t, a, one)
+
+	// 1 + a
+	interpreter.backupInput(a, one)
+	z, err = intHooks.add(one, a, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	expectedStr = fmt.Sprintf("%d", aVal+int64(1))
+	assertIntOk(t, expectedStr, z, err, interpreter)
+	interpreter.checkImmutable(t, a, one)
+
+	// a - 1
+	interpreter.backupInput(a, one)
+	z, err = intHooks.sub(a, one, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	expectedStr = fmt.Sprintf("%d", aVal-int64(1))
+	assertIntOk(t, expectedStr, z, err, interpreter)
+	interpreter.checkImmutable(t, a, one)
+
+	// 1 - a
+	interpreter.backupInput(a, one)
+	z, err = intHooks.sub(a, one, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	expectedStr = fmt.Sprintf("%d", aVal-int64(1))
+	assertIntOk(t, expectedStr, z, err, interpreter)
+	interpreter.checkImmutable(t, a, one)
+}
+
+func TestIntHooksOverflowAddSub(t *testing.T) {
+	interpreter := newTestInterpreter()
+
+	// around the upper limit
+	for aVal := int64(4294967290); aVal <= 4294967300; aVal++ {
+		testOverflowAddSub(t, interpreter, aVal)
+	}
+
+	// around the lower limit
+	for aVal := int64(-4294967290); aVal >= -4294967300; aVal-- {
+		testOverflowAddSub(t, interpreter, aVal)
+	}
+}
+
+func testOverflowMul(t *testing.T, interpreter *Interpreter, aVal int, bVal int) {
+	var z m.KReference
+	var expectedStr string
+	var err error
+
+	a := interpreter.Model.FromInt(aVal)
+	b := interpreter.Model.FromInt(bVal)
+	interpreter.backupInput(a, b)
+	z, err = intHooks.mul(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
+	expectedStr = fmt.Sprintf("%d", int64(aVal)*int64(bVal))
+	assertIntOk(t, expectedStr, z, err, interpreter)
+	interpreter.checkImmutable(t, a, b)
+}
+
+func TestIntHooksOverflowMul(t *testing.T) {
+	interpreter := newTestInterpreter()
+	sqrtMaxInt32 := int(math.Sqrt(float64(math.MaxInt32)))
+
+	// around the upper limit
+	for aVal := sqrtMaxInt32 - 20; aVal < sqrtMaxInt32+10; aVal++ {
+		for bVal := sqrtMaxInt32 - 20; bVal < sqrtMaxInt32+10; bVal++ {
+			testOverflowMul(t, interpreter, aVal, bVal)
+			testOverflowMul(t, interpreter, -aVal, -bVal)
+			testOverflowMul(t, interpreter, -aVal, bVal)
+			testOverflowMul(t, interpreter, aVal, -bVal)
+		}
+	}
 }
 
 func TestIntHooksMod(t *testing.T) {
@@ -299,14 +379,14 @@ func TestIntHooksMod(t *testing.T) {
 	var a, b, z m.KReference
 	var err error
 
-    a = interpreter.Model.IntFromString("231584178474632390847141970017375815706539969331281128078915168015826259279869")
+	a = interpreter.Model.IntFromString("231584178474632390847141970017375815706539969331281128078915168015826259279869")
 	b = interpreter.Model.FromInt(2)
 	interpreter.backupInput(a, b)
 	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)
 	assertIntOk(t, "1", z, err, interpreter)
 	interpreter.checkImmutable(t, a, b)
 
-    a = interpreter.Model.FromInt(-5)
+	a = interpreter.Model.FromInt(-5)
 	b = interpreter.Model.FromInt(3)
 	interpreter.backupInput(a, b)
 	z, err = intHooks.tmod(a, b, m.LblDummy, m.SortInt, m.InternedBottom, interpreter)

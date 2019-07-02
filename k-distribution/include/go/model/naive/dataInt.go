@@ -18,6 +18,10 @@ func fitsInSmallIntReference(i int32) bool {
 	return false
 }
 
+func smallMultiplicationSafe(a, b int32) bool {
+	return false
+}
+
 func smallIntReference(i int32) KReference {
 	panic("cannot call function smallIntReference in this implementation")
 }
