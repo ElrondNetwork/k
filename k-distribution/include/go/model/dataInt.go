@@ -31,7 +31,7 @@ type bigInt struct {
 	bigValue  *big.Int
 }
 
-func fitsInSmallIntReference(i int32) bool {
+func fitsInSmallIntReference(i int64) bool {
 	return i >= minSmallInt && i <= maxSmallInt
 }
 

@@ -2,8 +2,6 @@ package %PACKAGE_MODEL%
 
 import (
 	"math/big"
-
-	"github.com/JohnCGriffin/overflow"
 )
 
 var bigOne = big.NewInt(1)
@@ -113,9 +111,9 @@ func (ms *ModelState) IntGe(ref1 KReference, ref2 KReference) (bool, bool) {
 func (ms *ModelState) IntAdd(ref1 KReference, ref2 KReference) (KReference, bool) {
 	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
 	if smallOk {
-		result, of := overflow.Add32(small1, small2)
-		if !of && fitsInSmallIntReference(result) {
-			return smallIntReference(result), true
+		result := int64(small1) + int64(small2)
+		if fitsInSmallIntReference(result) {
+			return smallIntReference(int32(result)), true
 		}
 	}
 
@@ -140,9 +138,9 @@ func (ms *ModelState) IntAdd(ref1 KReference, ref2 KReference) (KReference, bool
 func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool) {
 	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
 	if smallOk {
-		result, of := overflow.Sub32(small1, small2)
-		if !of && fitsInSmallIntReference(result) {
-			return smallIntReference(result), true
+		result := int64(small1) - int64(small2)
+		if fitsInSmallIntReference(result) {
+			return smallIntReference(int32(result)), true
 		}
 	}
 
