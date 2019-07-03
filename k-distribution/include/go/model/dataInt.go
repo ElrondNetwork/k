@@ -104,7 +104,7 @@ func (ms *ModelState) getBigIntObject(ref KReference) (*bigInt, bool) {
 func convertSmallIntRefToBigInt(ref KReference) (*big.Int, bool) {
 	small, isSmall := getSmallInt(ref)
 	if isSmall {
-		if ref.constantObject && smallToBigIntConstants != nil {
+		if smallToBigIntConstants != nil {
 			bigIntConstant, found := smallToBigIntConstants[small]
 			if found {
 				return bigIntConstant, true
