@@ -35,6 +35,10 @@ func (ms *ModelState) GetMemoizedValue(memoTable MemoTable, keys ...KMapKey) (KR
 // SetMemoizedValue inserts a value into the memo table structure, for a variable number of keys.
 // It extends the tree up to where it is required.
 func (ms *ModelState) SetMemoizedValue(memoized KReference, memoTable MemoTable, keys ...KMapKey) {
+    // it is very important to prevent memoized values from being recycled
+    ms.Preserve(memoized)
+
+    // create necessary structures and insert
 	if ms.memoTables == nil {
 		ms.memoTables = make(map[MemoTable]interface{})
 	}

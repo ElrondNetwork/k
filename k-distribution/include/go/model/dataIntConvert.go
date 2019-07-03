@@ -67,8 +67,10 @@ func (ms *ModelState) IntFromString(s string) KReference {
 	return i
 }
 
-// GetBigInt yields a big.Int cast from any K integer object, if possible.
-func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
+// GetBigIntUnsafe yields a big.Int cast from any K integer object, if possible.
+// Can retrieve objects from the model.
+// Only use if you are absolutely certain that the retrieved object will not be changed!!!
+func (ms *ModelState) GetBigIntUnsafe(ref KReference) (*big.Int, bool) {
 	bigFromSmall, isSmall := convertSmallIntRefToBigInt(ref)
 	if isSmall {
 		return bigFromSmall, true
@@ -77,6 +79,22 @@ func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
 	bi, isBigInt := ms.getBigIntObject(ref)
 	if isBigInt {
 		return bi.bigValue, true
+	}
+	return nil, false
+}
+
+// GetBigInt yields a big.Int cast from any K integer object, if possible.
+// Does not provide any big.Int object from the model, only copies,
+// so it is safe to use anywhere.
+func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
+	small, isSmall := getSmallInt(ref)
+	if isSmall {
+		return big.NewInt(int64(small)), true
+	}
+
+	bi, isBigInt := ms.getBigIntObject(ref)
+	if isBigInt {
+		return big.NewInt(0).Set(bi.bigValue), true
 	}
 	return nil, false
 }

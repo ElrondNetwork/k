@@ -27,8 +27,10 @@ var smallToBigIntConstants map[int32]*big.Int
 
 // bigInt is a KObject representing a big int in K
 type bigInt struct {
-	lastInUse int
-	bigValue  *big.Int
+	referenceCount int
+	recycleCount   uint32
+	reuseStatus    objectReuseStatus
+	bigValue       *big.Int
 }
 
 func fitsInSmallIntReference(i int64) bool {
@@ -49,15 +51,9 @@ func smallIntReference(i int32) KReference {
 
 func getSmallInt(ref KReference) (int32, bool) {
 	if ref.refType == smallPositiveIntRef {
-		if ref.value1 > maxSmallInt {
-			return 0, false
-		}
 		return int32(ref.value1), true
 	}
 	if ref.refType == smallNegativeIntRef {
-		if ref.value1 > -minSmallInt {
-			return 0, false
-		}
 		return -int32(ref.value1), true
 	}
 	return 0, false
@@ -70,15 +66,22 @@ func (ms *ModelState) newBigIntObject() (KReference, *bigInt) {
 		// pop
 		recycled := ms.bigIntRecycleBin[recycleBinSize-1]
 		ms.bigIntRecycleBin = ms.bigIntRecycleBin[:recycleBinSize-1]
+		if recycled.constantObject {
+            panic("constant ended up in bigInt recycle bin")
+        }
 
-		// set value
+		// update object
 		bigObj, isBigObj := ms.getBigIntObject(recycled)
 		if !isBigObj {
 			panic("recycled bigInt is in fact not a big int reference")
 		}
-		if recycled.constantObject {
-		    panic("constant ended up in bigInt recycle bin")
+        if bigObj.reuseStatus != inRecycleBin {
+			panic("recycled bigInt does not have status inRecycleBin")
 		}
+		bigObj.reuseStatus = active
+
+		bigObj.recycleCount++
+		recycled.value2++ // we match value2 with the recycleCount
 
 		return recycled, bigObj
 	}
@@ -88,7 +91,7 @@ func (ms *ModelState) newBigIntObject() (KReference, *bigInt) {
 
 func (ms *ModelState) newBigIntObjectNoRecycle() (KReference, *bigInt) {
 	newIndex := len(ms.bigInts)
-	bigObj := &bigInt{lastInUse: 0, bigValue: big.NewInt(0)}
+	bigObj := &bigInt{referenceCount: 0, recycleCount: 0, reuseStatus: active, bigValue: big.NewInt(0)}
 	ms.bigInts = append(ms.bigInts, bigObj)
 	newRef := KReference{refType: bigIntRef, constantObject: false, value1: uint32(newIndex), value2: 0}
 	return newRef, bigObj
@@ -106,6 +109,9 @@ func (ms *ModelState) getBigIntObject(ref KReference) (*bigInt, bool) {
 		panic("trying to reference object beyond allocated objects")
 	}
 	obj := ms.bigInts[index]
+	if ref.value2 != obj.recycleCount {
+	    panic("reference points to bigInt that was recycled in the mean time and can no longer be used in this context")
+	}
 	return obj, true
 }
 

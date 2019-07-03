@@ -15,9 +15,19 @@ type KObject interface {
 	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
 	kprint(ms *ModelState, sb *strings.Builder)
 	collectionsToK(ms *ModelState) KReference
-	markInUse(ms *ModelState, stepNr int)
-	recycleUnused(ms *ModelState, stepNr int)
+	increaseUsage(ms *ModelState)
+	decreaseUsage(ms *ModelState)
+	recycleUnused(ms *ModelState)
+	preserve(ms *ModelState)
 }
+
+type objectReuseStatus int
+
+const (
+    active objectReuseStatus = iota
+    inRecycleBin
+    preserved
+)
 
 // ModelState holds the state of the executor at a certain moment
 type ModelState struct {

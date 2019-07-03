@@ -21,11 +21,11 @@ func (*ModelState) bothSmall(ref1 KReference, ref2 KReference) (int32, int32, bo
 
 // helper function for writing operations in fewer lines
 func (ms *ModelState) bothBig(ref1 KReference, ref2 KReference) (*big.Int, *big.Int, bool) {
-	big1, isInt1 := ms.GetBigInt(ref1)
+	big1, isInt1 := ms.GetBigIntUnsafe(ref1)
 	if !isInt1 {
 		return nil, nil, false
 	}
-	big2, isInt2 := ms.GetBigInt(ref2)
+	big2, isInt2 := ms.GetBigIntUnsafe(ref2)
 	if !isInt2 {
 		return nil, nil, false
 	}
