@@ -448,7 +448,7 @@ public class DefinitionToGo {
             sb.endOneBlock();
         }
 
-        sb.writeIndent().append("result, found := i.Model.GetMemoizedValue(memoTableCmem");
+        sb.writeIndent().append("result, found := i.Model.GetMemoizedValue(").append(tableName);
         for (int i = 1; i <= arity; i++) {
             sb.append(", c" + i + "AsKey");
         }
@@ -464,7 +464,7 @@ public class DefinitionToGo {
         sb.appendIndentedLine("return m.NoResult, err");
         sb.endOneBlock();
 
-        sb.writeIndent().append("i.Model.SetMemoizedValue(computation, memoTableCmem");
+        sb.writeIndent().append("i.Model.SetMemoizedValue(computation, ").append(tableName);
         for (int i = 1; i <= arity; i++) {
             sb.append(", c" + i + "AsKey");
         }
