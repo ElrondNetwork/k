@@ -2,10 +2,6 @@
 
 package %PACKAGE_MODEL%
 
-import (
-	"math/big"
-)
-
 // DeepCopy yields a fresh copy of the K item given as argument.
 func (ms *ModelState) DeepCopy(ref KReference) KReference {
 	switch ref.refType {
@@ -28,9 +24,9 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 		return ref
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
-		intCopy := big.NewInt(0)
-		intCopy.Set(obj.bigValue)
-		return ms.addBigIntObject(intCopy)
+		newRef, newObj := ms.newBigIntObjectNoRecycle()
+		newObj.bigValue.Set(obj.bigValue)
+		return newRef
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)

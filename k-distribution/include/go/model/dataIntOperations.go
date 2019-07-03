@@ -126,9 +126,9 @@ func (ms *ModelState) IntAdd(ref1 KReference, ref2 KReference) (KReference, bool
 			return ref1, true
 		}
 
-		var z big.Int
-		z.Add(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Add(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -150,9 +150,9 @@ func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool
 			return ref1, true
 		}
 
-		var z big.Int
-		z.Sub(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Sub(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -177,9 +177,9 @@ func (ms *ModelState) IntMul(ref1 KReference, ref2 KReference) (KReference, bool
 			return ref1, true
 		}
 
-		var z big.Int
-		z.Mul(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Mul(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -200,12 +200,12 @@ func (ms *ModelState) IntDiv(ref1 KReference, ref2 KReference) (KReference, bool
 			big2 = big.NewInt(0).Neg(big2)
 		}
 
-		var z big.Int
-		z.Div(big1, big2)
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Div(big1, big2)
 		if !resultPositive {
-			z.Neg(&z)
+			obj.bigValue.Neg(obj.bigValue)
 		}
-		return ms.FromBigInt(&z), true
+		return ref, true
 	}
 
 	return NullReference, false
@@ -226,12 +226,12 @@ func (ms *ModelState) IntMod(ref1 KReference, ref2 KReference) (KReference, bool
 			big2 = big.NewInt(0).Neg(big2)
 		}
 
-		var z big.Int
-		z.Mod(big1, big2)
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Mod(big1, big2)
 		if arg1Negative {
-			z.Neg(&z)
+			obj.bigValue.Neg(obj.bigValue)
 		}
-		return ms.FromBigInt(&z), true
+		return ref, true
 	}
 
 	return NullReference, false
@@ -241,9 +241,9 @@ func (ms *ModelState) IntMod(ref1 KReference, ref2 KReference) (KReference, bool
 func (ms *ModelState) IntEuclidianDiv(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.Div(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Div(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -253,9 +253,9 @@ func (ms *ModelState) IntEuclidianDiv(ref1 KReference, ref2 KReference) (KRefere
 func (ms *ModelState) IntEuclidianMod(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.Mod(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Mod(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -265,9 +265,9 @@ func (ms *ModelState) IntEuclidianMod(ref1 KReference, ref2 KReference) (KRefere
 func (ms *ModelState) IntPow(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.Exp(big1, big2, nil)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Exp(big1, big2, nil)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -279,9 +279,9 @@ func (ms *ModelState) IntPowMod(ref1 KReference, ref2 KReference, ref3 KReferenc
 	if bigOk {
 		big3, big3Ok := ms.GetBigInt(ref3)
 		if big3Ok {
-			var z big.Int
-			z.Exp(big1, big2, big3)
-			return ms.FromBigInt(&z), true
+			ref, obj := ms.newBigIntObject()
+			obj.bigValue.Exp(big1, big2, big3)
+			return ref, true
 		}
 	}
 
@@ -297,9 +297,9 @@ func (ms *ModelState) IntShl(ref1 KReference, ref2 KReference) (KReference, bool
 
 	arg1, arg1Ok := ms.GetBigInt(ref1)
 	if arg1Ok {
-		var z big.Int
-		z.Lsh(arg1, arg2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Lsh(arg1, arg2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -314,9 +314,9 @@ func (ms *ModelState) IntShr(ref1 KReference, ref2 KReference) (KReference, bool
 
 	arg1, arg1Ok := ms.GetBigInt(ref1)
 	if arg1Ok {
-		var z big.Int
-		z.Rsh(arg1, arg2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Rsh(arg1, arg2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -330,9 +330,9 @@ func (ms *ModelState) IntAnd(ref1 KReference, ref2 KReference) (KReference, bool
 
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.And(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.And(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -349,9 +349,9 @@ func (ms *ModelState) IntOr(ref1 KReference, ref2 KReference) (KReference, bool)
 
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.Or(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Or(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -361,9 +361,9 @@ func (ms *ModelState) IntOr(ref1 KReference, ref2 KReference) (KReference, bool)
 func (ms *ModelState) IntXor(ref1 KReference, ref2 KReference) (KReference, bool) {
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
-		var z big.Int
-		z.Xor(big1, big2)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Xor(big1, big2)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -373,9 +373,9 @@ func (ms *ModelState) IntXor(ref1 KReference, ref2 KReference) (KReference, bool
 func (ms *ModelState) IntNot(ref KReference) (KReference, bool) {
 	arg, argOk := ms.GetBigInt(ref)
 	if argOk {
-		var z big.Int
-		z.Not(arg)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Not(arg)
+		return ref, true
 	}
 
 	return NullReference, false
@@ -396,9 +396,9 @@ func (ms *ModelState) IntAbs(ref KReference) (KReference, bool) {
 		if bigArg.Sign() >= 0 {
 			return ref, true
 		}
-		var z big.Int
-		z.Neg(bigArg)
-		return ms.FromBigInt(&z), true
+		ref, obj := ms.newBigIntObject()
+		obj.bigValue.Neg(bigArg)
+		return ref, true
 	}
 
 	return NullReference, false

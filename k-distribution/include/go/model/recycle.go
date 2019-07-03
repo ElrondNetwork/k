@@ -5,6 +5,10 @@ package %PACKAGE_MODEL%
 // MarkInUse sets flags indicating the last step at which objects were used.
 // It goes recursively through the whole tree.
 func (ms *ModelState) MarkInUse(ref KReference, stepNr int) {
+    if ref.constantObject {
+        return
+    }
+
 	switch ref.refType {
 	case boolRef:
 	case bottomRef:
@@ -83,6 +87,10 @@ func (k *Bytes) markInUse(ms *ModelState, stepNr int) {
 // This goes recursively through the whole tree.
 // Function MarkInUse must be called beforehand, for this to work.
 func (ms *ModelState) RecycleUnused(ref KReference, stepNr int) {
+    if ref.constantObject {
+        return
+    }
+
 	switch ref.refType {
 	case boolRef:
 	case bottomRef:

@@ -63,7 +63,8 @@ func getSmallInt(ref KReference) (int32, bool) {
 	return 0, false
 }
 
-func (ms *ModelState) addBigIntObject(bigValue *big.Int) KReference {
+// recycle big Int, or create a new one
+func (ms *ModelState) newBigIntObject() (KReference, *bigInt) {
 	recycleBinSize := len(ms.bigIntRecycleBin)
 	if len(ms.bigIntRecycleBin) > 0 {
 		// pop
@@ -75,15 +76,22 @@ func (ms *ModelState) addBigIntObject(bigValue *big.Int) KReference {
 		if !isBigObj {
 			panic("recycled bigInt is in fact not a big int reference")
 		}
-		bigObj.bigValue.Set(bigValue)
+		if recycled.constantObject {
+		    panic("constant ended up in bigInt recycle bin")
+		}
 
-		return recycled
+		return recycled, bigObj
 	}
 
+	return ms.newBigIntObjectNoRecycle()
+}
+
+func (ms *ModelState) newBigIntObjectNoRecycle() (KReference, *bigInt) {
 	newIndex := len(ms.bigInts)
-	bigObj := &bigInt{lastInUse: 0, bigValue: bigValue}
+	bigObj := &bigInt{lastInUse: 0, bigValue: big.NewInt(0)}
 	ms.bigInts = append(ms.bigInts, bigObj)
-	return KReference{refType: bigIntRef, constantObject: false, value1: uint32(newIndex), value2: 0}
+	newRef := KReference{refType: bigIntRef, constantObject: false, value1: uint32(newIndex), value2: 0}
+	return newRef, bigObj
 }
 
 func (ms *ModelState) getBigIntObject(ref KReference) (*bigInt, bool) {
@@ -139,7 +147,9 @@ func (ms *ModelState) FromBigInt(bi *big.Int) KReference {
 		}
 	}
 	// make it big
-	return ms.addBigIntObject(bi)
+	ref, obj := ms.newBigIntObject()
+	obj.bigValue.Set(bi)
+	return ref
 }
 
 // NewIntConstant creates a new integer constant, which is saved statically.
@@ -166,7 +176,9 @@ func (ms *ModelState) FromInt(x int) KReference {
 	if x >= minSmallInt && x <= maxSmallInt {
 		return smallIntReference(int32(x))
 	}
-	return ms.addBigIntObject(big.NewInt(int64(x)))
+	ref, obj := ms.newBigIntObject()
+	obj.bigValue.SetInt64(int64(x))
+	return ref
 }
 
 // FromInt64 converts a int64 to an integer in the model
@@ -174,7 +186,9 @@ func (ms *ModelState) FromInt64(x int64) KReference {
 	if x >= minSmallInt && x <= maxSmallInt {
 		return smallIntReference(int32(x))
 	}
-	return ms.addBigIntObject(big.NewInt(x))
+	ref, obj := ms.newBigIntObject()
+	obj.bigValue.SetInt64(x)
+	return ref
 }
 
 // FromUint64 converts a uint64 to an integer in the model
@@ -182,7 +196,7 @@ func (ms *ModelState) FromUint64(x uint64) KReference {
 	if x <= maxSmallInt {
 		return smallIntReference(int32(x))
 	}
-	var z big.Int
-	z.SetUint64(x)
-	return ms.addBigIntObject(&z)
+	ref, obj := ms.newBigIntObject()
+	obj.bigValue.SetUint64(x)
+	return ref
 }
