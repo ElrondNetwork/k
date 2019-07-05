@@ -22,16 +22,14 @@ func (ms *ModelState) Preserve(ref KReference) {
 		for _, child := range ks {
 			ms.Preserve(child)
 		}
+	case kapplyRef:
+		for _, child := range ms.kapplyArgSlice(ref) {
+			ms.Preserve(child)
+		}
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
 		obj.preserve(ms)
-	}
-}
-
-func (k *KApply) preserve(ms *ModelState) {
-	for _, child := range k.List {
-		ms.Preserve(child)
 	}
 }
 

@@ -70,11 +70,6 @@ func (ms *ModelState) GetKApplyObject(ref KReference) (*KApply, bool) {
 	return castObj, true
 }
 
-// KApply0Ref yields a reference to a KApply with 0 arguments.
-func (ms *ModelState) KApply0Ref(label KLabel) KReference {
-	return &KApply{Label: label, List: nil}
-}
-
 // NewKApply creates a new object.
 func (ms *ModelState) NewKApply(label KLabel, arguments ...KReference) KReference {
 	return &KApply{Label: label, List: arguments}

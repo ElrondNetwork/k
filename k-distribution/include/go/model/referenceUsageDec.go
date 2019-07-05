@@ -19,23 +19,21 @@ func (ms *ModelState) DecreaseUsage(ref KReference) {
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active {
-            obj.referenceCount--
-        }
+			obj.referenceCount--
+		}
 	case nonEmptyKseqRef:
 		ks := ms.KSequenceToSlice(ref)
 		for _, child := range ks {
+			ms.DecreaseUsage(child)
+		}
+	case kapplyRef:
+		for _, child := range ms.kapplyArgSlice(ref) {
 			ms.DecreaseUsage(child)
 		}
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
 		obj.decreaseUsage(ms)
-	}
-}
-
-func (k *KApply) decreaseUsage(ms *ModelState) {
-	for _, child := range k.List {
-		ms.DecreaseUsage(child)
 	}
 }
 

@@ -95,7 +95,7 @@ func (k KToken) toKItem(ms *ModelState) (KReference, error) {
 }
 
 func (mapKey kmapKeyKApply0) toKItem(ms *ModelState) (KReference, error) {
-	return ms.KApply0Ref(mapKey.label), nil
+	return ms.NewKApply(mapKey.label), nil
 }
 
 func (mapKey kmapKeyKApply1) toKItem(ms *ModelState) (KReference, error) {

@@ -18,27 +18,25 @@ func (ms *ModelState) IncreaseUsage(ref KReference) {
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active {
-		    if obj.referenceCount < 1 {
-		        obj.referenceCount = 1
-		    } else {
-		        obj.referenceCount++
-		    }
+			if obj.referenceCount < 1 {
+				obj.referenceCount = 1
+			} else {
+				obj.referenceCount++
+			}
 		}
 	case nonEmptyKseqRef:
 		ks := ms.KSequenceToSlice(ref)
 		for _, child := range ks {
 			ms.IncreaseUsage(child)
 		}
+	case kapplyRef:
+		for _, child := range ms.kapplyArgSlice(ref) {
+			ms.IncreaseUsage(child)
+		}
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
 		obj.increaseUsage(ms)
-	}
-}
-
-func (k *KApply) increaseUsage(ms *ModelState) {
-	for _, child := range k.List {
-		ms.IncreaseUsage(child)
 	}
 }
 

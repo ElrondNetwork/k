@@ -137,16 +137,16 @@ func (i *Interpreter) runSteps(maxSteps int) error {
 
 		// decrease all usages from the previous state
 		previousState := i.state
-		i.Model.DecreaseUsage(previousState)
+		//i.Model.DecreaseUsage(previousState)
 
         var err error
 		i.state, err = i.step(previousState)
 
 		// increase all usages for the current state
-		i.Model.IncreaseUsage(i.state)
+		//i.Model.IncreaseUsage(i.state)
 
 		// recycle everything that didn't show up in the new state
-        i.Model.RecycleUnused(previousState)
+        //i.Model.RecycleUnused(previousState)
 
 		if err == nil {
 			i.traceStepEnd()

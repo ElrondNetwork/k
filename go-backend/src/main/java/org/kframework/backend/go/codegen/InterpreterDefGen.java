@@ -77,12 +77,9 @@ public class InterpreterDefGen {
         sb.append("func NewInterpreter(");
         sb.append(fields.stream().map(fd -> fd.fieldDef).collect(Collectors.joining(", ")));
         sb.append(") *Interpreter").beginBlock();
-
-        sb.appendIndentedLine("model := &m.ModelState{}");
-        sb.appendIndentedLine("model.Init()");
         sb.newLine();
         sb.writeIndent().append("return &Interpreter").beginBlock();
-        sb.appendIndentedLine("Model:         model,");
+        sb.appendIndentedLine("Model:         m.NewModel(),");
         sb.appendIndentedLine("MaxSteps:      0,");
         sb.appendIndentedLine("currentStep:   -1, // meaning that no processing started yet");
         sb.appendIndentedLine("state:         m.NullReference,");

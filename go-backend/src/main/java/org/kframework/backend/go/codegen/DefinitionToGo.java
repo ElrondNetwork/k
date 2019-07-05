@@ -404,14 +404,9 @@ public class DefinitionToGo {
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
-                if (functionInfo.arguments.arity() > 0) {
-                    sb.writeIndent().append("return i.Model.KApply0Ref(lbl)");
-                } else {
-                    sb.writeIndent().append("return i.Model.NewKApply(lbl, ");
-                    sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
-                    sb.append(")");
-                }
-                sb.append(", nil").newLine();
+                sb.writeIndent().append("return i.Model.NewKApply(lbl, ");
+                sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
+                sb.append("), nil").newLine();
 
                 sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
                 sb.appendIndentedLine("return m.NullReference, nil");
