@@ -393,42 +393,44 @@ public class RuleLhsWriter extends VisitK {
             sb.appendIndentedLine("// KSequence, size 1:", ToKast.apply(k));
             apply(k.items().get(0));
             return;
-        case 2:
-            // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
-            String kseqHead = "kseq" + kitemIndex + "Head";
-            String kseqTail = "kseq" + kitemIndex + "Tail";
-            kitemIndex++;
-            sb.writeIndent().append("if ok, ");
-            sb.append(kseqHead).append(", ");
-            sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(consumeSubject()).append("); ok");
-            sb.beginBlock(ToKast.apply(k));
-            nextSubject = kseqHead;
-            apply(k.items().get(0));
-            nextSubject = kseqTail;
-            apply(k.items().get(1));
-            return;
         default:
-            String kseqVarBase = "kseq" + kitemIndex;
-            kitemIndex++;
-
             int nrHeads = k.items().size() - 1;
             String subject = consumeSubject();
             sb.writeIndent().append("if i.Model.IsNonEmptyKSequenceMinimumLength(");
             sb.append(subject).append(", ").append(nrHeads).append(")");
             sb.beginBlock(ToKast.apply(k));
-            // heads
+
+            String kseqVarBase = "kseq" + kitemIndex;
+            kitemIndex++;
+            String kseqTail = "";
+
+            // declare head(s)/tails
             for (int i = 0; i < nrHeads; i++) {
-                String headVar = kseqVarBase + "Head" + (i + 1);
-                sb.appendIndentedLine(headVar + " := i.Model.KSequenceGet(", subject + ", " + i + ") // ", ToKast.apply(k.items().get(i)));
-                nextSubject = headVar;
+                // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
+                // if multiple heads required, split repeatedly
+                String kseqHead = kseqVarBase + "Head" + i;
+                kseqTail = kseqVarBase + "Tail" + i;
+                sb.writeIndent().append("_, ");
+                sb.append(kseqHead).append(", ");
+                sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(subject).append(") // ");
+                sb.append(ToKast.apply(k.items().get(i))).append(" ~> ...");
+                sb.newLine();
+
+                // the tail becomes the next subject to split
+                subject = kseqTail;
+            }
+
+            // process heads
+            for (int i = 0; i < nrHeads; i++) {
+                String kseqHead = kseqVarBase + "Head" + i;
+                nextSubject = kseqHead;
                 apply(k.items().get(i));
             }
-            // tail
-            K tail = k.items().get(nrHeads);
-            String tailVar = kseqVarBase + "Tail";
-            sb.appendIndentedLine(tailVar + " := i.Model.KSequenceSub(" + subject + ", " + nrHeads + ") // ", ToKast.apply(tail));
-            nextSubject = tailVar; // slice with the rest, can be empty
-            apply(tail); // last element
+
+            // process tail
+            nextSubject = kseqTail;
+            apply(k.items().get(k.items().size() - 1));
+
             return;
         }
     }

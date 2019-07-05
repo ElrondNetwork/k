@@ -31,9 +31,9 @@ const (
 
 // ModelState holds the state of the executor at a certain moment
 type ModelState struct {
-	// allKs keeps all KSequences into one large structure
-	// all KSequences point to this structure
-	allKs *ksequenceSliceContainer
+	// allKs keeps all K sequence elements into one large structure
+	// all K sequence element references point to this structure
+	allKsElements []ksequenceElem
 
 	// contains all KApply args, concatenated into one slice
 	// KApply references contain the start position and arity,
@@ -84,7 +84,7 @@ func addConstantObject(obj KObject) KReference {
 // NewModel creates a new blank model.
 func NewModel() *ModelState {
 	ms := &ModelState{}
-	ms.allKs = &ksequenceSliceContainer{}
+	ms.allKsElements = make([]ksequenceElem, 0, 100000)
 	ms.allKApplyArgs = make([]KReference, 0, 1000000)
 	ms.allObjects = make([]KObject, 0, 10000)
 	ms.memoTables = nil
@@ -94,6 +94,7 @@ func NewModel() *ModelState {
 // Clear resets the model as if it were new,
 // but does not free the memory allocated by previous execution.
 func (ms *ModelState) Clear() {
+	ms.allKsElements = ms.allKsElements[:0]
 	ms.allKApplyArgs = ms.allKApplyArgs[:0]
 	ms.allObjects = ms.allObjects[:0]
 	ms.recycleAllInts()
@@ -104,7 +105,7 @@ func (ms *ModelState) Clear() {
 // Useful for checking the size of the model data.
 func (ms *ModelState) PrintStats() {
 	fmt.Printf("Nr. BigInt objects: %d\n", len(ms.bigInts))
-	fmt.Printf("Nr. K sequence slices: %d\n", len(ms.allKs.allSlices))
+	fmt.Printf("Nr. K sequence elements: %d\n", len(ms.allKsElements))
 	fmt.Printf("Nr. KApply args: %d\n", len(ms.allKApplyArgs))
 	fmt.Printf("Nr. objects: %d\n", len(ms.allObjects))
 	fmt.Printf("Recycle bin\n")
