@@ -92,10 +92,12 @@ func NewModel() *ModelState {
 }
 
 // Clear resets the model as if it were new,
-// but does not free the allocated memory.
+// but does not free the memory allocated by previous execution.
 func (ms *ModelState) Clear() {
-    ms.allKApplyArgs = ms.allKApplyArgs[:0]
-    ms.allObjects = ms.allObjects[:0]
+	ms.allKApplyArgs = ms.allKApplyArgs[:0]
+	ms.allObjects = ms.allObjects[:0]
+	ms.recycleAllInts()
+	ms.memoTables = nil
 }
 
 // PrintStats simply prints some statistics to the console.
