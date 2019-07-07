@@ -15,6 +15,8 @@ func (ms *ModelState) RecycleUnused(ref KReference) {
 	case emptyKseqRef:
 	case smallPositiveIntRef:
 	case smallNegativeIntRef:
+	case stringRef:
+	case bytesRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active && obj.referenceCount < 1 {
@@ -77,11 +79,5 @@ func (k *MInt) recycleUnused(ms *ModelState) {
 func (k *Float) recycleUnused(ms *ModelState) {
 }
 
-func (k *String) recycleUnused(ms *ModelState) {
-}
-
 func (k *StringBuffer) recycleUnused(ms *ModelState) {
-}
-
-func (k *Bytes) recycleUnused(ms *ModelState) {
 }

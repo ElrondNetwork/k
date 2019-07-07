@@ -2,42 +2,27 @@
 
 package %PACKAGE_MODEL%
 
-import (
-	"strings"
-)
-
-// String is a KObject that contains a string
-type String struct {
-	Value string
+func newBytesReference(refType kreferenceType, startIndex int, length int) KReference {
+	return KReference{
+		refType:        refType,
+		constantObject: false,
+		value1:         uint32(startIndex),
+		value2:         uint32(length),
+		value3:         0,
+	}
 }
 
-func (*String) referenceType() kreferenceType {
-	return stringRef
-}
-
-// Bytes is a KObject that contains a slice of bytes
-type Bytes struct {
-	Value []byte
-}
-
-func (*Bytes) referenceType() kreferenceType {
-	return bytesRef
-}
-
-// StringBuffer is a KObject that contains a string buffer
-type StringBuffer struct {
-	Value strings.Builder
-}
-
-func (*StringBuffer) referenceType() kreferenceType {
-	return stringBufferRef
+func parseBytesReference(ref KReference) (startIndex int, length int) {
+	startIndex = int(ref.value1)
+	length = int(ref.value2)
+	return
 }
 
 // StringEmpty is a reference to an empty string
-var StringEmpty = addConstantObject(&String{Value: ""})
+var StringEmpty = newBytesReference(stringRef, 0, 0)
 
 // BytesEmpty is a reference to a Bytes item with no bytes (length 0)
-var BytesEmpty = addConstantObject(&Bytes{Value: nil})
+var BytesEmpty = newBytesReference(bytesRef, 0, 0)
 
 // IsString returns true if reference points to a string
 func IsString(ref KReference) bool {
@@ -49,63 +34,47 @@ func IsBytes(ref KReference) bool {
 	return ref.refType == bytesRef
 }
 
-// IsStringBuffer returns true if reference points to a string buffer
-func IsStringBuffer(ref KReference) bool {
-	return ref.refType == stringBufferRef
-}
-
-// GetStringObject yields the cast object for a String reference, if possible.
-func (ms *ModelState) GetStringObject(ref KReference) (*String, bool) {
-	if ref.refType == stringRef {
-		obj := ms.getReferencedObject(ref)
-		castObj, typeOk := obj.(*String)
-		if !typeOk {
-			panic("wrong object type for reference")
-		}
-		return castObj, true
-	}
-
-	return nil, false
-}
-
 // GetString converts reference to a Go string, if possbile
 func (ms *ModelState) GetString(ref KReference) (string, bool) {
-	castObj, typeOk := ms.GetStringObject(ref)
-	if !typeOk {
+	if ref.refType != stringRef {
 		return "", false
 	}
-	return castObj.Value, true
+	if ref.constantObject {
+		ref.constantObject = false
+		return constantsModel.GetString(ref)
+	}
+	startIndex, length := parseBytesReference(ref)
+	if length == 0 {
+		return "", true
+	}
+	return string(ms.allBytes[startIndex : startIndex+length]), true
 }
 
-// GetBytesObject yields the cast object for a Bytes reference, if possible.
-func (ms *ModelState) GetBytesObject(ref KReference) (*Bytes, bool) {
+// GetBytes yields the cast object for a Bytes reference, if possible.
+func (ms *ModelState) GetBytes(ref KReference) ([]byte, bool) {
 	if ref.refType != bytesRef {
 		return nil, false
 	}
-	obj := ms.getReferencedObject(ref)
-	castObj, typeOk := obj.(*Bytes)
-	if !typeOk {
-		panic("wrong object type for reference")
+	if ref.constantObject {
+		ref.constantObject = false
+		return constantsModel.GetBytes(ref)
 	}
-	return castObj, true
-}
-
-// GetStringBufferObject yields the cast object for a StringBuffer reference, if possible.
-func (ms *ModelState) GetStringBufferObject(ref KReference) (*StringBuffer, bool) {
-	if ref.refType != stringBufferRef {
-		return nil, false
+	startIndex, length := parseBytesReference(ref)
+	if length == 0 {
+		return nil, true
 	}
-	obj := ms.getReferencedObject(ref)
-	castObj, typeOk := obj.(*StringBuffer)
-	if !typeOk {
-		panic("wrong object type for reference")
-	}
-	return castObj, true
+	return ms.allBytes[startIndex : startIndex+length], true
 }
 
 // NewString creates a new K string object from a Go string
 func (ms *ModelState) NewString(str string) KReference {
-	return ms.addObject(&String{Value: str})
+	length := len(str)
+	if length == 0 {
+		return StringEmpty
+	}
+	startIndex := len(ms.allBytes)
+	ms.allBytes = append(ms.allBytes, []byte(str)...)
+	return newBytesReference(stringRef, startIndex, length)
 }
 
 // NewStringConstant creates a new string constant, which is saved statically.
@@ -118,25 +87,75 @@ func NewStringConstant(s string) KReference {
 
 // NewBytes creates a new K string object from a Go string
 func (ms *ModelState) NewBytes(value []byte) KReference {
-	return ms.addObject(&Bytes{Value: value})
+	length := len(value)
+	if length == 0 {
+		return BytesEmpty
+	}
+	startIndex := len(ms.allBytes)
+	ms.allBytes = append(ms.allBytes, value...)
+	return newBytesReference(bytesRef, startIndex, length)
 }
 
-// NewStringBuffer creates a new object and returns the reference.
-func (ms *ModelState) NewStringBuffer() KReference {
-	return ms.addObject(&StringBuffer{Value: strings.Builder{}})
+// Bytes2String converts a bytes reference to a string reference.
+// The neat thing is, because we use the same underlying structure, no data needs to be copied.
+func (ms *ModelState) Bytes2String(ref KReference) (KReference, bool) {
+	if ref.refType != bytesRef {
+		return NullReference, false
+	}
+	startIndex, length := parseBytesReference(ref)
+	return newBytesReference(stringRef, startIndex, length), true
 }
 
-// IsEmpty returns true if Bytes is the empty byte slice
-func (k *Bytes) IsEmpty() bool {
-	return len(k.Value) == 0
+// String2Bytes converts a string reference to a bytes reference.
+// The neat thing is, because we use the same underlying structure, no data needs to be copied.
+func (ms *ModelState) String2Bytes(ref KReference) (KReference, bool) {
+	if ref.refType != stringRef {
+		return NullReference, false
+	}
+	startIndex, length := parseBytesReference(ref)
+	return newBytesReference(bytesRef, startIndex, length), true
 }
 
-// String yields a Go string representation of the K String
-func (k *String) String() string {
-	return k.Value
+// StringSub yields a reference to a substring of a given string.
+// Given the structure of our data, no data needs to be copied or moved in this operation.
+func StringSub(ref KReference, fromIndex int, toIndex int) (KReference, bool) {
+	return subString(stringRef, ref, fromIndex, toIndex)
 }
 
-// IsEmpty returns true if it is the empty string
-func (k *String) IsEmpty() bool {
-	return len(k.Value) == 0
+// BytesSub yields a reference to a sub-slice of a given byte slice.
+// Given the structure of our data, no data needs to be copied or moved in this operation.
+func BytesSub(ref KReference, fromIndex int, toIndex int) (KReference, bool) {
+	return subString(bytesRef, ref, fromIndex, toIndex)
+}
+
+func subString(expectedRefType kreferenceType, ref KReference, fromIndex int, toIndex int) (KReference, bool) {
+	if ref.refType != expectedRefType {
+		return NullReference, false
+	}
+	startIndex, length := parseBytesReference(ref)
+	if fromIndex > toIndex || fromIndex < 0 || toIndex < 0 || fromIndex > length {
+		return NullReference, false
+	}
+	if toIndex > length {
+		toIndex = length
+	}
+	return newBytesReference(ref.refType, startIndex+fromIndex, toIndex-fromIndex), true
+}
+
+// StringLength yields the length of a string.
+func StringLength(ref KReference) (int, bool) {
+	if ref.refType != stringRef {
+		return 0, false
+	}
+	_, length := parseBytesReference(ref)
+	return length, true
+}
+
+// BytesLength yields the length of a byte array.
+func BytesLength(ref KReference) (int, bool) {
+	if ref.refType != bytesRef {
+		return 0, false
+	}
+	_, length := parseBytesReference(ref)
+	return length, true
 }

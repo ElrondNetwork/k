@@ -34,6 +34,12 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 			argCopy[i] = ms.DeepCopy(child)
 		}
 		return ms.NewKApply(ms.KApplyLabel(ref), argCopy...)
+	case stringRef:
+		str, _ := ms.GetString(ref)
+		return ms.NewString(str)
+	case bytesRef:
+		bytes, _ := ms.GetBytes(ref)
+		return ms.NewBytes(bytes)
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -99,16 +105,6 @@ func (k *Float) deepCopy(ms *ModelState) KObject {
 	return k // not implemented
 }
 
-func (k *String) deepCopy(ms *ModelState) KObject {
-	return &String{Value: k.Value}
-}
-
 func (k *StringBuffer) deepCopy(ms *ModelState) KObject {
 	return k // no deep copy needed here
-}
-
-func (k *Bytes) deepCopy(ms *ModelState) KObject {
-	bytesCopy := make([]byte, len(k.Value))
-	copy(bytesCopy, k.Value)
-	return &Bytes{Value: bytesCopy}
 }

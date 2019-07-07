@@ -2,6 +2,8 @@
 
 package %PACKAGE_MODEL%
 
+import "strings"
+
 // InternedBottom is usually used as a dummy object
 var InternedBottom = KReference{refType: bottomRef, value1: 0, value2: 0}
 
@@ -66,3 +68,34 @@ func (ms *ModelState) NewInjectedKLabel(label KLabel) KReference {
 	return ms.addObject(&InjectedKLabel{Label: label})
 }
 
+// StringBuffer is a KObject that contains a string buffer
+type StringBuffer struct {
+	Value strings.Builder
+}
+
+func (*StringBuffer) referenceType() kreferenceType {
+	return stringBufferRef
+}
+
+// IsStringBuffer returns true if reference points to a string buffer
+func IsStringBuffer(ref KReference) bool {
+	return ref.refType == stringBufferRef
+}
+
+// GetStringBufferObject yields the cast object for a StringBuffer reference, if possible.
+func (ms *ModelState) GetStringBufferObject(ref KReference) (*StringBuffer, bool) {
+	if ref.refType != stringBufferRef {
+		return nil, false
+	}
+	obj := ms.getReferencedObject(ref)
+	castObj, typeOk := obj.(*StringBuffer)
+	if !typeOk {
+		panic("wrong object type for reference")
+	}
+	return castObj, true
+}
+
+// NewStringBuffer creates a new object and returns the reference.
+func (ms *ModelState) NewStringBuffer() KReference {
+	return ms.addObject(&StringBuffer{Value: strings.Builder{}})
+}

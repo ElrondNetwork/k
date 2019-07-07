@@ -119,29 +119,25 @@ func (stringHooksType) rfind(c1 m.KReference, c2 m.KReference, c3 m.KReference, 
 	return interpreter.Model.FromInt(result), nil
 }
 
-func (stringHooksType) length(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	k, ok := interpreter.Model.GetString(c)
+func (stringHooksType) length(kstr m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	length, ok := m.StringLength(kstr)
 	if !ok {
 		return invalidArgsResult()
 	}
-	return interpreter.Model.FromInt(len(k)), nil
+	return interpreter.Model.FromInt(length), nil
 }
 
-func (stringHooksType) substr(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	str, ok1 := interpreter.Model.GetString(c1)
-	from, ok2 := interpreter.Model.GetPositiveInt(c2) // from is inclusive
-	to, ok3 := interpreter.Model.GetPositiveInt(c3)   // to is exclusive
-	if !ok1 || !ok2 || !ok3 {
+func (stringHooksType) substr(kstr, kfrom, kto m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
+	from, ok2 := interpreter.Model.GetPositiveInt(kfrom) // from is inclusive
+	to, ok3 := interpreter.Model.GetPositiveInt(kto)     // to is exclusive
+	if !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
-	length := len(str)
-	if from > to || from > length {
+	subStr, ok := m.StringSub(kstr, from, to)
+	if !ok {
 		return invalidArgsResult()
 	}
-	if to > length {
-		to = length
-	}
-	return interpreter.Model.NewString(str[from:to]), nil
+	return subStr, nil
 }
 
 func (stringHooksType) ord(arg m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {

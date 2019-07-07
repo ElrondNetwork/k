@@ -13,7 +13,7 @@ const kreflectionHooks kreflectionHooksType = 0
 var constKReflectionSortInt = m.NewStringConstant("Int")
 var constKReflectionSortString = m.NewStringConstant("String")
 var constKReflectionSortBytes = m.NewStringConstant("Bytes")
-var constKReflectionSortbool = m.NewStringConstant("Bool")
+var constKReflectionSortBool = m.NewStringConstant("Bool")
 
 func (kreflectionHooksType) sort(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	if obj, t := interpreter.Model.GetKTokenObject(c); t {
@@ -29,7 +29,7 @@ func (kreflectionHooksType) sort(c m.KReference, lbl m.KLabel, sort m.Sort, conf
 		return constKReflectionSortBytes, nil
 	}
 	if m.IsBool(c) {
-		return constKReflectionSortbool, nil
+		return constKReflectionSortBool, nil
 	}
 	if obj, t := interpreter.Model.GetMapObject(c); t {
 		return interpreter.Model.NewString(obj.Sort.Name()), nil
@@ -62,8 +62,8 @@ func (kreflectionHooksType) configuration(lbl m.KLabel, sort m.Sort, config m.KR
 var freshCounter int
 
 func (kreflectionHooksType) fresh(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	if k, t := interpreter.Model.GetStringObject(c); t {
-		sort := m.ParseSort(k.Value)
+	if str, t := interpreter.Model.GetString(c); t {
+		sort := m.ParseSort(str)
 		result, err := interpreter.freshFunction(sort, config, freshCounter)
 		if err != nil {
 			return m.NoResult, err

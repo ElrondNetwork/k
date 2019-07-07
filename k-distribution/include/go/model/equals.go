@@ -48,6 +48,14 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 			}
 		}
 		return true
+	case stringRef:
+		str1, _ := ms.GetString(ref1)
+		str2, _ := ms.GetString(ref2)
+		return str1 == str2
+	case bytesRef:
+		bytes1, _ := ms.GetBytes(ref1)
+		bytes2, _ := ms.GetBytes(ref2)
+		return bytes.Equal(bytes1, bytes2)
 	default:
 		// object types
 		obj1 := ms.getReferencedObject(ref1)
@@ -175,25 +183,9 @@ func (k *Float) equals(ms *ModelState, arg KObject) bool {
 	return k.Value == other.Value
 }
 
-func (k *String) equals(ms *ModelState, arg KObject) bool {
-	other, typeOk := arg.(*String)
-	if !typeOk {
-		panic("equals between different types should have been handled during reference Equals")
-	}
-	return k.Value == other.Value
-}
-
 // Equals ... Pointer comparison only for StringBuffer
 func (k *StringBuffer) equals(ms *ModelState, arg KObject) bool {
 	return k == arg
-}
-
-func (k *Bytes) equals(ms *ModelState, arg KObject) bool {
-	other, typeOk := arg.(*Bytes)
-	if !typeOk {
-		panic("equals between different types should have been handled during reference Equals")
-	}
-	return bytes.Equal(k.Value, other.Value)
 }
 
 func (ms *ModelState) ksequenceEquals(ref1 KReference, ref2 KReference) bool {

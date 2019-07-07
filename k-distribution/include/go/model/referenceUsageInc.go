@@ -15,6 +15,8 @@ func (ms *ModelState) IncreaseUsage(ref KReference) {
 	case emptyKseqRef:
 	case smallPositiveIntRef:
 	case smallNegativeIntRef:
+	case stringRef:
+	case bytesRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active {
@@ -78,11 +80,5 @@ func (k *MInt) increaseUsage(ms *ModelState) {
 func (k *Float) increaseUsage(ms *ModelState) {
 }
 
-func (k *String) increaseUsage(ms *ModelState) {
-}
-
 func (k *StringBuffer) increaseUsage(ms *ModelState) {
-}
-
-func (k *Bytes) increaseUsage(ms *ModelState) {
 }

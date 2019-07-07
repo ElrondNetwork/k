@@ -47,6 +47,9 @@ type ModelState struct {
 	// works as a stack
 	bigIntRecycleBin []KReference
 
+	// contains all bytes from types String, Bytes and KToken
+	allBytes []byte
+
 	// keeps object types mixed together
 	allObjects []KObject
 
@@ -86,6 +89,7 @@ func NewModel() *ModelState {
 	ms := &ModelState{}
 	ms.allKsElements = make([]ksequenceElem, 0, 100000)
 	ms.allKApplyArgs = make([]KReference, 0, 1000000)
+	ms.allBytes = make([]byte, 0, 1 << 20)
 	ms.allObjects = make([]KObject, 0, 10000)
 	ms.memoTables = nil
 	return ms
@@ -97,6 +101,7 @@ func (ms *ModelState) Clear() {
 	ms.allKsElements = ms.allKsElements[:0]
 	ms.allKApplyArgs = ms.allKApplyArgs[:0]
 	ms.allObjects = ms.allObjects[:0]
+	ms.allBytes = ms.allBytes[:0]
 	ms.recycleAllInts()
 	ms.memoTables = nil
 }
@@ -107,7 +112,8 @@ func (ms *ModelState) PrintStats() {
 	fmt.Printf("Nr. BigInt objects: %d\n", len(ms.bigInts))
 	fmt.Printf("Nr. K sequence elements: %d\n", len(ms.allKsElements))
 	fmt.Printf("Nr. KApply args: %d\n", len(ms.allKApplyArgs))
-	fmt.Printf("Nr. objects: %d\n", len(ms.allObjects))
+	fmt.Printf("Nr. bytes (strings, byte arrays, KTokens): %d\n", len(ms.allBytes))
+	fmt.Printf("Nr. other objects: %d\n", len(ms.allObjects))
 	fmt.Printf("Recycle bin\n")
 	fmt.Printf("     BigInt    %d\n", len(ms.bigIntRecycleBin))
 }

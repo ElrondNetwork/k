@@ -16,11 +16,11 @@ func (bufferHooksType) empty(lbl m.KLabel, sort m.Sort, config m.KReference, int
 
 func (bufferHooksType) concat(kbuf m.KReference, kstr m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
 	buf, ok1 := interpreter.Model.GetStringBufferObject(kbuf)
-	str, ok2 := interpreter.Model.GetStringObject(kstr)
+	str, ok2 := interpreter.Model.GetString(kstr)
 	if !ok1 || !ok2 {
 		return invalidArgsResult()
 	}
-	buf.Value.WriteString(str.Value)
+	buf.Value.WriteString(str)
 	return kbuf, nil
 }
 

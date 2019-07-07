@@ -52,6 +52,25 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 		}
 	case kapplyRef:
 		ms.prettyPrintKApply(sb, ms.KApplyLabel(ref), ms.kapplyArgSlice(ref), indent)
+	case stringRef:
+		str, _ := ms.GetString(ref)
+		sb.WriteString("String(\"")
+		writeEscapedString(sb, str)
+		sb.WriteString("\")")
+	case bytesRef:
+		bytes, _ := ms.GetBytes(ref)
+		sb.WriteString("Bytes(")
+		if len(bytes) == 0 {
+			sb.WriteString("empty")
+		} else {
+			for i, b := range bytes {
+				sb.WriteString(fmt.Sprintf("%02x", b))
+				if i < len(bytes)-1 {
+					sb.WriteByte(' ')
+				}
+			}
+		}
+		sb.WriteString(")")
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -221,29 +240,8 @@ func (k *Float) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("Float (%f)", k.Value))
 }
 
-func (k *String) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	sb.WriteString("String(\"")
-	writeEscapedString(sb, k.Value)
-	sb.WriteString("\")")
-}
-
 func (k *StringBuffer) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString("StringBuffer(\"")
 	writeEscapedString(sb, k.Value.String())
 	sb.WriteString("\")")
-}
-
-func (k *Bytes) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	sb.WriteString("Bytes(")
-	if len(k.Value) == 0 {
-		sb.WriteString("empty")
-	} else {
-		for i, b := range k.Value {
-			sb.WriteString(fmt.Sprintf("%02x", b))
-			if i < len(k.Value)-1 {
-				sb.WriteByte(' ')
-			}
-		}
-	}
-	sb.WriteString(")")
 }

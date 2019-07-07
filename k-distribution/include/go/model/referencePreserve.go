@@ -14,6 +14,8 @@ func (ms *ModelState) Preserve(ref KReference) {
 	case emptyKseqRef:
 	case smallPositiveIntRef:
 	case smallNegativeIntRef:
+	case stringRef:
+	case bytesRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		obj.reuseStatus = preserved
@@ -71,11 +73,5 @@ func (k *MInt) preserve(ms *ModelState) {
 func (k *Float) preserve(ms *ModelState) {
 }
 
-func (k *String) preserve(ms *ModelState) {
-}
-
 func (k *StringBuffer) preserve(ms *ModelState) {
-}
-
-func (k *Bytes) preserve(ms *ModelState) {
 }

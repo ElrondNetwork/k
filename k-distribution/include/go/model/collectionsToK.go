@@ -140,14 +140,6 @@ func (k *Float) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }
 
-func (k *String) collectionsToK(ms *ModelState) KReference {
-	panic("collectionsToK shouldn't be called for this object type")
-}
-
 func (k *StringBuffer) collectionsToK(ms *ModelState) KReference {
-	panic("collectionsToK shouldn't be called for this object type")
-}
-
-func (k *Bytes) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }

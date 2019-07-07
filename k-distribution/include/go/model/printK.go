@@ -45,6 +45,12 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		}
 	case kapplyRef:
 		kprintKApply(ms, sb, ms.KApplyLabel(ref), ms.kapplyArgSlice(ref))
+	case stringRef:
+		str, _ := ms.GetString(ref)
+		kprintKToken(sb, SortString, str, true)
+	case bytesRef:
+		bytes, _ := ms.GetBytes(ref)
+		kprintKToken(sb, SortBytes, string(bytes), true)
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -131,14 +137,6 @@ func (k *Float) kprint(ms *ModelState, sb *strings.Builder) {
 	kprintKToken(sb, SortFloat, fmt.Sprintf("%f", k.Value), false)
 }
 
-func (k *String) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, SortString, k.Value, true)
-}
-
 func (k *StringBuffer) kprint(ms *ModelState, sb *strings.Builder) {
 	kprintKToken(sb, SortStringBuffer, k.Value.String(), true)
-}
-
-func (k *Bytes) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, SortBytes, string(k.Value), true)
 }
