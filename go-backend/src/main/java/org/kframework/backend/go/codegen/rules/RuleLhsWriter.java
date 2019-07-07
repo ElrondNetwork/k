@@ -211,7 +211,9 @@ public class RuleLhsWriter extends VisitK {
                 }
             }
         } else {
+            String subject = consumeSubject();
             KVariable alias = consumeAlias();
+            int arity = k.klist().items().size();
             String kappVar;
             String aliasComment = "";
             if (alias != null) {
@@ -222,10 +224,15 @@ public class RuleLhsWriter extends VisitK {
                 kitemIndex++;
             }
 
-            lhsTypeIf(kappVar, consumeSubject(), "CastKApply");
-            sb.append(" && i.Model.KApplyLabel(").append(kappVar).append(") == m.").append(nameProvider.klabelVariableName(k.klabel()));
-            sb.append(" && i.Model.KApplyArity(").append(kappVar).append(") == ").append(k.klist().items().size());
+            handleExpressionType(ExpressionType.IF);
+            sb.writeIndent();
+            sb.append("if m.KApplyMatch(").append(subject).append(", ");
+            sb.append("m.").append(nameProvider.klabelVariableName(k.klabel())).append(", ");
+            sb.append(arity).append(")");
             sb.beginBlock(ToKast.apply(k), aliasComment);
+            if (arity > 0) {
+                sb.appendIndentedLine(kappVar, " := ", subject);
+            }
             int i = 0;
             for (K item : k.klist().items()) {
                 nextSubject = "i.Model.KApplyArg(" + kappVar + ", " + i + ")";

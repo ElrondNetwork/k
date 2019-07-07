@@ -9,6 +9,20 @@ type KApply struct {
 	List  []KReference
 }
 
+// KApplyMatch returns true if reference is a KApply with correct label and arity
+func KApplyMatch(ref KReference, expectedLabel KLabel, expectedArity uint32) bool {
+    if ref.refType != kapplyRef {
+        return false
+    }
+    if ref.value1 != uint32(expectedLabel) {
+        return false
+    }
+    if ref.value2 != expectedArity {
+        return false
+    }
+    return true
+}
+
 // CastKApply returns true if argument is a KApply item.
 // Also returns argument, for convenience.
 func (ms *ModelState) CastKApply(ref KReference) (KReference, bool) {
