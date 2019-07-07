@@ -18,6 +18,7 @@ func (ms *ModelState) DecreaseUsage(ref KReference) {
 	case smallNegativeIntRef:
 	case stringRef:
 	case bytesRef:
+	case ktokenRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active {
@@ -40,9 +41,6 @@ func (ms *ModelState) DecreaseUsage(ref KReference) {
 }
 
 func (k *InjectedKLabel) decreaseUsage(ms *ModelState) {
-}
-
-func (k *KToken) decreaseUsage(ms *ModelState) {
 }
 
 func (k *KVariable) decreaseUsage(ms *ModelState) {

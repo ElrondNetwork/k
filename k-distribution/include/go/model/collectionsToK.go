@@ -124,10 +124,6 @@ func (k *InjectedKLabel) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }
 
-func (k *KToken) collectionsToK(ms *ModelState) KReference {
-	panic("collectionsToK shouldn't be called for this object type")
-}
-
 func (k *KVariable) collectionsToK(ms *ModelState) KReference {
 	panic("collectionsToK shouldn't be called for this object type")
 }

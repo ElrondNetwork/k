@@ -91,7 +91,7 @@ func (mapKey kmapKeyBasic) toKItem(ms *ModelState) (KReference, error) {
 }
 
 func (k KToken) toKItem(ms *ModelState) (KReference, error) {
-	return ms.addObject(&k), nil
+	return ms.NewKToken(k.Sort, k.Value), nil
 }
 
 func (mapKey kmapKeyKApply0) toKItem(ms *ModelState) (KReference, error) {

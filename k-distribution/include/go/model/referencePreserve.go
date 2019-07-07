@@ -16,6 +16,7 @@ func (ms *ModelState) Preserve(ref KReference) {
 	case smallNegativeIntRef:
 	case stringRef:
 	case bytesRef:
+	case ktokenRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		obj.reuseStatus = preserved
@@ -36,9 +37,6 @@ func (ms *ModelState) Preserve(ref KReference) {
 }
 
 func (k *InjectedKLabel) preserve(ms *ModelState) {
-}
-
-func (k *KToken) preserve(ms *ModelState) {
 }
 
 func (k *KVariable) preserve(ms *ModelState) {

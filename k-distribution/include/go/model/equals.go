@@ -56,6 +56,13 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		bytes1, _ := ms.GetBytes(ref1)
 		bytes2, _ := ms.GetBytes(ref2)
 		return bytes.Equal(bytes1, bytes2)
+	case ktokenRef:
+		ktoken1, _ := ms.GetKTokenObject(ref1)
+		ktoken2, _ := ms.GetKTokenObject(ref2)
+		if ktoken1.Sort != ktoken2.Sort {
+			return false
+		}
+		return ktoken1.Value == ktoken2.Value
 	default:
 		// object types
 		obj1 := ms.getReferencedObject(ref1)
@@ -73,17 +80,6 @@ func (k *InjectedKLabel) equals(ms *ModelState, arg KObject) bool {
 		return false
 	}
 	return true
-}
-
-func (k *KToken) equals(ms *ModelState, arg KObject) bool {
-	other, typeOk := arg.(*KToken)
-	if !typeOk {
-		panic("equals between different types should have been handled during reference Equals")
-	}
-	if k.Sort != other.Sort {
-		return false
-	}
-	return k.Value == other.Value
 }
 
 func (k *KVariable) equals(ms *ModelState, arg KObject) bool {

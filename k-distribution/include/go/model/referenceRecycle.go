@@ -17,6 +17,7 @@ func (ms *ModelState) RecycleUnused(ref KReference) {
 	case smallNegativeIntRef:
 	case stringRef:
 	case bytesRef:
+	case ktokenRef:
 	case bigIntRef:
 		obj, _ := ms.getBigIntObject(ref)
 		if obj.reuseStatus == active && obj.referenceCount < 1 {
@@ -42,9 +43,6 @@ func (ms *ModelState) RecycleUnused(ref KReference) {
 }
 
 func (k *InjectedKLabel) recycleUnused(ms *ModelState) {
-}
-
-func (k *KToken) recycleUnused(ms *ModelState) {
 }
 
 func (k *KVariable) recycleUnused(ms *ModelState) {

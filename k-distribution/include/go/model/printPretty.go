@@ -71,6 +71,9 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 			}
 		}
 		sb.WriteString(")")
+	case ktokenRef:
+		ktoken, _ := ms.GetKTokenObject(ref)
+		sb.WriteString(fmt.Sprintf("%s: %s", ktoken.Sort.Name(), ktoken.Value))
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -133,10 +136,6 @@ func (ms *ModelState) prettyPrintKApply(sb *strings.Builder, label KLabel, args 
 
 func (k *InjectedKLabel) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
 	sb.WriteString(fmt.Sprintf("InjectedKLabel(%s)", k.Label.Name()))
-}
-
-func (k *KToken) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {
-	sb.WriteString(fmt.Sprintf("%s: %s", k.Sort.Name(), k.Value))
 }
 
 func (k *KVariable) prettyPrint(ms *ModelState, sb *strings.Builder, indent int) {

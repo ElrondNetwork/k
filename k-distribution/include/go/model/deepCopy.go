@@ -40,6 +40,9 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 	case bytesRef:
 		bytes, _ := ms.GetBytes(ref)
 		return ms.NewBytes(bytes)
+	case ktokenRef:
+		ktoken, _ := ms.GetKTokenObject(ref)
+		return ms.NewKToken(ktoken.Sort, ktoken.Value)
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -55,10 +58,6 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 
 func (k *InjectedKLabel) deepCopy(ms *ModelState) KObject {
 	return &InjectedKLabel{Label: k.Label}
-}
-
-func (k *KToken) deepCopy(ms *ModelState) KObject {
-	return &KToken{Sort: k.Sort, Value: k.Value}
 }
 
 func (k *KVariable) deepCopy(ms *ModelState) KObject {

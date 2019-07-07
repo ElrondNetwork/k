@@ -51,6 +51,9 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 	case bytesRef:
 		bytes, _ := ms.GetBytes(ref)
 		kprintKToken(sb, SortBytes, string(bytes), true)
+	case ktokenRef:
+		ktoken, _ := ms.GetKTokenObject(ref)
+		kprintKToken(sb, ktoken.Sort, ktoken.Value, false)
 	default:
 		// object types
 		obj := ms.getReferencedObject(ref)
@@ -99,10 +102,6 @@ func kprintKToken(sb *strings.Builder, sort Sort, value string, escape bool) {
 	sb.WriteString("\", \"")
 	sb.WriteString(sort.Name())
 	sb.WriteString("\")")
-}
-
-func (k *KToken) kprint(ms *ModelState, sb *strings.Builder) {
-	kprintKToken(sb, k.Sort, k.Value, false)
 }
 
 func (k *KVariable) kprint(ms *ModelState, sb *strings.Builder) {
