@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // EmptyKSequence is the KSequence with no elements.
 // To simplify things, it is a separate reference type.

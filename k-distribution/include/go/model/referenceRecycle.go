@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // RecycleUnused sends to the recycle bin all objects left without references.
 // This goes recursively through the whole sub-tree.

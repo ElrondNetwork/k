@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // Bottom is a K item that contains no data
 type Bottom struct {

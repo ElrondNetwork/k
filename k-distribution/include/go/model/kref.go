@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // kreferenceType identifies the type of K item referenced by a KReference
 type kreferenceType uint64

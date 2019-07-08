@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // MemoTable is a reference to a memoization table
 type MemoTable int

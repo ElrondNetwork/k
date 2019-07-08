@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // DecreaseUsage decrements all reference counters in tree below given root
 // and sends to the recycle bin all objects left without references.

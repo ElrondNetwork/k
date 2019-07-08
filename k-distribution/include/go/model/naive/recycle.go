@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // MarkInUse does nothing in this version.
 func (ms *ModelState) MarkInUse(ref KReference, stepNr int) {

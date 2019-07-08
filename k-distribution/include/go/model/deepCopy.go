@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // DeepCopy yields a fresh copy of the K item given as argument.
 func (ms *ModelState) DeepCopy(ref KReference) KReference {

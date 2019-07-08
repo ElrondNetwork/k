@@ -1,4 +1,4 @@
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 import (
 	"math/big"

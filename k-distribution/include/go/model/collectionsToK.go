@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // CollectionsToK converts all collections to standard K items, like KApply, KToken, etc.
 func (ms *ModelState) CollectionsToK(ref KReference) KReference {

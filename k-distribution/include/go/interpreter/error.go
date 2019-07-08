@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_INTERPRETER%
+package %PACKAGE%
 
 import (
     "errors"

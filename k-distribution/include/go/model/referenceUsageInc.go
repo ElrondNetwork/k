@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // IncreaseUsage increments all reference counters in tree below given root.
 // It goes recursively through the whole sub-tree.

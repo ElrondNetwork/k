@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // StringEmpty is a reference to an empty string.
 // There is no data, so is is irrelevant if we declare it constant or not.

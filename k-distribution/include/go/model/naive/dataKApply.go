@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // KApply is a KObject representing a KApply item in K
 type KApply struct {

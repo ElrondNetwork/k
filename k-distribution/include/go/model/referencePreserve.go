@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // Preserve prevents argument and any objects contained by it from being recycled ever again.
 func (ms *ModelState) Preserve(ref KReference) {

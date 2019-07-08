@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // KToken is a KObject representing a KToken item in K
 type KToken struct {

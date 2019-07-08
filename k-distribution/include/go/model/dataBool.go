@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // BoolTrue represents a boolean value with value true
 var BoolTrue = createKrefBasic(boolRef, true, 1)

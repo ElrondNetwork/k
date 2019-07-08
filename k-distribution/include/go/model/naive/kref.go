@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // KReference is a reference to a K item.
 // In this implementation, it is just an alias to the regular pointer to the item.

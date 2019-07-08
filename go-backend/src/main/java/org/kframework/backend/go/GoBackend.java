@@ -210,7 +210,8 @@ public class GoBackend implements Backend {
                 // quickMain
                 packageManager.copyFileAndReplaceGoPackages(
                         files.resolveKBase("include/go/quickMain.go"),
-                        files.resolveKompiled("quickMain.go"));
+                        files.resolveKompiled("quickMain.go"),
+                        null);
 
                 //save .vscode config, it is convenient for VSCode users for debugging
                 copyFileAndReplaceVsCodeConfig(

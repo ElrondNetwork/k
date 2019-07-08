@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // KVariable is a KObject representing a KVariable item in K
 type KVariable struct {

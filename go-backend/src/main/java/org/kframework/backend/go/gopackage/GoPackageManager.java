@@ -88,24 +88,25 @@ public class GoPackageManager {
     public void copyFileToPackage(File srcFile, GoPackage pkg, String fileName) throws IOException {
         copyFileAndReplaceGoPackages(
                 srcFile,
-                files.resolveKompiled(pkg.getRelativePath() + "/" + fileName));
+                files.resolveKompiled(pkg.getRelativePath() + "/" + fileName),
+                pkg);
     }
 
     private static final String GO_COMMENT = "COMMENT"; // pattern: %COMMENT%
-    private static final String PACKAGE_INTERPRETER = "PACKAGE_INTERPRETER"; // pattern: %PACKAGE_INTERPRETER%
+    private static final String PACKAGE = "PACKAGE"; // pattern: %PACKAGE%
     private static final String INCLUDE_INTERPRETER = "INCLUDE_INTERPRETER"; // ...
-    private static final String PACKAGE_MODEL = "PACKAGE_MODEL";
     private static final String INCLUDE_MODEL = "INCLUDE_MODEL";
     private static final String PACKAGE_PARSER = "PACKAGE_PARSER";
     private static final String INCLUDE_PARSER = "INCLUDE_PARSER";
 
-    public void copyFileAndReplaceGoPackages(File srcFile, File destFile) throws IOException {
+    public void copyFileAndReplaceGoPackages(File srcFile, File destFile, GoPackage pkg) throws IOException {
         // the replacement patterns
         Map<String,String> tokens = new HashMap<>();
         tokens.put(GO_COMMENT, goNonGeneratedFileComment);
-        tokens.put(PACKAGE_INTERPRETER, interpreterPackage.getName());
+        if (pkg != null) {
+            tokens.put(PACKAGE, pkg.getName());
+        }
         tokens.put(INCLUDE_INTERPRETER, interpreterPackage.getGoPath());
-        tokens.put(PACKAGE_MODEL, modelPackage.getName());
         tokens.put(INCLUDE_MODEL, modelPackage.getGoPath());
         tokens.put(PACKAGE_PARSER, koreParserPackage.getName());
         tokens.put(INCLUDE_PARSER, koreParserPackage.getGoPath());

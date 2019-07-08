@@ -1,6 +1,6 @@
 %COMMENT%
 
-package %PACKAGE_MODEL%
+package %PACKAGE%
 
 // BoolTrue ... K boolean value with value true
 var BoolTrue = &Bool{Value: true}
