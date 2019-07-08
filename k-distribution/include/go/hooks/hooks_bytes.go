@@ -167,8 +167,8 @@ func (bytesHooksType) string2bytes(strRef m.KReference, lbl m.KLabel, sort m.Sor
 }
 
 func (bytesHooksType) substr(kbytes, kfrom, kto m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	from, ok2 := interpreter.Model.GetPositiveInt(kfrom) // from is inclusive
-	to, ok3 := interpreter.Model.GetPositiveInt(kto)     // to is exclusive
+	from, ok2 := interpreter.Model.GetUint64(kfrom) // from is inclusive
+	to, ok3 := interpreter.Model.GetUint64(kto)     // to is exclusive
 	if !ok2 || !ok3 {
 		return invalidArgsResult()
 	}
@@ -201,7 +201,7 @@ func (bytesHooksType) length(argBytes m.KReference, lbl m.KLabel, sort m.Sort, c
 	if !ok {
 		return invalidArgsResult()
 	}
-	return interpreter.Model.FromInt(length), nil
+	return interpreter.Model.FromUint64(length), nil
 }
 
 func (bytesHooksType) padRight(argBytes m.KReference, argLen m.KReference, argWith m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {

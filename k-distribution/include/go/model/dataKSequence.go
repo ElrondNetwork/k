@@ -4,33 +4,22 @@ package %PACKAGE_MODEL%
 
 // EmptyKSequence is the KSequence with no elements.
 // To simplify things, it is a separate reference type.
-var EmptyKSequence = KReference{refType: emptyKseqRef}
+var EmptyKSequence = createKrefBasic(emptyKseqRef, true, 0)
 
 type ksequenceElem struct {
 	head KReference
 	tail KReference
 }
 
-func createNonEmptyKseqRef(elemIndex int, length int) KReference {
-	return KReference{refType: nonEmptyKseqRef, value1: uint32(elemIndex), value2: uint32(length)}
-}
-
-func nonEmptyKseqRefParse(ref KReference) (ok bool, elemIndex int, length int) {
-	if ref.refType != nonEmptyKseqRef {
-		return false, 0, 0
-	}
-	return true, int(ref.value1), int(ref.value2)
-}
-
 // IsNonEmptyKSequenceMinimumLength returns true for any K sequence with length greater of equal than given argument.
 // Returns false for EmptyKSequence.
 // Especially used for pattern matching.
-func (ms *ModelState) IsNonEmptyKSequenceMinimumLength(ref KReference, minimumLength int) bool {
-	if ref.refType == emptyKseqRef {
+func (ms *ModelState) IsNonEmptyKSequenceMinimumLength(ref KReference, minimumLength uint64) bool {
+	refType, _, length := parseKrefKseq(ref)
+	if refType == emptyKseqRef {
 		return false
 	}
-	isNonEmptyKseq, _, length := nonEmptyKseqRefParse(ref)
-	if !isNonEmptyKseq {
+	if refType != nonEmptyKseqRef {
 		return minimumLength == 1
 	}
 	return length >= minimumLength
@@ -43,31 +32,32 @@ func (ms *ModelState) NewKSequence(elements []KReference) KReference {
 
 // KSequenceIsEmpty returns true if KSequence has no elements
 func (ms *ModelState) KSequenceIsEmpty(ref KReference) bool {
-	return ref.refType == emptyKseqRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == emptyKseqRef
 }
 
 // KSequenceGet yields element at position.
 func (ms *ModelState) KSequenceGet(ref KReference, position int) KReference {
 	for i := 0; i < position; i++ {
-		isNonEmptyKseq, elemIndex, _ := nonEmptyKseqRefParse(ref)
-		if !isNonEmptyKseq {
+		refType, elemIndex, _ := parseKrefKseq(ref)
+		if refType != nonEmptyKseqRef {
 			panic("bad argument to KSequenceGet: position exceeds K sequence length")
 		}
 		elem := ms.allKsElements[elemIndex]
 		ref = elem.tail
 	}
 
-	isNonEmptyKseq, elemIndex, _ := nonEmptyKseqRefParse(ref)
-	if !isNonEmptyKseq {
+	refType, elemIndex, _ := parseKrefKseq(ref)
+	if refType != nonEmptyKseqRef {
 		return ref
 	}
 	return ms.allKsElements[elemIndex].head
 }
 
 // KSequenceLength yields KSequence length
-func (ms *ModelState) KSequenceLength(ref KReference) int {
-	isNonEmptyKseq, _, length := nonEmptyKseqRefParse(ref)
-	if !isNonEmptyKseq {
+func (ms *ModelState) KSequenceLength(ref KReference) uint64 {
+	refType, _, length := parseKrefKseq(ref)
+	if refType != nonEmptyKseqRef {
 		panic("bad argument to KSequenceLength: ref is not a reference to a K sequence")
 	}
 	return length
@@ -75,26 +65,26 @@ func (ms *ModelState) KSequenceLength(ref KReference) int {
 
 // KSequenceToSlice converts KSequence to a slice of K items
 func (ms *ModelState) KSequenceToSlice(ref KReference) []KReference {
-	if ref.refType == emptyKseqRef {
+	refType, elemIndex, length := parseKrefKseq(ref)
+	if refType == emptyKseqRef {
 		return nil
 	}
-	isNonEmptyKseq, elemIndex, length := nonEmptyKseqRefParse(ref)
-	if !isNonEmptyKseq {
+	if refType != nonEmptyKseqRef {
 		panic("bad argument to KSequenceToSlice: ref is not a reference to a K sequence")
 	}
 
 	var result []KReference
-	for isNonEmptyKseq {
+	for refType == nonEmptyKseqRef {
 		elem := ms.allKsElements[elemIndex]
 		result = append(result, elem.head)
 		ref = elem.tail
-		isNonEmptyKseq, elemIndex, _ = nonEmptyKseqRefParse(ref)
+		refType, elemIndex, _ = parseKrefKseq(ref)
 	}
 
 	// last element is not a K sequence
 	result = append(result, ref)
 
-	if len(result) != length {
+	if uint64(len(result)) != length {
 		panic("K sequence reference length does not match actual length of K sequence")
 	}
 
@@ -104,8 +94,8 @@ func (ms *ModelState) KSequenceToSlice(ref KReference) []KReference {
 // KSequenceSub yields subsequence starting at position
 func (ms *ModelState) KSequenceSub(ref KReference, startPosition int) KReference {
 	for i := 0; i < startPosition; i++ {
-		isNonEmptyKseq, elemIndex, _ := nonEmptyKseqRefParse(ref)
-		if !isNonEmptyKseq {
+		refType, elemIndex, _ := parseKrefKseq(ref)
+		if refType != nonEmptyKseqRef {
 			if i == startPosition-1 {
 				return EmptyKSequence
 			}
@@ -122,12 +112,13 @@ func (ms *ModelState) KSequenceSub(ref KReference, startPosition int) KReference
 // KSequenceSplitHeadTail  extracts first element of a KSequence, extracts the rest, if possible
 // will treat non-KSequence as if they were KSequences of length 1
 func (ms *ModelState) KSequenceSplitHeadTail(ref KReference) (ok bool, head KReference, tail KReference) {
-	if ref.refType == emptyKseqRef {
+	refType, elemIndex, _ := parseKrefKseq(ref)
+	if refType == emptyKseqRef {
 		return false, NoResult, EmptyKSequence
 	}
 
-	if ref.refType == nonEmptyKseqRef {
-		elem := ms.allKsElements[ref.value1]
+	if refType == nonEmptyKseqRef {
+		elem := ms.allKsElements[elemIndex]
 		return true, elem.head, elem.tail
 	}
 
@@ -140,31 +131,34 @@ func (ms *ModelState) KSequenceSplitHeadTail(ref KReference) (ok bool, head KRef
 // Never returns KSequence of 1 element, it returns the element directly instead
 func (ms *ModelState) AssembleKSequence(refs ...KReference) KReference {
 	head := EmptyKSequence
-	resultLength := 0
+	var resultLength uint64
 
 	for i := len(refs) - 1; i >= 0; i-- {
 		ref := refs[i]
-		if ref.refType == emptyKseqRef {
+		refType, _, refLength := parseKrefKseq(ref)
+		headType, _, _ := parseKrefKseq(head)
+		if refType == emptyKseqRef {
 			// nothing, ignore
 		} else {
-			if head.refType == emptyKseqRef {
+			if headType == emptyKseqRef {
 				// first to be added
 				head = ref
-				if ref.refType == nonEmptyKseqRef {
-					// result extends another K sequence
-					resultLength = int(head.value2)
+				if refType == nonEmptyKseqRef {
+					// last ref is a K sequence that we
+					resultLength = refLength
 				} else {
 					resultLength = 1
 				}
 			} else {
 				// append to the simple linked list
 				// like the cons in cons lists
-				if ref.refType == nonEmptyKseqRef {
+				if refType == nonEmptyKseqRef {
 					// flatten K sequence given as argument
 					// concatenate entire sub-sequence to beginning of result sequence
 					slice := ms.KSequenceToSlice(ref)
 					slice = append(slice, head)
 					head = ms.AssembleKSequence(slice...)
+					_, _, resultLength = parseKrefKseq(head)
 				} else {
 					// add 1 element to beginning of list
 					newHead := ksequenceElem{
@@ -172,9 +166,9 @@ func (ms *ModelState) AssembleKSequence(refs ...KReference) KReference {
 						tail: head,
 					}
 					resultLength++
-					newIndex := len(ms.allKsElements)
+					newIndex := uint64(len(ms.allKsElements))
 					ms.allKsElements = append(ms.allKsElements, newHead)
-					head = createNonEmptyKseqRef(newIndex, resultLength)
+					head = createKrefNonEmptyKseq(newIndex, resultLength)
 				}
 			}
 		}

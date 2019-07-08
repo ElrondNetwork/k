@@ -124,12 +124,12 @@ func (stringHooksType) length(kstr m.KReference, lbl m.KLabel, sort m.Sort, conf
 	if !ok {
 		return invalidArgsResult()
 	}
-	return interpreter.Model.FromInt(length), nil
+	return interpreter.Model.FromUint64(length), nil
 }
 
 func (stringHooksType) substr(kstr, kfrom, kto m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	from, ok2 := interpreter.Model.GetPositiveInt(kfrom) // from is inclusive
-	to, ok3 := interpreter.Model.GetPositiveInt(kto)     // to is exclusive
+	from, ok2 := interpreter.Model.GetUint64(kfrom) // from is inclusive
+	to, ok3 := interpreter.Model.GetUint64(kto)     // to is exclusive
 	if !ok2 || !ok3 {
 		return invalidArgsResult()
 	}

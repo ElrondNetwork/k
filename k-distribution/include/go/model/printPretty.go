@@ -24,7 +24,17 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 		return
 	}
 
-	switch ref.refType {
+	refType, constant, value := parseKrefBasic(ref)
+
+	// collection types
+	if isCollectionType(refType) {
+		_, _, _, index := parseKrefCollection(ref)
+		obj := ms.getReferencedObject(index, false)
+		obj.prettyPrint(ms, sb, indent)
+		return
+	}
+
+	switch refType {
 	case boolRef:
 		sb.WriteString(fmt.Sprintf("Bool (%t)", IsTrue(ref)))
 	case bottomRef:
@@ -76,7 +86,7 @@ func (ms *ModelState) prettyPrintToStringBuilder(sb *strings.Builder, ref KRefer
 		sb.WriteString(fmt.Sprintf("%s: %s", ktoken.Sort.Name(), ktoken.Value))
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		obj.prettyPrint(ms, sb, indent)
 	}
 }

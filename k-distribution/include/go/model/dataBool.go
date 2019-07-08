@@ -3,17 +3,18 @@
 package %PACKAGE_MODEL%
 
 // BoolTrue represents a boolean value with value true
-var BoolTrue = KReference{refType: boolRef, value1: 1, value2: 0}
+var BoolTrue = createKrefBasic(boolRef, true, 1)
 
 // BoolFalse represents a boolean value with value false
-var BoolFalse = KReference{refType: boolRef, value1: 0, value2: 0}
+var BoolFalse = createKrefBasic(boolRef, true, 0)
 
 // CastToBool converts K Bool to Go bool, if possible.
 func CastToBool(ref KReference) (bool, bool) {
-	if ref.refType != boolRef {
+	refType, _, value := parseKrefBasic(ref)
+	if refType != boolRef {
 		return false, false
 	}
-	return ref.value1 == 1, true
+	return value == 1, true
 }
 
 // ToKBool converts Go bool to K Bool.
@@ -26,13 +27,15 @@ func ToKBool(b bool) KReference {
 
 // IsBool checks if the argument is a bool reference
 func IsBool(ref KReference) bool {
-	return ref.refType == boolRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == boolRef
 }
 
 // IsTrue checks if argument is identical to the K Bool with the value true
 func IsTrue(ref KReference) bool {
-	if ref.refType != boolRef {
+	refType, _, value := parseKrefBasic(ref)
+	if refType != boolRef {
 		return false
 	}
-	return ref.value1 == 1
+	return value == 1
 }

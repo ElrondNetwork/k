@@ -22,7 +22,17 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		return
 	}
 
-	switch ref.refType {
+	refType, constant, value := parseKrefBasic(ref)
+
+	// collection types
+	if isCollectionType(refType) {
+		_, _, _, index := parseKrefCollection(ref)
+		obj := ms.getReferencedObject(index, false)
+		obj.kprint(ms, sb)
+		return
+	}
+
+	switch refType {
 	case boolRef:
 		kprintKToken(sb, SortBool, fmt.Sprintf("%t", IsTrue(ref)), false)
 	case bottomRef:
@@ -56,7 +66,7 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		kprintKToken(sb, ktoken.Sort, ktoken.Value, false)
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		obj.kprint(ms, sb)
 	}
 }

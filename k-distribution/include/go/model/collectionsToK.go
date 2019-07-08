@@ -4,29 +4,24 @@ package %PACKAGE_MODEL%
 
 // CollectionsToK converts all collections to standard K items, like KApply, KToken, etc.
 func (ms *ModelState) CollectionsToK(ref KReference) KReference {
-	if ref.refType == nonEmptyKseqRef {
+	refType := getRefType(ref)
+	if refType == nonEmptyKseqRef {
 		ks := ms.KSequenceToSlice(ref)
 		newKs := make([]KReference, len(ks))
 		for i, child := range ks {
-			obj := ms.getReferencedObject(child)
-			newKs[i] = obj.collectionsToK(ms)
+			newKs[i] = ms.CollectionsToK(child)
 		}
 		return ms.NewKSequence(newKs)
-	} else if ref.refType == kapplyRef {
+	} else if refType == kapplyRef {
 		argSlice := ms.kapplyArgSlice(ref)
 		newArgs := make([]KReference, len(argSlice))
 		for i, child := range argSlice {
 			newArgs[i] = ms.CollectionsToK(child)
 		}
 		return ms.NewKApply(ms.KApplyLabel(ref), newArgs...)
-	} else if ref.refType == mapRef ||
-		ref.refType == listRef ||
-		ref.refType == setRef ||
-		ref.refType == arrayRef ||
-		ref.refType == kapplyRef {
-
-		// object types
-		obj := ms.getReferencedObject(ref)
+	} else if isCollectionType(refType) {
+		_, _, _, index := parseKrefCollection(ref)
+		obj := ms.getReferencedObject(index, false)
 		return obj.collectionsToK(ms)
 	}
 

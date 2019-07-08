@@ -4,7 +4,17 @@ package %PACKAGE_MODEL%
 
 // DeepCopy yields a fresh copy of the K item given as argument.
 func (ms *ModelState) DeepCopy(ref KReference) KReference {
-	switch ref.refType {
+	refType, constant, value := parseKrefBasic(ref)
+
+	// collection types
+	if isCollectionType(refType) {
+		_, _, _, index := parseKrefCollection(ref)
+		obj := ms.getReferencedObject(index, false)
+		copiedObj := obj.deepCopy(ms)
+		return ms.addObject(copiedObj)
+	}
+
+	switch refType {
 	case boolRef:
 		return ref
 	case bottomRef:
@@ -45,14 +55,14 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 		return ms.NewKToken(ktoken.Sort, ktoken.Value)
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		copiedObj := obj.deepCopy(ms)
 		if copiedObj == obj {
 			// if no new instance was created,
 			// it means that the object does not need to be deep copied
 			return ref
 		}
-		return ms.addObject(obj)
+		return ms.addObject(copiedObj)
 	}
 }
 

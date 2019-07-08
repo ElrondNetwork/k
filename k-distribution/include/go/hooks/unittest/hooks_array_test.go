@@ -1,6 +1,6 @@
-package %PACKAGE_INTERPRETER%
-
 %COMMENT%
+
+package %PACKAGE_INTERPRETER%
 
 import (
 	m "%INCLUDE_MODEL%"

@@ -5,11 +5,12 @@ package %PACKAGE_MODEL%
 // IncreaseUsage increments all reference counters in tree below given root.
 // It goes recursively through the whole sub-tree.
 func (ms *ModelState) IncreaseUsage(ref KReference) {
-	if ref.constantObject {
+	refType, constant, value := parseKrefBasic(ref)
+	if constant {
 		return
 	}
 
-	switch ref.refType {
+	switch refType {
 	case boolRef:
 	case bottomRef:
 	case emptyKseqRef:
@@ -38,7 +39,7 @@ func (ms *ModelState) IncreaseUsage(ref KReference) {
 		}
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		obj.increaseUsage(ms)
 	}
 }

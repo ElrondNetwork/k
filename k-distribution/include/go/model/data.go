@@ -61,12 +61,11 @@ type ModelState struct {
 // constantsModel is another instance of the model, but which only contains a few constants.
 var constantsModel = NewModel()
 
-func (ms *ModelState) getReferencedObject(ref KReference) KObject {
-	index := int(ref.value1)
-	if ref.constantObject {
+func (ms *ModelState) getReferencedObject(index uint64, constant bool) KObject {
+	if constant {
 		return constantsModel.allObjects[index]
 	}
-	if index >= len(ms.allObjects) {
+	if index >= uint64(len(ms.allObjects)) {
 		panic("trying to reference object beyond allocated objects")
 	}
 	return ms.allObjects[index]
@@ -75,13 +74,13 @@ func (ms *ModelState) getReferencedObject(ref KReference) KObject {
 func (ms *ModelState) addObject(obj KObject) KReference {
 	newIndex := len(ms.allObjects)
 	ms.allObjects = append(ms.allObjects, obj)
-	return KReference{refType: obj.referenceType(), constantObject: false, value1: uint32(newIndex), value2: 0}
+	return createKrefBasic(obj.referenceType(), false, uint64(newIndex))
 }
 
 func addConstantObject(obj KObject) KReference {
 	newIndex := len(constantsModel.allObjects)
 	constantsModel.allObjects = append(constantsModel.allObjects, obj)
-	return KReference{refType: obj.referenceType(), constantObject: true, value1: uint32(newIndex), value2: 0}
+	return createKrefBasic(obj.referenceType(), false, uint64(newIndex))
 }
 
 // NewModel creates a new blank model.
@@ -89,7 +88,7 @@ func NewModel() *ModelState {
 	ms := &ModelState{}
 	ms.allKsElements = make([]ksequenceElem, 0, 100000)
 	ms.allKApplyArgs = make([]KReference, 0, 1000000)
-	ms.allBytes = make([]byte, 0, 1 << 20)
+	ms.allBytes = make([]byte, 0, 1<<20)
 	ms.allObjects = make([]KObject, 0, 10000)
 	ms.memoTables = nil
 	return ms

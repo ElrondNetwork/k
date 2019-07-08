@@ -5,11 +5,12 @@ package %PACKAGE_MODEL%
 // RecycleUnused sends to the recycle bin all objects left without references.
 // This goes recursively through the whole sub-tree.
 func (ms *ModelState) RecycleUnused(ref KReference) {
-	if ref.constantObject {
+	refType, constant, value := parseKrefBasic(ref)
+	if constant {
 		return
 	}
 
-	switch ref.refType {
+	switch refType {
 	case boolRef:
 	case bottomRef:
 	case emptyKseqRef:
@@ -37,7 +38,7 @@ func (ms *ModelState) RecycleUnused(ref KReference) {
 		}
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		obj.recycleUnused(ms)
 	}
 }

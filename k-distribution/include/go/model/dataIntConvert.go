@@ -31,7 +31,7 @@ func (ms *ModelState) ParseInt(str string) (KReference, error) {
 		if err != nil {
 			return NullReference, &parseIntError{parseVal: str}
 		}
-		return smallIntReference(int32(i)), nil
+		return createKrefSmallInt(int32(i)), nil
 	}
 
 	b := big.NewInt(0)
@@ -87,7 +87,7 @@ func (ms *ModelState) GetBigIntUnsafe(ref KReference) (*big.Int, bool) {
 // Does not provide any big.Int object from the model, only copies,
 // so it is safe to use anywhere.
 func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		return big.NewInt(int64(small)), true
 	}
@@ -101,7 +101,7 @@ func (ms *ModelState) GetBigInt(ref KReference) (*big.Int, bool) {
 
 // IsZero returns true if an item represents number 0
 func (ms *ModelState) IsZero(ref KReference) bool {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		return small == 0
 	}
@@ -116,7 +116,7 @@ func (ms *ModelState) IsZero(ref KReference) bool {
 
 // GetUint converts to uint if possible, returns (0, false) if not
 func (ms *ModelState) GetUint(ref KReference) (uint, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small < 0 {
 			return 0, false
@@ -141,7 +141,7 @@ func (ms *ModelState) GetUint(ref KReference) (uint, bool) {
 
 // GetUint64 converts to uint64 if possible, returns (0, false) if not
 func (ms *ModelState) GetUint64(ref KReference) (uint64, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small < 0 {
 			return 0, false
@@ -162,7 +162,7 @@ func (ms *ModelState) GetUint64(ref KReference) (uint64, bool) {
 
 // GetInt converts to int if possible, returns (0, false) if not
 func (ms *ModelState) GetInt(ref KReference) (int, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		return int(small), true
 	}
@@ -184,7 +184,7 @@ func (ms *ModelState) GetInt(ref KReference) (int, bool) {
 // GetPositiveInt converts to int32 if possible, returns (0, false) if not.
 // Also rejects negative numbers, so we don't have to test for that again.
 func (ms *ModelState) GetPositiveInt(ref KReference) (int, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small < 0 {
 			return 0, false
@@ -209,7 +209,7 @@ func (ms *ModelState) GetPositiveInt(ref KReference) (int, bool) {
 
 // GetByte converts to 1 byte if possible, returns (0, false) if not
 func (ms *ModelState) GetByte(ref KReference) (byte, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small < 0 || small > 255 {
 			return 0, false
@@ -234,7 +234,7 @@ func (ms *ModelState) GetByte(ref KReference) (byte, bool) {
 
 // GetIntAsDecimalString converts a K integer to a decimal string representation, decimal, if possible.
 func (ms *ModelState) GetIntAsDecimalString(ref KReference) (string, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		return fmt.Sprintf("%d", small), true
 	}
@@ -249,7 +249,7 @@ func (ms *ModelState) GetIntAsDecimalString(ref KReference) (string, bool) {
 
 // GetIntToString converts a K integer to a string representation in given base, if possible.
 func (ms *ModelState) GetIntToString(ref KReference, base int) (string, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		return strconv.FormatInt(int64(small), base), true
 	}

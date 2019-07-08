@@ -85,6 +85,13 @@ func TestAssembleKSequenceNest3(t *testing.T) {
 	assertKSequenceOfInts(t, kseq3, interpreter, 3, 4)
 }
 
+func TestAssembleKSequenceNest4(t *testing.T) {
+	interpreter := newTestInterpreter()
+	kseq1 := interpreter.Model.AssembleKSequence(interpreter.Model.FromInt(2), interpreter.Model.FromInt(3))
+	kseq2 := interpreter.Model.AssembleKSequence(interpreter.Model.FromInt(1), kseq1, interpreter.Model.FromInt(4))
+	assertKSequenceOfInts(t, kseq2, interpreter, 1, 2, 3, 4)
+}
+
 func assertKSequenceEmpty(t *testing.T, actual m.KReference, interpreter *Interpreter) {
 	expected := m.EmptyKSequence
 	if !interpreter.Model.Equals(actual, expected) {
@@ -168,5 +175,17 @@ func assertKSequenceOfInts(t *testing.T, actual m.KReference, interpreter *Inter
 		t.Errorf("Unexpected result. Got:%s Want:%s",
 			interpreter.Model.PrettyPrint(actual),
 			interpreter.Model.PrettyPrint(expected))
+	}
+	if len(ints) >= 2 {
+		// some additional checks related to slicing and length
+		actualSlice := interpreter.Model.KSequenceToSlice(actual)
+		if len(actualSlice) != len(ints) {
+			t.Error("Bad K sequence length when converted to slice")
+		}
+		for i, expectedElem := range ints {
+			if !interpreter.Model.Equals(actualSlice[i], interpreter.Model.FromInt(expectedElem)) {
+				t.Error("Bad K sequence length when converted to slice")
+			}
+		}
 	}
 }

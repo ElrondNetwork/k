@@ -4,11 +4,12 @@ package %PACKAGE_MODEL%
 
 // Preserve prevents argument and any objects contained by it from being recycled ever again.
 func (ms *ModelState) Preserve(ref KReference) {
-	if ref.constantObject {
+	refType, constant, value := parseKrefBasic(ref)
+	if constant {
 		return
 	}
 
-	switch ref.refType {
+	switch refType {
 	case boolRef:
 	case bottomRef:
 	case emptyKseqRef:
@@ -31,7 +32,7 @@ func (ms *ModelState) Preserve(ref KReference) {
 		}
 	default:
 		// object types
-		obj := ms.getReferencedObject(ref)
+		obj := ms.getReferencedObject(value, constant)
 		obj.preserve(ms)
 	}
 }

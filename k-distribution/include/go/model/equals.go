@@ -19,12 +19,24 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		return intEquals
 	}
 
+	refType1, constant1, value1 := parseKrefBasic(ref1)
+	refType2, constant2, value2 := parseKrefBasic(ref2)
+
 	// for non-int types, refTypes should be equal
-	if ref1.refType != ref2.refType {
+	if refType1 != refType2 {
 		return false
 	}
 
-	switch ref1.refType {
+	// collection types
+	if isCollectionType(refType1) {
+		_, _, _, index1 := parseKrefCollection(ref1)
+		_, _, _, index2 := parseKrefCollection(ref2)
+		obj1 := ms.getReferencedObject(index1, false)
+		obj2 := ms.getReferencedObject(index2, false)
+		return obj1.equals(ms, obj2)
+	}
+
+	switch refType1 {
 	case boolRef:
 		return false // if they were equal, ref1 == ref2 condition would already have returned true
 	case bottomRef:
@@ -65,8 +77,8 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		return ktoken1.Value == ktoken2.Value
 	default:
 		// object types
-		obj1 := ms.getReferencedObject(ref1)
-		obj2 := ms.getReferencedObject(ref2)
+		obj1 := ms.getReferencedObject(value1, constant1)
+		obj2 := ms.getReferencedObject(value2, constant2)
 		return obj1.equals(ms, obj2)
 	}
 }

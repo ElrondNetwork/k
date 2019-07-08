@@ -184,6 +184,12 @@ public class GoBackend implements Backend {
             // copy: unit tests
             if (options.unitTests) {
                 for (String fileName : Arrays.asList(
+                        "kref_test.go")) {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/model/" + fileName),
+                            packageManager.modelPackage, fileName);
+                }
+                for (String fileName : Arrays.asList(
                         "hooks_array_test.go",
                         "hooks_bool_test.go",
                         "hooks_buffer_test.go",
@@ -235,9 +241,17 @@ public class GoBackend implements Backend {
                     throw KEMException.criticalError("go build returned nonzero exit code: " + exit + "\nExamine output to see errors.");
                 }
 
-                System.out.println("Running go unit tests.");
+                System.out.println("Running model unit tests.");
                 exit = pb.command("go", "test")
                         .directory(files.resolveKompiled(packageManager.interpreterPackage.getRelativePath()))
+                        .inheritIO().start().waitFor();
+                if (exit != 0) {
+                    throw KEMException.criticalError("go test returned nonzero exit code: " + exit + "\nExamine output to see errors.");
+                }
+
+                System.out.println("Running interpreter unit tests.");
+                exit = pb.command("go", "test")
+                        .directory(files.resolveKompiled(packageManager.modelPackage.getRelativePath()))
                         .inheritIO().start().waitFor();
                 if (exit != 0) {
                     throw KEMException.criticalError("go test returned nonzero exit code: " + exit + "\nExamine output to see errors.");

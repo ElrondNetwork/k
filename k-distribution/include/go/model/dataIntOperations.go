@@ -8,11 +8,11 @@ var bigOne = big.NewInt(1)
 
 // helper function for writing operations in fewer lines
 func (*ModelState) bothSmall(ref1 KReference, ref2 KReference) (int32, int32, bool) {
-	small1, isSmall1 := getSmallInt(ref1)
+	small1, isSmall1 := parseKrefSmallInt(ref1)
 	if !isSmall1 {
 		return 0, 0, false
 	}
-	small2, isSmall2 := getSmallInt(ref2)
+	small2, isSmall2 := parseKrefSmallInt(ref2)
 	if !isSmall2 {
 		return 0, 0, false
 	}
@@ -113,7 +113,7 @@ func (ms *ModelState) IntAdd(ref1 KReference, ref2 KReference) (KReference, bool
 	if smallOk {
 		result := int64(small1) + int64(small2)
 		if fitsInSmallIntReference(result) {
-			return smallIntReference(int32(result)), true
+			return createKrefSmallInt(int32(result)), true
 		}
 	}
 
@@ -140,7 +140,7 @@ func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool
 	if smallOk {
 		result := int64(small1) - int64(small2)
 		if fitsInSmallIntReference(result) {
-			return smallIntReference(int32(result)), true
+			return createKrefSmallInt(int32(result)), true
 		}
 	}
 
@@ -162,7 +162,7 @@ func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool
 func (ms *ModelState) IntMul(ref1 KReference, ref2 KReference) (KReference, bool) {
 	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
 	if smallOk && smallMultiplicationSafe(small1, small2) {
-		return smallIntReference(small1 * small2), true
+		return createKrefSmallInt(small1 * small2), true
 	}
 
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
@@ -383,12 +383,12 @@ func (ms *ModelState) IntNot(ref KReference) (KReference, bool) {
 
 // IntAbs returns the absoute value, if type ok
 func (ms *ModelState) IntAbs(ref KReference) (KReference, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small >= 0 {
 			return ref, true
 		}
-		return smallIntReference(-small), true
+		return createKrefSmallInt(-small), true
 	}
 
 	bigArg, bigOk := ms.GetBigInt(ref)
@@ -408,7 +408,7 @@ func (ms *ModelState) IntAbs(ref KReference) (KReference, bool) {
 // It is equal to a a truncated log2 of the number.
 // Argument must be strictly positive.
 func (ms *ModelState) IntLog2(ref KReference) (KReference, bool) {
-	small, isSmall := getSmallInt(ref)
+	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if small <= 0 {
 			return NullReference, false

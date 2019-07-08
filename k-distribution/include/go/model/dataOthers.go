@@ -2,14 +2,20 @@
 
 package %PACKAGE_MODEL%
 
-import "strings"
+import (
+	"strings"
+)
 
 // InternedBottom is usually used as a dummy object
-var InternedBottom = KReference{refType: bottomRef, value1: 0, value2: 0}
+var InternedBottom = createKrefBasic(bottomRef, true, 0)
+
+// NoResult is the result when a function returns an error
+var NoResult = InternedBottom
 
 // IsBottom returns true if reference points to bottom
 func IsBottom(ref KReference) bool {
-	return ref.refType == bottomRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == bottomRef
 }
 
 // Float is a KObject representing a float in K
@@ -23,11 +29,11 @@ func (*Float) referenceType() kreferenceType {
 
 // GetFloatObject yields the cast object for a KApply reference, if possible.
 func (ms *ModelState) GetFloatObject(ref KReference) (*Float, bool) {
-	if ref.refType != floatRef {
+	refType, _, index := parseKrefBasic(ref)
+	if refType != floatRef {
 		return nil, false
 	}
-	ms.getReferencedObject(ref)
-	obj := ms.getReferencedObject(ref)
+	obj := ms.getReferencedObject(index, false)
 	castObj, typeOk := obj.(*Float)
 	if !typeOk {
 		panic("wrong object type for reference")
@@ -37,7 +43,8 @@ func (ms *ModelState) GetFloatObject(ref KReference) (*Float, bool) {
 
 // IsFloat returns true if reference points to a float
 func IsFloat(ref KReference) bool {
-	return ref.refType == floatRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == floatRef
 }
 
 // MInt is a KObject representing a machine integer in K
@@ -51,7 +58,8 @@ func (*MInt) referenceType() kreferenceType {
 
 // IsMInt returns true if reference points to a string buffer
 func IsMInt(ref KReference) bool {
-	return ref.refType == mintRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == mintRef
 }
 
 // InjectedKLabel is a KObject representing an InjectedKLabel item in K
@@ -79,15 +87,17 @@ func (*StringBuffer) referenceType() kreferenceType {
 
 // IsStringBuffer returns true if reference points to a string buffer
 func IsStringBuffer(ref KReference) bool {
-	return ref.refType == stringBufferRef
+	refType, _, _ := parseKrefBasic(ref)
+	return refType == stringBufferRef
 }
 
 // GetStringBufferObject yields the cast object for a StringBuffer reference, if possible.
 func (ms *ModelState) GetStringBufferObject(ref KReference) (*StringBuffer, bool) {
-	if ref.refType != stringBufferRef {
+	refType, _, index := parseKrefBasic(ref)
+	if refType != stringBufferRef {
 		return nil, false
 	}
-	obj := ms.getReferencedObject(ref)
+	obj := ms.getReferencedObject(index, false)
 	castObj, typeOk := obj.(*StringBuffer)
 	if !typeOk {
 		panic("wrong object type for reference")
