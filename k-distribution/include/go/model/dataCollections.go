@@ -114,7 +114,7 @@ func (ms *ModelState) ListSplitHeadTail(ref KReference, expectedSort Sort, expec
 	if len(castObj.Data) == 0 {
 		return false, NullReference, NullReference
 	}
-	tailRef := ms.addObject(&List{Sort: castObj.Sort, Label: castObj.Label, Data: castObj.Data[1:]})
+	tailRef := ms.NewList(castObj.Sort, castObj.Label, castObj.Data[1:])
 	return true, castObj.Data[0], tailRef
 }
 

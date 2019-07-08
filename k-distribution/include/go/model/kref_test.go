@@ -41,12 +41,51 @@ func testKrefBigInt(t *testing.T, constant bool, recycleCount uint64, index uint
 		t.Error("testKrefBigInt bad refType")
 	}
 	if constantOut != constant {
-		t.Error("testKrefBasic mismatch")
+		t.Error("testKrefBigInt mismatch")
 	}
 	if recycleCountOut != recycleCount {
-		t.Error("testKrefBasic mismatch")
+		t.Error("testKrefBigInt mismatch")
 	}
 	if indexOut != index {
-		t.Error("testKrefBasic mismatch")
+		t.Error("testKrefBigInt mismatch")
+	}
+}
+
+func TestKrefCollection(t *testing.T) {
+	testKrefCollection(t, listRef, Sort(5), KLabel(7), 123)
+	testKrefList(t, Sort(2), KLabel(4))
+}
+
+func testKrefCollection(t *testing.T, refType kreferenceType, sort Sort, label KLabel, index uint64) {
+	ms := NewModel()
+	ms.NewList(sort, label, nil)
+	ref := createKrefCollection(refType, sort, label, index)
+	refTypeOut, sortOut, labelOut, indexOut := parseKrefCollection(ref)
+	if refTypeOut != refType {
+		t.Error("testKrefCollection bad refType")
+	}
+	if sortOut != sort {
+		t.Error("testKrefCollection mismatch")
+	}
+	if labelOut != label {
+		t.Error("testKrefCollection mismatch")
+	}
+	if indexOut != index {
+		t.Error("testKrefCollection mismatch")
+	}
+}
+
+func testKrefList(t *testing.T, sort Sort, label KLabel) {
+	ms := NewModel()
+	ref := ms.NewList(sort, label, nil)
+	refTypeOut, sortOut, labelOut, _ := parseKrefCollection(ref)
+	if refTypeOut != listRef {
+		t.Error("testKrefList bad refType")
+	}
+	if sortOut != sort {
+		t.Error("testKrefList mismatch")
+	}
+	if labelOut != label {
+		t.Error("testKrefList mismatch")
 	}
 }
