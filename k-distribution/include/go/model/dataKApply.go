@@ -15,7 +15,7 @@ func KApplyMatch(ref KReference, expectedLabel KLabel, expectedArity uint32) boo
 	if !isKApply {
 		return false
 	}
-	if label != expectedLabel {
+	if label != uint64(expectedLabel) {
 		return false
 	}
 	if arity != uint64(expectedArity) {
@@ -30,7 +30,7 @@ func (ms *ModelState) KApplyLabel(ref KReference) KLabel {
 	if !isKApply {
 		panic("KApplyLabel called for reference to item other than KApply")
 	}
-	return label
+	return KLabel(label)
 }
 
 // KApplyArity returns the arity of a KApply item (nr. of arguments)
@@ -72,7 +72,7 @@ func (ms *ModelState) GetKApplyObject(ref KReference) (*KApply, bool) {
 		return nil, false
 	}
 	return &KApply{
-		Label: label,
+		Label: KLabel(label),
 		List:  ms.kapplyArgSlice(ref),
 	}, true
 }
@@ -85,7 +85,7 @@ func (ms *ModelState) NewKApply(label KLabel, arguments ...KReference) KReferenc
 		ms.allKApplyArgs = append(ms.allKApplyArgs, arguments...)
 	}
 
-	return createKrefKApply(label, uint64(len(arguments)), uint64(argStartIndex))
+	return createKrefKApply(uint64(label), uint64(len(arguments)), uint64(argStartIndex))
 }
 
 // NewKApplyConstant creates a new integer constant, which is saved statically.

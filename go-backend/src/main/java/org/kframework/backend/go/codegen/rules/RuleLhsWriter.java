@@ -140,10 +140,13 @@ public class RuleLhsWriter extends VisitK {
             //magic down-ness
             String ktVar = "kt" + kitemIndex;
             kitemIndex++;
-            lhsTypeIf(ktVar, consumeSubject(), "GetKTokenObject");
-            sb.append(" && ").append(ktVar).append(".Sort == m.").append(nameProvider.sortVariableName(sort));
+            handleExpressionType(ExpressionType.IF);
+            sb.writeIndent();
+            String subject = consumeSubject();
+            sb.append("if m.MatchKToken(").append(subject).append(", ");
+            sb.append("uint64(m.").append(nameProvider.sortVariableName(sort)).append("))");
             sb.beginBlock("lhs KApply #KToken");
-            nextSubject = ktVar + ".Value";
+            nextSubject = "i.Model.KTokenValue(" + ktVar + ")";
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             handleExpressionType(ExpressionType.IF);
@@ -226,8 +229,8 @@ public class RuleLhsWriter extends VisitK {
 
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
-            sb.append("if m.KApplyMatch(").append(subject).append(", ");
-            sb.append("m.").append(nameProvider.klabelVariableName(k.klabel())).append(", ");
+            sb.append("if m.MatchKApply(").append(subject).append(", ");
+            sb.append("uint64(m.").append(nameProvider.klabelVariableName(k.klabel())).append("), ");
             sb.append(arity).append(")");
             sb.beginBlock(ToKast.apply(k), aliasComment);
             if (arity > 0) {
@@ -403,9 +406,15 @@ public class RuleLhsWriter extends VisitK {
         default:
             int nrHeads = k.items().size() - 1;
             String subject = consumeSubject();
-            sb.writeIndent().append("if i.Model.IsNonEmptyKSequenceMinimumLength(");
-            sb.append(subject).append(", ").append(nrHeads).append(")");
-            sb.beginBlock(ToKast.apply(k));
+            if (nrHeads == 1) {
+                sb.writeIndent().append("if m.MatchNonEmptyKSequence(");
+                sb.append(subject).append(")");
+                sb.beginBlock(ToKast.apply(k));
+            } else {
+                sb.writeIndent().append("if m.MatchNonEmptyKSequenceMinLength(");
+                sb.append(subject).append(", ").append(nrHeads).append(")");
+                sb.beginBlock(ToKast.apply(k));
+            }
 
             String kseqVarBase = "kseq" + kitemIndex;
             kitemIndex++;

@@ -2,7 +2,9 @@
 
 package %PACKAGE%
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestKrefBasic(t *testing.T) {
 	testKrefBasic(t, bottomRef, true, 0)
@@ -52,22 +54,20 @@ func testKrefBigInt(t *testing.T, constant bool, recycleCount uint64, index uint
 }
 
 func TestKrefCollection(t *testing.T) {
-	testKrefCollection(t, listRef, Sort(5), KLabel(7), 123)
-	testKrefList(t, Sort(2), KLabel(4))
+	testKrefCollection(t, listRef, 5, 7, 123)
+	testKrefList(t, 2, 4)
 }
 
-func testKrefCollection(t *testing.T, refType kreferenceType, sort Sort, label KLabel, index uint64) {
-	ms := NewModel()
-	ms.NewList(sort, label, nil)
-	ref := createKrefCollection(refType, sort, label, index)
+func testKrefCollection(t *testing.T, refType kreferenceType, sortInt uint64, labelInt uint64, index uint64) {
+	ref := createKrefCollection(refType, sortInt, labelInt, index)
 	refTypeOut, sortOut, labelOut, indexOut := parseKrefCollection(ref)
 	if refTypeOut != refType {
 		t.Error("testKrefCollection bad refType")
 	}
-	if sortOut != sort {
+	if sortOut != sortInt {
 		t.Error("testKrefCollection mismatch")
 	}
-	if labelOut != label {
+	if labelOut != labelInt {
 		t.Error("testKrefCollection mismatch")
 	}
 	if indexOut != index {
@@ -75,17 +75,17 @@ func testKrefCollection(t *testing.T, refType kreferenceType, sort Sort, label K
 	}
 }
 
-func testKrefList(t *testing.T, sort Sort, label KLabel) {
+func testKrefList(t *testing.T, sortInt uint64, labelInt uint64) {
 	ms := NewModel()
-	ref := ms.NewList(sort, label, nil)
+	ref := ms.NewList(Sort(sortInt), KLabel(labelInt), nil)
 	refTypeOut, sortOut, labelOut, _ := parseKrefCollection(ref)
 	if refTypeOut != listRef {
 		t.Error("testKrefList bad refType")
 	}
-	if sortOut != sort {
+	if sortOut != sortInt {
 		t.Error("testKrefList mismatch")
 	}
-	if labelOut != label {
+	if labelOut != labelInt {
 		t.Error("testKrefList mismatch")
 	}
 }

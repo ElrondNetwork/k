@@ -48,25 +48,25 @@ func (*Array) referenceType() kreferenceType {
 // IsMap returns true if reference points to a map with given sort
 func (ms *ModelState) IsMap(ref KReference, expectedSort Sort) bool {
 	refType, sort, _, _ := parseKrefCollection(ref)
-	return refType == mapRef && sort == expectedSort
+	return refType == mapRef && sort == uint64(expectedSort)
 }
 
 // IsSet returns true if reference points to a set with given sort
 func (ms *ModelState) IsSet(ref KReference, expectedSort Sort) bool {
 	refType, sort, _, _ := parseKrefCollection(ref)
-	return refType == setRef && sort == expectedSort
+	return refType == setRef && sort == uint64(expectedSort)
 }
 
 // IsList returns true if reference points to a list with given sort
 func (ms *ModelState) IsList(ref KReference, expectedSort Sort) bool {
 	refType, sort, _, _ := parseKrefCollection(ref)
-	return refType == listRef && sort == expectedSort
+	return refType == listRef && sort == uint64(expectedSort)
 }
 
 // IsArray returns true if reference points to an array with given sort
 func (ms *ModelState) IsArray(ref KReference, expectedSort Sort) bool {
 	refType, sort, _, _ := parseKrefCollection(ref)
-	return refType == arrayRef && sort == expectedSort
+	return refType == arrayRef && sort == uint64(expectedSort)
 }
 
 // GetListObject yields the cast object for a List reference, if possible.
@@ -163,7 +163,7 @@ func (ms *ModelState) GetArrayObject(ref KReference) (*Array, bool) {
 func (ms *ModelState) addCollectionObject(sort Sort, label KLabel, obj KObject) KReference {
 	newIndex := len(ms.allObjects)
 	ms.allObjects = append(ms.allObjects, obj)
-	return createKrefCollection(obj.referenceType(), sort, label, uint64(newIndex))
+	return createKrefCollection(obj.referenceType(), uint64(sort), uint64(label), uint64(newIndex))
 }
 
 // NewList creates a new object and returns the reference.

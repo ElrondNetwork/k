@@ -23,20 +23,36 @@ func (ms *ModelState) GetKTokenObject(ref KReference) (*KToken, bool) {
 		value = string(ms.allBytes[index : index+length])
 	}
 	return &KToken{
-		Sort:  sort,
+		Sort:  Sort(sort),
 		Value: value,
 	}, true
+}
+
+// KTokenValue yields the value of a KToken object.
+func (ms *ModelState) KTokenValue(ref KReference) string {
+	isKToken, constant, _, length, index := parseKrefKToken(ref)
+	if !isKToken {
+		panic("KTokenValue called for reference to item other than KToken")
+	}
+	if constant {
+		ref = unsetConstantFlag(ref)
+		return constantsModel.KTokenValue(ref)
+	}
+	if length == 0 {
+		return ""
+	}
+	return string(ms.allBytes[index : index+length])
 }
 
 // NewKToken creates a new object and returns the reference.
 func (ms *ModelState) NewKToken(sort Sort, value string) KReference {
 	length := uint64(len(value))
 	if length == 0 {
-		return createKrefKToken(false, sort, length, 0)
+		return createKrefKToken(false, uint64(sort), length, 0)
 	}
 	startIndex := uint64(len(ms.allBytes))
 	ms.allBytes = append(ms.allBytes, []byte(value)...)
-	return createKrefKToken(false, sort, length, startIndex)
+	return createKrefKToken(false, uint64(sort), length, startIndex)
 }
 
 // NewKTokenConstant creates a new KToken constant, which is saved statically.
