@@ -407,27 +407,31 @@ public class RuleLhsWriter extends VisitK {
             return;
         default:
             int nrHeads = k.items().size() - 1;
-            String subject = consumeSubject();
-            if (nrHeads == 1) {
-                sb.writeIndent().append("if m.MatchNonEmptyKSequence(");
-                sb.append(subject).append(")");
-                sb.beginBlock(ToKast.apply(k));
-            } else {
-                sb.writeIndent().append("if m.MatchNonEmptyKSequenceMinLength(");
-                sb.append(subject).append(", ").append(nrHeads).append(")");
-                sb.beginBlock(ToKast.apply(k));
-            }
-
-            String kseqVarBase = "kseq" + kitemIndex;
+            String kseqVarName = "kseq" + kitemIndex;
             kitemIndex++;
-            String kseqTail = "";
+
+            // the subject might be an expression, call it only once, in the if
+            handleExpressionType(ExpressionType.IF);
+            sb.writeIndent().append("if ");
+            sb.append(kseqVarName).append(" := ").append(consumeSubject()).append("; ");
+            String subject = kseqVarName;
+
+            // match condition
+            if (nrHeads == 1) {
+                matchWriter.appendNonEmptyKSequenceMatch(sb, subject);
+            } else {
+                matchWriter.appendNonEmptyKSequenceMinLengthMatch(sb, subject, nrHeads);
+            }
+            sb.beginBlock(ToKast.apply(k));
+
 
             // declare head(s)/tails
+            String kseqTail = "";
             for (int i = 0; i < nrHeads; i++) {
                 // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
                 // if multiple heads required, split repeatedly
-                String kseqHead = kseqVarBase + "Head" + i;
-                kseqTail = kseqVarBase + "Tail" + i;
+                String kseqHead = kseqVarName + "Head" + i;
+                kseqTail = kseqVarName + "Tail" + i;
                 sb.writeIndent().append("_, ");
                 sb.append(kseqHead).append(", ");
                 sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(subject).append(") // ");
@@ -440,7 +444,7 @@ public class RuleLhsWriter extends VisitK {
 
             // process heads
             for (int i = 0; i < nrHeads; i++) {
-                String kseqHead = kseqVarBase + "Head" + i;
+                String kseqHead = kseqVarName + "Head" + i;
                 nextSubject = kseqHead;
                 apply(k.items().get(i));
             }

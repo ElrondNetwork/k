@@ -17,4 +17,16 @@ public class RuleLhsMatchInlineManager implements RuleLhsMatchWriter {
         sb.append(subject).append("&kapplyMatchMask == ").append(signature.matchConstName);
     }
 
+    @Override
+    public void appendNonEmptyKSequenceMatch(GoStringBuilder sb, String subject) {
+        sb.append(subject).append(">>refTypeShift != refEmptyKseqTypeAsUint");
+    }
+
+    @Override
+    public void appendNonEmptyKSequenceMinLengthMatch(GoStringBuilder sb, String subject, int minLength) {
+        sb.append(subject).append(">>refTypeShift == refNonEmptyKseqTypeAsUint && (");
+        sb.append(subject).append(">>refNonEmptyKseqIndexShift&refNonEmptyKseqLengthMask) >= ");
+        sb.append(minLength);
+    }
+
 }

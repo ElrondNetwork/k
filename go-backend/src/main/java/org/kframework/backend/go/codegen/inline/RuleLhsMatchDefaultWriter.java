@@ -10,4 +10,16 @@ public class RuleLhsMatchDefaultWriter implements RuleLhsMatchWriter {
         sb.append("uint64(m.").append(labelName).append("), ");
         sb.append(arity).append(")");
     }
+
+    @Override
+    public void appendNonEmptyKSequenceMatch(GoStringBuilder sb, String subject) {
+        sb.writeIndent().append("m.MatchNonEmptyKSequence(");
+        sb.append(subject).append(")");
+    }
+
+    @Override
+    public void appendNonEmptyKSequenceMinLengthMatch(GoStringBuilder sb, String subject, int minLength) {
+        sb.writeIndent().append("m.MatchNonEmptyKSequenceMinLength(");
+        sb.append(subject).append(", ").append(minLength).append(")");
+    }
 }
