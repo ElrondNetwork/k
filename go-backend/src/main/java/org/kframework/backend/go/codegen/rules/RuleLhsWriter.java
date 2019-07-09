@@ -3,6 +3,7 @@ package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.attributes.Att;
 import org.kframework.backend.go.codegen.GoBuiltin;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleVars;
@@ -32,6 +33,7 @@ public class RuleLhsWriter extends VisitK {
     private final GoStringBuilder sb;
     private final DefinitionData data;
     private final GoNameProvider nameProvider;
+    private final RuleLhsMatchWriter matchWriter;
     private final FunctionParams functionVars;
     private final RuleVars lhsVars;
     private final RuleVars rhsVars;
@@ -76,6 +78,7 @@ public class RuleLhsWriter extends VisitK {
     public RuleLhsWriter(GoStringBuilder sb,
                          DefinitionData data,
                          GoNameProvider nameProvider,
+                         RuleLhsMatchWriter matchWriter,
                          FunctionParams functionVars,
                          RuleVars lhsVars, RuleVars rhsVars,
                          Set<KVariable> alreadySeenVariables,
@@ -83,6 +86,7 @@ public class RuleLhsWriter extends VisitK {
         this.sb = sb;
         this.data = data;
         this.nameProvider = nameProvider;
+        this.matchWriter = matchWriter;
         this.functionVars = functionVars;
         this.lhsVars = lhsVars;
         this.rhsVars = rhsVars;
@@ -228,10 +232,8 @@ public class RuleLhsWriter extends VisitK {
             }
 
             handleExpressionType(ExpressionType.IF);
-            sb.writeIndent();
-            sb.append("if m.MatchKApply(").append(subject).append(", ");
-            sb.append("uint64(m.").append(nameProvider.klabelVariableName(k.klabel())).append("), ");
-            sb.append(arity).append(")");
+            sb.writeIndent().append("if ");
+            matchWriter.appendKApplyMatch(sb, subject, nameProvider.klabelVariableName(k.klabel()), arity);
             sb.beginBlock(ToKast.apply(k), aliasComment);
             if (arity > 0) {
                 sb.appendIndentedLine(kappVar, " := ", subject);

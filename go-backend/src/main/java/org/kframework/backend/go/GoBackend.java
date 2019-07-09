@@ -13,6 +13,10 @@ import org.kframework.backend.go.codegen.KLabelsGen;
 import org.kframework.backend.go.codegen.SortsGen;
 import org.kframework.backend.go.codegen.StepFunctionGen;
 import org.kframework.backend.go.codegen.StuckGen;
+import org.kframework.backend.go.codegen.inline.InlineMatchGen;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchDefaultWriter;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchInlineManager;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.strings.GoNameProvider;
@@ -67,9 +71,15 @@ public class GoBackend implements Backend {
         } else {
             nameProvider = new GoNameProviderProper();
         }
+        RuleLhsMatchWriter matchWriter;
+        if (options.naive) {
+            matchWriter = new RuleLhsMatchDefaultWriter();
+        } else {
+            matchWriter = new RuleLhsMatchInlineManager();
+        }
 
         DefinitionToOcamlTempCopy ocamlDef = new DefinitionToOcamlTempCopy(kem, files, globalOptions, kompileOptions, options);
-        DefinitionToGo def = new DefinitionToGo(kem, files, packageManager, nameProvider, globalOptions, kompileOptions, options);
+        DefinitionToGo def = new DefinitionToGo(kem, files, packageManager, nameProvider, matchWriter, globalOptions, kompileOptions, options);
         ocamlDef.initialize(compiledDefinition);
         def.initialize(compiledDefinition);
 
@@ -93,7 +103,7 @@ public class GoBackend implements Backend {
                     new FreshFunctionGen(data, packageManager, nameProvider).generate());
             packageManager.saveToPackage(packageManager.interpreterPackage, "eval.go",
                     new EvalFunctionGen(data, packageManager, nameProvider).generate());
-            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageManager, nameProvider);
+            StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageManager, nameProvider, matchWriter);
             packageManager.saveToPackage(packageManager.interpreterPackage, "step.go",
                     stepFunctionGen.generateStep());
             packageManager.saveToPackage(packageManager.interpreterPackage, "stepLookups.go",
@@ -103,12 +113,15 @@ public class GoBackend implements Backend {
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
             packageManager.saveToPackage(packageManager.interpreterPackage, "stuck.go",
-                    new StuckGen(data, packageManager, nameProvider).generateStuck());
+                    new StuckGen(data, packageManager, nameProvider, matchWriter).generateStuck());
             packageManager.saveToPackage(packageManager.interpreterPackage, "constants.go",
                     new ConstantsGen(packageManager, data.constants).generate());
             packageManager.saveToPackage(packageManager.interpreterPackage, "interpreterDef.go",
                     new InterpreterDefGen(data, packageManager).generate());
-
+            if (matchWriter instanceof RuleLhsMatchInlineManager) {
+                packageManager.saveToPackage(packageManager.interpreterPackage, "krefInline.go",
+                        new InlineMatchGen(packageManager, (RuleLhsMatchInlineManager)matchWriter).generate());
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -158,6 +171,20 @@ public class GoBackend implements Backend {
                     packageManager.copyFileToPackage(
                             files.resolveKBase("include/go/model/" + fileName),
                             packageManager.modelPackage, fileName);
+                }
+            }
+
+            // kref.go also gets copied into the interpreter
+            for (String fileName : Arrays.asList(
+                    "kref.go")) {
+                if (options.naive) {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/model/naive/" + fileName),
+                            packageManager.interpreterPackage, fileName);
+                } else {
+                    packageManager.copyFileToPackage(
+                            files.resolveKBase("include/go/model/" + fileName),
+                            packageManager.interpreterPackage, fileName);
                 }
             }
 

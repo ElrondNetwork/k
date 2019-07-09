@@ -1,11 +1,11 @@
 // Copyright (c) 2015-2019 K Team. All Rights Reserved.
 package org.kframework.backend.go.codegen;
 
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
-import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.strings.GoNameProvider;
@@ -18,10 +18,10 @@ public class StuckGen {
     private final RuleWriter ruleWriter;
     private static final int stuckRuleNumber = -1; // this only affects comments and traces
 
-    public StuckGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
+    public StuckGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter) {
         this.data = data;
         this.packageManager = packageManager;
-        this.ruleWriter = new RuleWriter(data, nameProvider);
+        this.ruleWriter = new RuleWriter(data, nameProvider, matchWriter);
     }
 
     public String generateStuck() {

@@ -2,11 +2,11 @@
 package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ComparisonChain;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
-import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.RuleCounter;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
@@ -34,10 +34,10 @@ public class StepFunctionGen {
 
     private final RuleCounter ruleCounter = new RuleCounter();
 
-    public StepFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider) {
+    public StepFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter) {
         this.data = data;
         this.packageManager = packageManager;
-        this.ruleWriter = new RuleWriter(data, nameProvider);
+        this.ruleWriter = new RuleWriter(data, nameProvider, matchWriter);
         List<Rule> unsortedRules = stream(data.mainModule.rules()).collect(Collectors.toList());
 //        if (options.reverse) {
 //            Collections.reverse(unsortedRules);

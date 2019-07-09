@@ -12,6 +12,7 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.apache.commons.lang3.NotImplementedException;
 import org.kframework.backend.go.GoOptions;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoExternalHookManager;
 import org.kframework.backend.go.gopackage.GoPackageManager;
@@ -74,6 +75,7 @@ public class DefinitionToGo {
     private transient final FileUtil files;
     private final GoPackageManager packageManager;
     private final GoNameProvider nameProvider;
+    private final RuleLhsMatchWriter matchWriter;
     private transient final GlobalOptions globalOptions;
     private transient final KompileOptions kompileOptions;
     private transient ExpandMacros expandMacros;
@@ -88,6 +90,7 @@ public class DefinitionToGo {
             FileUtil files,
             GoPackageManager packageManager,
             GoNameProvider nameProvider,
+            RuleLhsMatchWriter matchWriter,
             GlobalOptions globalOptions,
             KompileOptions kompileOptions,
             GoOptions options) {
@@ -95,6 +98,7 @@ public class DefinitionToGo {
         this.files = files;
         this.packageManager = packageManager;
         this.nameProvider = nameProvider;
+        this.matchWriter = matchWriter;
         this.globalOptions = globalOptions;
         this.kompileOptions = kompileOptions;
         this.options = options;
@@ -201,7 +205,7 @@ public class DefinitionToGo {
             functionInfoMap.put(label, functionInfo);
         }
 
-        ruleWriter = new RuleWriter(this.definitionData(), nameProvider);
+        ruleWriter = new RuleWriter(this.definitionData(), nameProvider, matchWriter);
     }
 
     SetMultimap<KLabel, Rule> functionRules;

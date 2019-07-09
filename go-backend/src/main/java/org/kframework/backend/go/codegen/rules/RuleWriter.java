@@ -3,6 +3,7 @@ package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.attributes.Location;
 import org.kframework.attributes.Source;
+import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
@@ -38,11 +39,13 @@ public class RuleWriter {
 
     private final DefinitionData data;
     private final GoNameProvider nameProvider;
+    private final RuleLhsMatchWriter matchWriter;
     private final TempVarCounters tempVarCounters = new TempVarCounters();
 
-    public RuleWriter(DefinitionData data, GoNameProvider nameProvider) {
+    public RuleWriter(DefinitionData data, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter) {
         this.data = data;
         this.nameProvider = nameProvider;
+        this.matchWriter = matchWriter;
     }
 
     public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, int ruleNum,
@@ -90,7 +93,9 @@ public class RuleWriter {
             // output main LHS
             sb.writeIndent().append("// LHS").newLine();
             Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
-            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, functionInfo.arguments,
+            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
+                    nameProvider, matchWriter,
+                    functionInfo.arguments,
                     accumLhsVars.vars(),
                     accumRhsVars.vars(),
                     alreadySeenLhsVariables,
@@ -174,7 +179,9 @@ public class RuleWriter {
 
             sb.appendIndentedLine("// lookup:", lookup.comment());
 
-            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
+                    nameProvider, matchWriter,
+                    new FunctionParams(0),
                     lhsVars, rhsVars,
                     alreadySeenLhsVariables,
                     false);
@@ -211,7 +218,9 @@ public class RuleWriter {
                 }
                 break;
             case SETCHOICE:
-                lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+                lhsWriter = new RuleLhsWriter(sb, data,
+                        nameProvider, matchWriter,
+                        new FunctionParams(0),
                         lhsVars, rhsVars,
                         alreadySeenLhsVariables,
                         false);
@@ -222,7 +231,9 @@ public class RuleWriter {
                         lhsWriter, rhsWriter);
                 break;
             case MAPCHOICE:
-                lhsWriter = new RuleLhsWriter(sb, data, nameProvider, new FunctionParams(0),
+                lhsWriter = new RuleLhsWriter(sb, data,
+                        nameProvider, matchWriter,
+                        new FunctionParams(0),
                         lhsVars, rhsVars,
                         alreadySeenLhsVariables,
                         false);

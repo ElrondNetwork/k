@@ -4,7 +4,7 @@ package %PACKAGE%
 
 // The file is duplicated in the interpreter and in the model intentionally,
 // for performance reasons.
-// This version is for: impinterpreter
+// This version is for: %PACKAGE%
 
 // kreferenceType identifies the type of K item referenced by a KReference
 type kreferenceType uint64
@@ -54,7 +54,9 @@ var NullReference = KReference(0)
 // - next 1 bit: is constant = 1, not constant = 0
 // - the remaining 58 LS bits: type-specific data
 
-const refTypeShift = 59 // shift right this many bits to get the refType
+const refTypeBits = 5                      // refType gets represented in this many bits
+const refTypeMask = (1 << refTypeBits) - 1 // 5 bits of 1
+const refTypeShift = 59                    // shift right this many bits to get the refType
 const refBasicDataShift = 58
 const refBasicDataMask = (1 << refBasicDataShift) - 1
 
@@ -172,7 +174,7 @@ func createKrefCollection(refType kreferenceType, sortInt uint64, labelInt uint6
 // The KApply encoding is as follows (from MSB to LSB):
 // - first 5 bits: reference type
 // - next 1 bit: ignored
-// - 13 bits: Sort
+// - 13 bits: label
 // - 13 bits: arity
 // - 32 bits: arguments index
 

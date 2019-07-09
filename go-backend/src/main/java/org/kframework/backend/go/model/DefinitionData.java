@@ -49,6 +49,7 @@ public class DefinitionData {
         this.extHookManager = extHookManager;
         this.makeStuck = makeStuck;
         this.makeUnstuck = makeUnstuck;
+
     }
 
     public boolean isFunctionOrAnywhere(KLabel klabel) {
