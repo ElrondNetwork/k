@@ -22,4 +22,11 @@ public class RuleLhsMatchDefaultWriter implements RuleLhsMatchWriter {
         sb.writeIndent().append("m.MatchNonEmptyKSequenceMinLength(");
         sb.append(subject).append(", ").append(minLength).append(")");
     }
+
+    @Override
+    public void appendKTokenMatch(GoStringBuilder sb, String subject, String sortName) {
+        sb.append("m.MatchKToken(").append(subject).append(", ");
+        sb.append("uint64(m.").append(sortName).append("))");
+
+    }
 }

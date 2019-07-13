@@ -10,4 +10,6 @@ public interface RuleLhsMatchWriter {
 
     void appendNonEmptyKSequenceMinLengthMatch(GoStringBuilder sb, String subject, int minLength);
 
+    void appendKTokenMatch(GoStringBuilder sb, String subject, String sortName);
+
 }

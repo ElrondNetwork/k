@@ -37,6 +37,18 @@ public class InlineMatchGen {
         }
 
         sb.newLine();
+        sb.appendIndentedLine("const ktokenMatchMask uint64 = ((refTypeMask << 1 << refKTokenSortShift) | refKTokenSortMask) << refKTokenLengthShift << refKTokenIndexShift");
+        sb.newLine();
+
+        for (String ktokenSort : inlineManager.ktokenSortNames) {
+            sb.append("const ").append(inlineManager.ktokenMatchConstName((ktokenSort)));
+            sb.append(" = ((uint64(ktokenRef) << 1 << refKTokenSortShift) | uint64(m.");
+            sb.append(ktokenSort);
+            sb.append(")) << refKTokenLengthShift << refKTokenIndexShift");
+            sb.newLine();
+        }
+
+        sb.newLine();
         return sb.toString();
     }
 

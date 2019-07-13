@@ -8,6 +8,7 @@ import java.util.Set;
 public class RuleLhsMatchInlineManager implements RuleLhsMatchWriter {
 
     public final Set<KApplySignatureMatch> kapplySignatures = new HashSet<>();
+    public final Set<String> ktokenSortNames = new HashSet<>();
 
     @Override
     public void appendKApplyMatch(GoStringBuilder sb, String subject, String labelName, int arity) {
@@ -27,6 +28,16 @@ public class RuleLhsMatchInlineManager implements RuleLhsMatchWriter {
         sb.append(subject).append(">>refTypeShift == refNonEmptyKseqTypeAsUint && (");
         sb.append(subject).append(">>refNonEmptyKseqIndexShift&refNonEmptyKseqLengthMask) >= ");
         sb.append(minLength);
+    }
+
+    public String ktokenMatchConstName(String sortName) {
+        return "ktokenMatch" + sortName;
+    }
+
+    @Override
+    public void appendKTokenMatch(GoStringBuilder sb, String subject, String sortName) {
+        ktokenSortNames.add(sortName);
+        sb.append(subject).append("&ktokenMatchMask == ").append(ktokenMatchConstName(sortName));
     }
 
 }

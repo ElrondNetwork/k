@@ -147,8 +147,8 @@ public class RuleLhsWriter extends VisitK {
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
             String subject = consumeSubject();
-            sb.append("if m.MatchKToken(").append(subject).append(", ");
-            sb.append("uint64(m.").append(nameProvider.sortVariableName(sort)).append("))");
+            sb.append("if ");
+            matchWriter.appendKTokenMatch(sb, subject, nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
             nextSubject = "i.Model.KTokenValue(" + ktVar + ")";
             apply(value);
