@@ -69,12 +69,26 @@ func (ms *ModelState) Equals(ref1 KReference, ref2 KReference) bool {
 		bytes2, _ := ms.GetBytes(ref2)
 		return bytes.Equal(bytes1, bytes2)
 	case ktokenRef:
-		ktoken1, _ := ms.GetKTokenObject(ref1)
-		ktoken2, _ := ms.GetKTokenObject(ref2)
-		if ktoken1.Sort != ktoken2.Sort {
+		_, const1, sort1, length1, index1 := parseKrefKToken(ref1)
+		_, const2, sort2, length2, index2 := parseKrefKToken(ref2)
+		if sort1 != sort2 {
 			return false
 		}
-		return ktoken1.Value == ktoken2.Value
+		if length1 != length2 {
+			return false
+		}
+		var val1, val2 []byte
+		if const1 {
+			val1 = constantsModel.allBytes[index1 : index1+length1]
+		} else {
+			val1 = ms.allBytes[index1 : index1+length1]
+		}
+		if const2 {
+			val2 = constantsModel.allBytes[index2 : index2+length2]
+		} else {
+			val2 = ms.allBytes[index2 : index2+length2]
+		}
+		return bytes.Equal(val1, val2)
 	default:
 		// object types
 		obj1 := ms.getReferencedObject(value1, constant1)
