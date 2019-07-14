@@ -25,22 +25,22 @@ func (ms *ModelState) MapKey(ref KReference) (KMapKey, bool) {
 	if str, t := ms.GetString(ref); t {
 		return kmapKeyBasic{typeName: "String", value: str}, true
 	}
-	if iStr, t := ms.GetIntAsDecimalString(ref); t {
+	if iStr, t := ms.GetIntToString(ref, 16); t {
 		return kmapKeyBasic{typeName: "Int", value: iStr}, true
 	}
 	if ktoken, t := ms.GetKTokenObject(ref); t {
-		return *ktoken, true
+		return ktoken, true
 	}
-	if kapp, t := ms.GetKApplyObject(ref); t {
-		switch len(kapp.List) {
+	if isKApply, label, arity, index := parseKrefKApply(ref); isKApply {
+		switch arity {
 		case 0:
-			return kmapKeyKApply0{label: kapp.Label}, true
+			return kmapKeyKApply0{label: KLabel(label)}, true
 		case 1:
-			argAsKey, argOk := ms.MapKey(kapp.List[0])
+			argAsKey, argOk := ms.MapKey(ms.allKApplyArgs[index+0]) // first argument
 			if !argOk {
 				return kmapBottom{}, false
 			}
-			return kmapKeyKApply1{label: kapp.Label, arg1: argAsKey}, true
+			return kmapKeyKApply1{label: KLabel(label), arg1: argAsKey}, true
 		default:
 			return kmapBottom{}, false
 		}
@@ -75,7 +75,7 @@ type kmapBottom struct {
 func (mapKey kmapKeyBasic) toKItem(ms *ModelState) (KReference, error) {
 	switch mapKey.typeName {
 	case "Int":
-		return ms.ParseInt(mapKey.value)
+		return ms.ParseIntFromBase(mapKey.value, 16)
 	case "Bool":
 		b, err := strconv.ParseBool(mapKey.value)
 		if err != nil {

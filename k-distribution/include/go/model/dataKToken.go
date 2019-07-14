@@ -8,11 +8,11 @@ type KToken struct {
 	Sort  Sort
 }
 
-// GetKTokenObject yields the cast object for a KApply reference, if possible.
-func (ms *ModelState) GetKTokenObject(ref KReference) (*KToken, bool) {
+// GetKTokenObject a struct containing KToken data, if possible.
+func (ms *ModelState) GetKTokenObject(ref KReference) (KToken, bool) {
 	isKToken, constant, sort, length, index := parseKrefKToken(ref)
 	if !isKToken {
-		return nil, false
+		return KToken{}, false
 	}
 	if constant {
 		ref = unsetConstantFlag(ref)
@@ -22,7 +22,7 @@ func (ms *ModelState) GetKTokenObject(ref KReference) (*KToken, bool) {
 	if length > 0 {
 		value = string(ms.allBytes[index : index+length])
 	}
-	return &KToken{
+	return KToken{
 		Sort:  Sort(sort),
 		Value: value,
 	}, true
