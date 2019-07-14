@@ -14,4 +14,5 @@ public interface RuleLhsMatchWriter {
 
     void appendPredicateMatch(String hookName, GoStringBuilder sb, String subject, String sortName);
 
+    void appendBottomMatch(GoStringBuilder sb, String subject);
 }

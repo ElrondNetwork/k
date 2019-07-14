@@ -106,4 +106,8 @@ public class RuleLhsMatchInlineManager implements RuleLhsMatchWriter {
         }
     }
 
+    @Override
+    public void appendBottomMatch(GoStringBuilder sb, String subject) {
+        sb.append(subject).append(" == m.InternedBottom");
+    }
 }

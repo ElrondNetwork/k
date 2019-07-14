@@ -199,7 +199,9 @@ public class RuleWriter {
                 rhsWriter.writeReturnValue(sb);
 
                 sb.newLine();
-                sb.writeIndent().append("if m.IsBottom(").append(matchVar).append(")").beginBlock();
+                sb.writeIndent().append("if ");
+                matchWriter.appendBottomMatch(sb, matchVar);
+                sb.beginBlock();
                 sb.writeIndent().append(reapply).newLine();
                 sb.endOneBlock();
 

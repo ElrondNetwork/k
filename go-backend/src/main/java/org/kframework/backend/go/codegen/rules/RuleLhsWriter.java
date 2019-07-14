@@ -154,8 +154,8 @@ public class RuleLhsWriter extends VisitK {
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             handleExpressionType(ExpressionType.IF);
-            sb.writeIndent();
-            sb.append("if m.IsBottom(").append(consumeSubject()).append(")");
+            sb.writeIndent().append("if ");
+            matchWriter.appendBottomMatch(sb, consumeSubject());
         } else if (data.functions.contains(k.klabel())) {
             if (data.collectionFor.containsKey(k.klabel())) {
                 KLabel collectionLabel = data.collectionFor.get(k.klabel());

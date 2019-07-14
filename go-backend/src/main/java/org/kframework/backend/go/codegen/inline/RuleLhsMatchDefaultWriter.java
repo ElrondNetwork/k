@@ -71,4 +71,9 @@ public class RuleLhsMatchDefaultWriter implements RuleLhsMatchWriter {
             throw KEMException.internalError("Unknown predicate hook: " + hookName);
         }
     }
+
+    @Override
+    public void appendBottomMatch(GoStringBuilder sb, String subject) {
+        sb.append("m.IsBottom(").append(subject).append(")");
+    }
 }
