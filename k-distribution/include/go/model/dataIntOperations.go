@@ -7,7 +7,7 @@ import (
 var bigOne = big.NewInt(1)
 
 // helper function for writing operations in fewer lines
-func (*ModelState) bothSmall(ref1 KReference, ref2 KReference) (int32, int32, bool) {
+func (*ModelState) bothSmall(ref1 KReference, ref2 KReference) (int64, int64, bool) {
 	small1, isSmall1 := parseKrefSmallInt(ref1)
 	if !isSmall1 {
 		return 0, 0, false
@@ -32,79 +32,124 @@ func (ms *ModelState) bothBig(ref1 KReference, ref2 KReference) (*big.Int, *big.
 	return big1, big2, true
 }
 
-// IntEquals returns ref1 == ref2, if types ok
+// IntEquals returns ref1 == ref2, if types ok.
+// Also compares big ints with small ints.
 func (ms *ModelState) IntEquals(ref1 KReference, ref2 KReference) (bool, bool) {
-	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		return small1 == small2, true
+	if small1, isSmall1 := parseKrefSmallInt(ref1); isSmall1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// small == small
+			return small1 == small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// small == big
+			if big2.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return false, true
+			}
+			if big2.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return false, true
+			}
+			return small1 == big2.bigValue.Int64(), true
+		}
+		return false, false
+	} else if big1, isBig1 := ms.getBigIntObject(ref1); isBig1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// big == small
+			if big1.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return false, true
+			}
+			if big1.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return false, true
+			}
+			return big1.bigValue.Int64() == small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// big == big
+			return big1.bigValue.Cmp(big2.bigValue) == 0, true
+		}
 	}
-
-	big1, big2, bigOk := ms.bothBig(ref1, ref2)
-	if bigOk {
-		return big1.Cmp(big2) == 0, true
-	}
-
 	return false, false
 }
 
-// IntLt returns ref1 < ref2, if types ok
-func (ms *ModelState) IntLt(ref1 KReference, ref2 KReference) (bool, bool) {
-	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		return small1 < small2, true
-	}
-
-	big1, big2, bigOk := ms.bothBig(ref1, ref2)
-	if bigOk {
-		return big1.Cmp(big2) < 0, true
-	}
-
-	return false, false
-}
-
-// IntLe returns ref1 <= ref2, if types ok
-func (ms *ModelState) IntLe(ref1 KReference, ref2 KReference) (bool, bool) {
-	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		return small1 <= small2, true
-	}
-
-	big1, big2, bigOk := ms.bothBig(ref1, ref2)
-	if bigOk {
-		return big1.Cmp(big2) <= 0, true
-	}
-
-	return false, false
-}
-
-// IntGt returns ref1 > ref2, if types ok
+// IntGt returns ref1 > ref2, if types ok.
+// Also compares big ints with small ints.
 func (ms *ModelState) IntGt(ref1 KReference, ref2 KReference) (bool, bool) {
-	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		return small1 > small2, true
+	if small1, isSmall1 := parseKrefSmallInt(ref1); isSmall1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// small > small
+			return small1 > small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// small > big
+			if big2.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return false, true
+			}
+			if big2.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return true, true
+			}
+			return small1 > big2.bigValue.Int64(), true
+		}
+		return false, false
+	} else if big1, isBig1 := ms.getBigIntObject(ref1); isBig1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// big > small
+			if big1.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return true, true
+			}
+			if big1.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return false, true
+			}
+			return big1.bigValue.Int64() > small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// big > big
+			return big1.bigValue.Cmp(big2.bigValue) > 0, true
+		}
 	}
-
-	big1, big2, bigOk := ms.bothBig(ref1, ref2)
-	if bigOk {
-		return big1.Cmp(big2) > 0, true
-	}
-
 	return false, false
 }
 
-// IntGe returns ref1 >= ref2, if types ok
+// IntGe returns ref1 >= ref2, if types ok.
+// Also compares big ints with small ints.
 func (ms *ModelState) IntGe(ref1 KReference, ref2 KReference) (bool, bool) {
-	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
-	if smallOk {
-		return small1 >= small2, true
+	if small1, isSmall1 := parseKrefSmallInt(ref1); isSmall1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// small >= small
+			return small1 >= small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// small >= big
+			if big2.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return false, true
+			}
+			if big2.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return true, true
+			}
+			return small1 >= big2.bigValue.Int64(), true
+		}
+		return false, false
+	} else if big1, isBig1 := ms.getBigIntObject(ref1); isBig1 {
+		if small2, isSmall2 := parseKrefSmallInt(ref2); isSmall2 {
+			// big >= small
+			if big1.bigValue.Cmp(maxSmallIntAsBigInt) > 0 {
+				return true, true
+			}
+			if big1.bigValue.Cmp(minSmallIntAsBigInt) < 0 {
+				return false, true
+			}
+			return big1.bigValue.Int64() >= small2, true
+		} else if big2, isBig2 := ms.getBigIntObject(ref2); isBig2 {
+			// big >= big
+			return big1.bigValue.Cmp(big2.bigValue) >= 0, true
+		}
 	}
-
-	big1, big2, bigOk := ms.bothBig(ref1, ref2)
-	if bigOk {
-		return big1.Cmp(big2) >= 0, true
-	}
-
 	return false, false
+}
+
+// IntLt returns ref1 < ref2, if types ok.
+// Also compares big ints with small ints.
+func (ms *ModelState) IntLt(ref1 KReference, ref2 KReference) (bool, bool) {
+	return ms.IntGt(ref2, ref1)
+}
+
+// IntLe returns ref1 <= ref2, if types ok.
+// Also compares big ints with small ints.
+func (ms *ModelState) IntLe(ref1 KReference, ref2 KReference) (bool, bool) {
+	return ms.IntGe(ref2, ref1)
 }
 
 // IntAdd returns ref1 + ref2, if types ok
@@ -113,7 +158,7 @@ func (ms *ModelState) IntAdd(ref1 KReference, ref2 KReference) (KReference, bool
 	if smallOk {
 		result := int64(small1) + int64(small2)
 		if fitsInSmallIntReference(result) {
-			return createKrefSmallInt(int32(result)), true
+			return createKrefSmallInt(result), true
 		}
 	}
 
@@ -140,7 +185,7 @@ func (ms *ModelState) IntSub(ref1 KReference, ref2 KReference) (KReference, bool
 	if smallOk {
 		result := int64(small1) - int64(small2)
 		if fitsInSmallIntReference(result) {
-			return createKrefSmallInt(int32(result)), true
+			return createKrefSmallInt(result), true
 		}
 	}
 
@@ -405,11 +450,11 @@ func (ms *ModelState) IntAbs(ref KReference) (KReference, bool) {
 }
 
 // IntLog2 basically counts the number of bits after the most significant bit.
+// (so it is the total number of bits - 1)
 // It is equal to a a truncated log2 of the number.
 // Argument must be strictly positive.
 func (ms *ModelState) IntLog2(ref KReference) (KReference, bool) {
-	small, isSmall := parseKrefSmallInt(ref)
-	if isSmall {
+	if small, isSmall := parseKrefSmallInt(ref); isSmall {
 		if small <= 0 {
 			return NullReference, false
 		}
@@ -419,21 +464,12 @@ func (ms *ModelState) IntLog2(ref KReference) (KReference, bool) {
 			nrBits++
 		}
 		return ms.FromInt(nrBits - 1), true
-	}
-
-	bigArg, bigOk := ms.GetBigInt(ref)
-	if bigOk {
-		if bigArg.Sign() <= 0 {
+	} else if bigArg, isBig := ms.getBigIntObject(ref); isBig {
+		if bigArg.bigValue.Sign() <= 0 {
 			return NullReference, false
 		}
-		bytes := bigArg.Bytes()
-		leadingByte := bytes[0]
-		nrLeadingBits := 0
-		for leadingByte > 0 {
-			leadingByte = leadingByte >> 1
-			nrLeadingBits++
-		}
-		return ms.FromInt(nrLeadingBits + (len(bytes)-1)*8 - 1), true
+		nrBits := bigArg.bigValue.BitLen()
+		return ms.FromInt(nrBits - 1), true
 	}
 
 	return NullReference, false

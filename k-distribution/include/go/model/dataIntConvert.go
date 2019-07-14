@@ -31,7 +31,7 @@ func (ms *ModelState) ParseInt(str string) (KReference, error) {
 		if err != nil {
 			return NullReference, &parseIntError{parseVal: str}
 		}
-		return createKrefSmallInt(int32(i)), nil
+		return createKrefSmallInt(int64(i)), nil
 	}
 
 	b := big.NewInt(0)

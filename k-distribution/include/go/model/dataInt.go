@@ -16,14 +16,14 @@ var minSmallIntAsBigInt = big.NewInt(minSmallInt)
 
 // only attempt to multiply as small int numbers less than the sqrt of this max, by a safety margin
 // otherwise play it safe and perform big.Int multiplication
-var maxSmallMultiplicationInt = int32(math.Sqrt(float64(math.MaxInt32))) - 100
+var maxSmallMultiplicationInt = int64(math.Sqrt(float64(math.MaxInt32))) - 100
 var minSmallMultiplicationInt = -maxSmallMultiplicationInt
 
 // only attempt to parse as small int strings shorter than this
 var maxSmallIntStringLength = len(fmt.Sprintf("%d", maxSmallIntAsBigInt)) - 2
 
 // contains a big.Int corresponding to every small int constant
-var smallToBigIntConstants map[int32]*big.Int
+var smallToBigIntConstants map[int64]*big.Int
 
 // bigInt is a KObject representing a big int in K
 type bigInt struct {
@@ -37,25 +37,25 @@ func fitsInSmallIntReference(i int64) bool {
 	return i >= minSmallInt && i <= maxSmallInt
 }
 
-func smallMultiplicationSafe(a, b int32) bool {
+func smallMultiplicationSafe(a, b int64) bool {
 	return a >= minSmallMultiplicationInt && a <= maxSmallMultiplicationInt &&
 		b >= minSmallMultiplicationInt && b <= maxSmallMultiplicationInt
 }
 
-func createKrefSmallInt(i int32) KReference {
+func createKrefSmallInt(i int64) KReference {
 	if i < 0 {
 		return createKrefBasic(smallNegativeIntRef, false, uint64(-i))
 	}
 	return createKrefBasic(smallPositiveIntRef, false, uint64(i))
 }
 
-func parseKrefSmallInt(ref KReference) (int32, bool) {
+func parseKrefSmallInt(ref KReference) (int64, bool) {
 	refType, _, value := parseKrefBasic(ref)
 	if refType == smallPositiveIntRef {
-		return int32(value), true
+		return int64(value), true
 	}
 	if refType == smallNegativeIntRef {
-		return -int32(value), true
+		return -int64(value), true
 	}
 	return 0, false
 }
@@ -164,7 +164,7 @@ func (ms *ModelState) FromBigInt(bi *big.Int) KReference {
 	if bi.IsInt64() {
 		biInt64 := bi.Int64()
 		if biInt64 >= minSmallInt && biInt64 <= maxSmallInt {
-			return createKrefSmallInt(int32(biInt64))
+			return createKrefSmallInt(biInt64)
 		}
 	}
 	// make it big
@@ -184,7 +184,7 @@ func NewIntConstant(stringRepresentation string) KReference {
 	small, isSmall := parseKrefSmallInt(ref)
 	if isSmall {
 		if smallToBigIntConstants == nil {
-			smallToBigIntConstants = make(map[int32]*big.Int)
+			smallToBigIntConstants = make(map[int64]*big.Int)
 		}
 		smallToBigIntConstants[small] = big.NewInt(int64(small))
 	}
@@ -195,7 +195,7 @@ func NewIntConstant(stringRepresentation string) KReference {
 // FromInt converts a Go integer to an integer in the model
 func (ms *ModelState) FromInt(x int) KReference {
 	if x >= minSmallInt && x <= maxSmallInt {
-		return createKrefSmallInt(int32(x))
+		return createKrefSmallInt(int64(x))
 	}
 	ref, obj := ms.newBigIntObject()
 	obj.bigValue.SetInt64(int64(x))
@@ -205,7 +205,7 @@ func (ms *ModelState) FromInt(x int) KReference {
 // FromInt64 converts a int64 to an integer in the model
 func (ms *ModelState) FromInt64(x int64) KReference {
 	if x >= minSmallInt && x <= maxSmallInt {
-		return createKrefSmallInt(int32(x))
+		return createKrefSmallInt(x)
 	}
 	ref, obj := ms.newBigIntObject()
 	obj.bigValue.SetInt64(x)
@@ -215,7 +215,7 @@ func (ms *ModelState) FromInt64(x int64) KReference {
 // FromUint64 converts a uint64 to an integer in the model
 func (ms *ModelState) FromUint64(x uint64) KReference {
 	if x <= maxSmallInt {
-		return createKrefSmallInt(int32(x))
+		return createKrefSmallInt(int64(x))
 	}
 	ref, obj := ms.newBigIntObject()
 	obj.bigValue.SetUint64(x)
