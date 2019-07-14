@@ -312,28 +312,36 @@ public class DefinitionToGo {
 
                     for (Sort sort : sorts) {
                         String sortHook = mainModule.sortAttributesFor().apply(sort).<String>getOptional("hook").orElse("");
-                        if (GoBuiltin.PREDICATE_IFS.containsKey(sortHook)) {
-                            String sortName = "m." + nameProvider.sortVariableName(sort);
-                            String ifClause = GoBuiltin.PREDICATE_IFS.get(sortHook).apply("c", sortName);
+                        if (sortHook.equals("K.K") || sortHook.equals("K.KItem")) {
+                            sb.writeIndent();
                             if (unreachableCode) {
-                                sb.writeIndent().append("/* ");
-                                sb.append(ifClause);
-                                sb.beginBlock("// unreachable predicate rule: ", sortHook);
-                                sb.appendIndentedLine("return m.BoolTrue, nil");
-                                sb.endOneBlockNoNewline().append(" */").newLine();
-                            } else {
-                                sb.writeIndent().append("if !matched").beginBlock();
-                                sb.writeIndent();
-                                sb.append(ifClause);
-                                sb.beginBlock("// predicate rule: ", sortHook);
-                                sb.appendIndentedLine("return m.BoolTrue, nil");
-                                sb.endOneBlock();
-                                sb.newLine();
-
-                                if (sortHook.equals("K.K") || sortHook.equals("K.KItem")) {
-                                    unreachableCode = true;
-                                }
+                                sb.append("/* (unreachable) ");
                             }
+                            sb.append("if !matched").beginBlock();
+                            sb.appendIndentedLine("return m.BoolTrue, nil // predicate rule: ", sortHook);
+                            sb.endOneBlockNoNewline();
+                            if (unreachableCode) {
+                                sb.append(" */");
+                            }
+                            sb.newLine();
+                            unreachableCode = true;
+                        } else if (GoBuiltin.PREDICATE_HOOKS.contains(sortHook)) {
+                            sb.writeIndent();
+                            if (unreachableCode) {
+                                sb.append("/* (unreachable) ");
+                            }
+                            //String ifClause = GoBuiltin.LHS_KVARIABLE_HOOKS.get(sortHook).apply("c", sortName);
+                            sb.append("if !matched").beginBlock();
+                            sb.writeIndent().append("if ");
+                            matchWriter.appendPredicateMatch(sortHook, sb, "c", nameProvider.sortVariableName(sort));
+                            sb.beginBlock("predicate rule: ", sortHook);
+                            sb.appendIndentedLine("return m.BoolTrue, nil");
+                            sb.endOneBlock(); // if predicate ...
+                            sb.endOneBlockNoNewline(); // if !matched ...
+                            if (unreachableCode) {
+                                sb.append(" */");
+                            }
+                            sb.newLine();
                         }
                     }
                 }

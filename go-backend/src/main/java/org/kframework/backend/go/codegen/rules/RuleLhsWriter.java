@@ -352,12 +352,11 @@ public class RuleLhsWriter extends VisitK {
         Sort s = k.att().getOptional(Sort.class).orElse(KORE.Sort(""));
         if (data.mainModule.sortAttributesFor().contains(s)) {
             String hook = data.mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-            if (GoBuiltin.LHS_KVARIABLE_HOOKS.contains(hook)) {
+            if (GoBuiltin.PREDICATE_HOOKS.contains(hook)) {
                 String subject = consumeSubject();
-                String sortName = "m." + nameProvider.sortVariableName(s);
-                String ifClause = GoBuiltin.PREDICATE_IFS.get(hook).apply(subject, sortName);
                 handleExpressionType(ExpressionType.IF);
-                sb.writeIndent().append(ifClause);
+                sb.writeIndent().append("if ");
+                matchWriter.appendPredicateMatch(hook, sb, subject, nameProvider.sortVariableName(s));
                 sb.beginBlock("lhs KVariable with hook:" + hook);
 
                 boolean varNeeded = rhsVars.containsVar(k) // needed in RHS

@@ -12,4 +12,6 @@ public interface RuleLhsMatchWriter {
 
     void appendKTokenMatch(GoStringBuilder sb, String subject, String sortName);
 
+    void appendPredicateMatch(String hookName, GoStringBuilder sb, String subject, String sortName);
+
 }

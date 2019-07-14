@@ -67,8 +67,7 @@ public class PrecomputePredicates extends TransformK {
                 // is <Sort>
                 if (data.mainModule.sortAttributesFor().contains(s)) {
                     String hook2 = data.mainModule.sortAttributesFor().apply(s).<String>getOptional("hook").orElse("");
-                    if (GoBuiltin.SORT_VAR_HOOKS_1.containsKey(hook2) ||
-                            GoBuiltin.SORT_VAR_HOOKS_2.containsKey(hook2)) {
+                    if (GoBuiltin.PREDICATE_HOOKS.contains(hook2)) {
                         if (k.klist().items().size() == 1 && k.klist().items().get(0) instanceof KVariable) {
                             KVariable kvar = (KVariable) k.klist().items().get(0);
                             if (lhsVars.containsVar(kvar)) {

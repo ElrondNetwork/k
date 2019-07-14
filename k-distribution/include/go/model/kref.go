@@ -135,8 +135,8 @@ func parseKrefBigInt(ref KReference) (isBigInt bool, constant bool, recycleCount
 // The collection encoding is as follows (from MSB to LSB):
 // - first 5 bits: reference type
 // - next 1 bit: ignored
-// - 13 bits: Label
 // - 13 bits: Sort
+// - 13 bits: Label
 // - 32 bits: object index
 
 const refCollectionSortShift = 13
@@ -145,6 +145,18 @@ const refCollectionLabelShift = 13
 const refCollectionLabelMask = (1 << refCollectionLabelShift) - 1
 const refCollectionIndexShift = 32
 const refCollectionIndexMask = (1 << refCollectionIndexShift) - 1
+
+func createKrefCollection(refType kreferenceType, sortInt uint64, labelInt uint64, index uint64) KReference {
+	refRaw := uint64(refType)
+	refRaw <<= 1
+	refRaw <<= refCollectionSortShift
+	refRaw |= sortInt
+	refRaw <<= refCollectionLabelShift
+	refRaw |= labelInt
+	refRaw <<= refCollectionIndexShift
+	refRaw |= index
+	return KReference(refRaw)
+}
 
 func parseKrefCollection(ref KReference) (refType kreferenceType, sortInt uint64, labelInt uint64, index uint64) {
 	refRaw := uint64(ref)
@@ -157,18 +169,6 @@ func parseKrefCollection(ref KReference) (refType kreferenceType, sortInt uint64
 	refRaw >>= 1 // ignore constant flag
 	refType = kreferenceType(refRaw)
 	return
-}
-
-func createKrefCollection(refType kreferenceType, sortInt uint64, labelInt uint64, index uint64) KReference {
-	refRaw := uint64(refType)
-	refRaw <<= 1
-	refRaw <<= refCollectionSortShift
-	refRaw |= sortInt
-	refRaw <<= refCollectionLabelShift
-	refRaw |= labelInt
-	refRaw <<= refCollectionIndexShift
-	refRaw |= index
-	return KReference(refRaw)
 }
 
 // The KApply encoding is as follows (from MSB to LSB):
