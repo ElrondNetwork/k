@@ -233,6 +233,11 @@ func (ms *ModelState) IntMul(ref1 KReference, ref2 KReference) (KReference, bool
 // IntDiv performs integer division.
 // The result is truncated towards zero and obeys the rule of signs.
 func (ms *ModelState) IntDiv(ref1 KReference, ref2 KReference) (KReference, bool) {
+	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
+	if smallOk {
+		return createKrefSmallInt(small1 / small2), true
+	}
+
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
 		resultPositive := true
@@ -260,6 +265,11 @@ func (ms *ModelState) IntDiv(ref1 KReference, ref2 KReference) (KReference, bool
 // The result of rem a b has the sign of a, and its absolute value is strictly smaller than the absolute value of b.
 // The result satisfies the equality a = b * div a b + rem a b.
 func (ms *ModelState) IntMod(ref1 KReference, ref2 KReference) (KReference, bool) {
+	small1, small2, smallOk := ms.bothSmall(ref1, ref2)
+	if smallOk {
+		return createKrefSmallInt(small1 % small2), true
+	}
+
 	big1, big2, bigOk := ms.bothBig(ref1, ref2)
 	if bigOk {
 		arg1Negative := false
@@ -450,7 +460,6 @@ func (ms *ModelState) IntAbs(ref KReference) (KReference, bool) {
 }
 
 // IntLog2 basically counts the number of bits after the most significant bit.
-// (so it is the total number of bits - 1)
 // It is equal to a a truncated log2 of the number.
 // Argument must be strictly positive.
 func (ms *ModelState) IntLog2(ref KReference) (KReference, bool) {
