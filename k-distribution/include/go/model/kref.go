@@ -56,8 +56,9 @@ var NullReference = KReference(0)
 
 const refTypeBits = 5                      // refType gets represented in this many bits
 const refTypeMask = (1 << refTypeBits) - 1 // 5 bits of 1
-const refTypeShift = 59                    // shift right this many bits to get the refType
-const refBasicDataShift = 58
+const refTypeShift = 64 - refTypeBits      // shift right this many bits to get the refType
+const refModelShift = 1                    // how many bits we use to determine in which model the data resides (main/constants)
+const refBasicDataShift = 64 - refTypeBits - refModelShift
 const refBasicDataMask = (1 << refBasicDataShift) - 1
 
 func getRefType(ref KReference) kreferenceType {
@@ -69,14 +70,14 @@ func parseKrefBasic(ref KReference) (refType kreferenceType, constant bool, rest
 	rest = refRaw & refBasicDataMask
 	refRaw >>= refBasicDataShift
 	constant = refRaw&1 == 1
-	refRaw >>= 1
+	refRaw >>= refModelShift
 	refType = kreferenceType(refRaw)
 	return
 }
 
 func createKrefBasic(refType kreferenceType, constant bool, rest uint64) KReference {
 	refRaw := uint64(refType)
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	if constant {
 		refRaw |= 1
 	}
@@ -109,7 +110,7 @@ const refBigIntIndexBits = 32
 const refBigIntIndexMask = (1 << refBigIntIndexBits) - 1
 
 func createKrefBigInt(constant bool, recycleCount uint64, index uint64) KReference {
-	ref := uint64(bigIntRef) << 1
+	ref := uint64(bigIntRef) << refModelShift
 	if constant {
 		ref |= 1
 	}
@@ -127,7 +128,7 @@ func parseKrefBigInt(ref KReference) (isBigInt bool, constant bool, recycleCount
 	recycleCount = refRaw & refBigIntRecycleCountMask
 	refRaw >>= refBigIntRecycleCountBits
 	constant = refRaw&1 == 1
-	refRaw >>= 1
+	refRaw >>= refModelShift
 	isBigInt = refRaw == uint64(bigIntRef)
 	return
 }
@@ -148,7 +149,7 @@ const refCollectionIndexMask = (1 << refCollectionIndexShift) - 1
 
 func createKrefCollection(refType kreferenceType, sortInt uint64, labelInt uint64, index uint64) KReference {
 	refRaw := uint64(refType)
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	refRaw <<= refCollectionSortShift
 	refRaw |= sortInt
 	refRaw <<= refCollectionLabelShift
@@ -166,7 +167,7 @@ func parseKrefCollection(ref KReference) (refType kreferenceType, sortInt uint64
 	refRaw >>= refCollectionLabelShift
 	sortInt = refRaw & refCollectionSortMask
 	refRaw >>= refCollectionSortShift
-	refRaw >>= 1 // ignore constant flag
+	refRaw >>= refModelShift // ignore constant flag
 	refType = kreferenceType(refRaw)
 	return
 }
@@ -188,7 +189,7 @@ const refKApplyTypeAsUint = uint64(kapplyRef)
 
 func createKrefKApply(labelInt uint64, arity uint64, index uint64) KReference {
 	refRaw := refKApplyTypeAsUint
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	refRaw <<= refKApplyLabelShift
 	refRaw |= labelInt
 	refRaw <<= refKApplyArityShift
@@ -206,7 +207,7 @@ func parseKrefKApply(ref KReference) (isKApply bool, labelInt uint64, arity uint
 	refRaw >>= refKApplyArityShift
 	labelInt = refRaw & refKApplyLabelMask
 	refRaw >>= refKApplyLabelShift
-	refRaw >>= 1 // ignore constant flag
+	refRaw >>= refModelShift // ignore constant flag
 	isKApply = refRaw == refKApplyTypeAsUint
 	return
 }
@@ -220,7 +221,7 @@ func MatchKApply(ref KReference, expectedLabel uint64, expectedArity uint64) boo
 	refRaw >>= refKApplyArityShift
 	labelInt := refRaw & refKApplyLabelMask
 	refRaw >>= refKApplyLabelShift
-	refRaw >>= 1 // ignore constant flag
+	refRaw >>= refModelShift // ignore constant flag
 	return refRaw == refKApplyTypeAsUint &&
 		labelInt == expectedLabel &&
 		arity == expectedArity
@@ -241,7 +242,7 @@ const refEmptyKseqTypeAsUint = uint64(emptyKseqRef)
 
 func createKrefNonEmptyKseq(elemIndex uint64, length uint64) KReference {
 	refRaw := refNonEmptyKseqTypeAsUint
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	refRaw <<= refNonEmptyKseqLengthShift
 	refRaw |= length
 	refRaw <<= refNonEmptyKseqIndexShift
@@ -255,7 +256,7 @@ func parseKrefKseq(ref KReference) (refType kreferenceType, elemIndex uint64, le
 	refRaw >>= refNonEmptyKseqIndexShift
 	length = refRaw & refNonEmptyKseqLengthMask
 	refRaw >>= refNonEmptyKseqLengthShift
-	refRaw >>= 1 // ignore constant flag
+	refRaw >>= refModelShift // ignore constant flag
 	refType = kreferenceType(refRaw)
 	return
 }
@@ -276,7 +277,7 @@ func MatchNonEmptyKSequenceMinLength(ref KReference, minimumLength uint64) bool 
 	refRaw >>= refNonEmptyKseqIndexShift         // ignore element index
 	length := refRaw & refNonEmptyKseqLengthMask // length for matching
 	refRaw >>= refNonEmptyKseqLengthShift        //
-	refRaw >>= 1                                 // ignore constant flag
+	refRaw >>= refModelShift                                 // ignore constant flag
 
 	// refRaw is the reference type at this point
 	return refRaw == refNonEmptyKseqTypeAsUint && length >= minimumLength
@@ -299,7 +300,7 @@ const refKTokenTypeAsUint = uint64(ktokenRef)
 
 func createKrefKToken(constant bool, sortInt uint64, length uint64, index uint64) KReference {
 	refRaw := refKTokenTypeAsUint
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	if constant {
 		refRaw |= 1
 	}
@@ -321,7 +322,7 @@ func parseKrefKToken(ref KReference) (isKToken bool, constant bool, sortInt uint
 	sortInt = refRaw & refKTokenSortMask
 	refRaw >>= refKTokenSortShift
 	constant = refRaw&1 == 1
-	refRaw >>= 1
+	refRaw >>= refModelShift
 	isKToken = refRaw == refKTokenTypeAsUint
 	return
 }
@@ -334,7 +335,7 @@ func MatchKToken(ref KReference, expectedSort uint64) bool {
 	refRaw >>= refKTokenLengthShift       // ignore length
 	sortInt := refRaw & refKTokenSortMask // get sort
 	refRaw >>= refKTokenSortShift         // for matching
-	refRaw >>= 1                          // ignore constant flag
+	refRaw >>= refModelShift                          // ignore constant flag
 	return refRaw == refKTokenTypeAsUint &&
 		sortInt == expectedSort
 }
@@ -357,14 +358,14 @@ func parseKrefBytes(ref KReference) (refType kreferenceType, constant bool, star
 	length = refRaw & refBytesLengthMask
 	refRaw >>= refBytesLengthShift
 	constant = refRaw&1 == 1
-	refRaw >>= 1
+	refRaw >>= refModelShift
 	refType = kreferenceType(refRaw)
 	return
 }
 
 func createKrefBytes(refType kreferenceType, constant bool, startIndex uint64, length uint64) KReference {
 	refRaw := uint64(refType)
-	refRaw <<= 1
+	refRaw <<= refModelShift
 	if constant {
 		refRaw |= 1
 	}
