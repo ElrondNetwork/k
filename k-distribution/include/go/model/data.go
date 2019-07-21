@@ -56,10 +56,14 @@ type ModelState struct {
 	// memoTables is a structure containing all memoization maps.
 	// Memoization tables are implemented as maps of maps of maps of ...
 	memoTables map[MemoTable]interface{}
+
+	// swapModel is a small model used when collecting garbage.
+	// It is needed to keep the current state while the main model is flushed.
+	swapModel *ModelState
 }
 
 // constantsModel is another instance of the model, but which only contains a few constants.
-var constantsModel = NewModel()
+var constantsModel = newSmallModel()
 
 func (ms *ModelState) getReferencedObject(index uint64, constant bool) KObject {
 	if constant {
@@ -94,6 +98,17 @@ func NewModel() *ModelState {
 	return ms
 }
 
+// newSmallModel creates a smaller model.
+func newSmallModel() *ModelState {
+	ms := &ModelState{}
+	ms.allKsElements = make([]ksequenceElem, 0, 1024)
+	ms.allKApplyArgs = make([]KReference, 0, 1024)
+	ms.allBytes = make([]byte, 0, 1024)
+	ms.allObjects = make([]KObject, 0, 256)
+	ms.memoTables = nil
+	return ms
+}
+
 // Clear resets the model as if it were new,
 // but does not free the memory allocated by previous execution.
 func (ms *ModelState) Clear() {
@@ -105,14 +120,28 @@ func (ms *ModelState) Clear() {
 	ms.memoTables = nil
 }
 
+// Gc cleans up the model, but keeps the last state, given as argument.
+// It does so by temporarily copying the last state to another model.
+func (ms *ModelState) Gc(keepState KReference) KReference {
+	if ms.swapModel == nil {
+		ms.swapModel = newSmallModel()
+	} else {
+		ms.swapModel.Clear()
+	}
+	copiedState := DeepCopy(ms, ms.swapModel, keepState, true)
+	ms.Clear()
+	newState := DeepCopy(ms.swapModel, ms, copiedState, true)
+	return newState
+}
+
 // PrintStats simply prints some statistics to the console.
 // Useful for checking the size of the model data.
 func (ms *ModelState) PrintStats() {
-	fmt.Printf("Nr. BigInt objects: %d\n", len(ms.bigInts))
-	fmt.Printf("Nr. K sequence elements: %d\n", len(ms.allKsElements))
-	fmt.Printf("Nr. KApply args: %d\n", len(ms.allKApplyArgs))
-	fmt.Printf("Nr. bytes (strings, byte arrays, KTokens): %d\n", len(ms.allBytes))
-	fmt.Printf("Nr. other objects: %d\n", len(ms.allObjects))
+	fmt.Printf("KApply args: %d (cap: %d)\n", len(ms.allKApplyArgs), cap(ms.allKApplyArgs))
+	fmt.Printf("K sequence elements: %d (cap: %d)\n", len(ms.allKsElements), cap(ms.allKsElements))
+	fmt.Printf("BigInt objects: %d (cap: %d)\n", len(ms.bigInts), cap(ms.bigInts))
+	fmt.Printf("Bytes (strings, byte arrays, KTokens): %d (cap: %d)\n", len(ms.allBytes), cap(ms.allBytes))
+	fmt.Printf("Other objects: %d (cap: %d)\n", len(ms.allObjects), cap(ms.allObjects))
 	fmt.Printf("Recycle bin\n")
-	fmt.Printf("     BigInt    %d\n", len(ms.bigIntRecycleBin))
+	fmt.Printf("     BigInt    %d (cap: %d)\n", len(ms.bigIntRecycleBin), cap(ms.bigIntRecycleBin))
 }
