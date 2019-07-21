@@ -2,16 +2,21 @@
 
 package %PACKAGE%
 
-// DeepCopy yields a fresh copy of the K item given as argument.
-func (ms *ModelState) DeepCopy(ref KReference) KReference {
+// DeepCopy copies the structures underlying a reference from one model to the other.
+// Arguments from and to can be the same model.
+// Flag mainModelOnly, if set to true, will not deep copy constants, only references found in the main model.
+func DeepCopy(from, to *ModelState, ref KReference, mainModelOnly bool) KReference {
 	refType, constant, value := parseKrefBasic(ref)
+	if mainModelOnly && constant {
+		return ref
+	}
 
 	// collection types
 	if isCollectionType(refType) {
-		_, _, _, index := parseKrefCollection(ref)
-		obj := ms.getReferencedObject(index, false)
-		copiedObj := obj.deepCopy(ms)
-		return ms.addObject(copiedObj)
+		_, sortInt, labelInt, index := parseKrefCollection(ref)
+		obj := from.getReferencedObject(index, false)
+		copiedObj := obj.deepCopy(from, to, mainModelOnly)
+		return to.addCollectionObject(Sort(sortInt), KLabel(labelInt), copiedObj)
 	}
 
 	switch refType {
@@ -22,70 +27,74 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 	case emptyKseqRef:
 		return ref
 	case nonEmptyKseqRef:
-		ks := ms.KSequenceToSlice(ref)
+		ks := from.KSequenceToSlice(ref)
 		newKs := make([]KReference, len(ks))
 		for i, child := range ks {
-			newKs[i] = ms.DeepCopy(child)
+			newKs[i] = DeepCopy(from, to, child, mainModelOnly)
 		}
-		return ms.NewKSequence(newKs)
+		return to.NewKSequence(newKs)
 	case smallPositiveIntRef:
 		return ref
 	case smallNegativeIntRef:
 		return ref
 	case bigIntRef:
-		obj, _ := ms.getBigIntObject(ref)
-		newRef, newObj := ms.newBigIntObjectNoRecycle()
+		obj, _ := from.getBigIntObject(ref)
+		newRef, newObj := to.newBigIntObject()
 		newObj.bigValue.Set(obj.bigValue)
 		return newRef
 	case kapplyRef:
-		argSlice := ms.kapplyArgSlice(ref)
+		argSlice := from.kapplyArgSlice(ref)
 		argCopy := make([]KReference, len(argSlice))
 		for i, child := range argSlice {
-			argCopy[i] = ms.DeepCopy(child)
+			argCopy[i] = DeepCopy(from, to, child, mainModelOnly)
 		}
-		return ms.NewKApply(ms.KApplyLabel(ref), argCopy...)
+		return to.NewKApply(from.KApplyLabel(ref), argCopy...)
 	case stringRef:
-		str, _ := ms.GetString(ref)
-		return ms.NewString(str)
+		str, _ := from.GetString(ref)
+		return to.NewString(str)
 	case bytesRef:
-		bytes, _ := ms.GetBytes(ref)
-		return ms.NewBytes(bytes)
+		bytes, _ := from.GetBytes(ref)
+		return to.NewBytes(bytes)
 	case ktokenRef:
-		ktoken, _ := ms.GetKTokenObject(ref)
-		return ms.NewKToken(ktoken.Sort, ktoken.Value)
+		ktoken, _ := from.GetKTokenObject(ref)
+		return to.NewKToken(ktoken.Sort, ktoken.Value)
 	default:
 		// object types
-		obj := ms.getReferencedObject(value, constant)
-		copiedObj := obj.deepCopy(ms)
+		obj := from.getReferencedObject(value, constant)
+		copiedObj := obj.deepCopy(from, to, mainModelOnly)
 		if copiedObj == obj {
 			// if no new instance was created,
 			// it means that the object does not need to be deep copied
 			return ref
 		}
-		return ms.addObject(copiedObj)
+		return to.addObject(copiedObj)
 	}
 }
 
-func (k *InjectedKLabel) deepCopy(ms *ModelState) KObject {
+func (k *InjectedKLabel) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return &InjectedKLabel{Label: k.Label}
 }
 
-func (k *KVariable) deepCopy(ms *ModelState) KObject {
+func (k *KVariable) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return &KVariable{Name: k.Name}
 }
 
-func (k *Map) deepCopy(ms *ModelState) KObject {
+func (k *Map) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	mapCopy := make(map[KMapKey]KReference)
 	for key, val := range k.Data {
-		mapCopy[key] = ms.DeepCopy(val)
+		mapCopy[key] = DeepCopy(from, to, val, mainModelOnly)
 	}
-	return &Map{Data: mapCopy}
+	return &Map{
+		Sort:  k.Sort,
+		Label: k.Label,
+		Data:  mapCopy,
+	}
 }
 
-func (k *List) deepCopy(ms *ModelState) KObject {
+func (k *List) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	listCopy := make([]KReference, len(k.Data))
 	for i, elem := range k.Data {
-		listCopy[i] = ms.DeepCopy(elem)
+		listCopy[i] = DeepCopy(from, to, elem, mainModelOnly)
 	}
 	return &List{
 		Sort:  k.Sort,
@@ -94,26 +103,30 @@ func (k *List) deepCopy(ms *ModelState) KObject {
 	}
 }
 
-func (k *Set) deepCopy(ms *ModelState) KObject {
+func (k *Set) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	mapCopy := make(map[KMapKey]bool)
 	for key := range k.Data {
 		mapCopy[key] = true
 	}
-	return &Set{Data: mapCopy}
+	return &Set{
+		Sort:  k.Sort,
+		Label: k.Label,
+		Data:  mapCopy,
+	}
 }
 
-func (k *Array) deepCopy(ms *ModelState) KObject {
+func (k *Array) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return k // TODO: not implemented
 }
 
-func (k *MInt) deepCopy(ms *ModelState) KObject {
+func (k *MInt) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return k // not implemented
 }
 
-func (k *Float) deepCopy(ms *ModelState) KObject {
+func (k *Float) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return k // not implemented
 }
 
-func (k *StringBuffer) deepCopy(ms *ModelState) KObject {
+func (k *StringBuffer) deepCopy(from, to *ModelState, mainModelOnly bool) KObject {
 	return k // no deep copy needed here
 }

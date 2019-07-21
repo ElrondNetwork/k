@@ -11,7 +11,7 @@ import (
 type KObject interface {
 	referenceType() kreferenceType
 	equals(ms *ModelState, other KObject) bool
-	deepCopy(ms *ModelState) KObject
+	deepCopy(from, to *ModelState, mainModelOnly bool) KObject
 	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
 	kprint(ms *ModelState, sb *strings.Builder)
 	collectionsToK(ms *ModelState) KReference
