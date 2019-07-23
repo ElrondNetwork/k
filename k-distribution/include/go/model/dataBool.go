@@ -3,10 +3,10 @@
 package %PACKAGE%
 
 // BoolTrue represents a boolean value with value true
-var BoolTrue = createKrefBasic(boolRef, true, 1)
+var BoolTrue = createKrefBasic(boolRef, noDataRef, 1)
 
 // BoolFalse represents a boolean value with value false
-var BoolFalse = createKrefBasic(boolRef, true, 0)
+var BoolFalse = createKrefBasic(boolRef, noDataRef, 0)
 
 // CastToBool converts K Bool to Go bool, if possible.
 func CastToBool(ref KReference) (bool, bool) {

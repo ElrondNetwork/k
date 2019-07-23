@@ -22,12 +22,12 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		return
 	}
 
-	refType, constant, value := parseKrefBasic(ref)
+	refType, dataRef, value := parseKrefBasic(ref)
 
 	// collection types
 	if isCollectionType(refType) {
-		_, _, _, index := parseKrefCollection(ref)
-		obj := ms.getReferencedObject(index, false)
+		_, _, _, _, index := parseKrefCollection(ref)
+		obj := ms.getData(dataRef).getReferencedObject(index)
 		obj.kprint(ms, sb)
 		return
 	}
@@ -66,7 +66,7 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 		kprintKToken(sb, ktoken.Sort, ktoken.Value, false)
 	default:
 		// object types
-		obj := ms.getReferencedObject(value, constant)
+		obj := ms.getData(dataRef).getReferencedObject(value)
 		obj.kprint(ms, sb)
 	}
 }

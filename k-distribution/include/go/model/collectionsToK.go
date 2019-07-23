@@ -20,8 +20,8 @@ func (ms *ModelState) CollectionsToK(ref KReference) KReference {
 		}
 		return ms.NewKApply(ms.KApplyLabel(ref), newArgs...)
 	} else if isCollectionType(refType) {
-		_, _, _, index := parseKrefCollection(ref)
-		obj := ms.getReferencedObject(index, false)
+		_, dataRef, _, _, index := parseKrefCollection(ref)
+		obj := ms.getData(dataRef).getReferencedObject(index)
 		return obj.collectionsToK(ms)
 	}
 

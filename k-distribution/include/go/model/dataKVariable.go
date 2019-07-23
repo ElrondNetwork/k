@@ -11,8 +11,7 @@ func (*KVariable) referenceType() kreferenceType {
 	return kvariableRef
 }
 
-
 // NewKVariable creates a new object and returns the reference.
 func (ms *ModelState) NewKVariable(name string) KReference {
-	return ms.addObject(&KVariable{Name: name})
+	return ms.mainData.addObject(&KVariable{Name: name})
 }

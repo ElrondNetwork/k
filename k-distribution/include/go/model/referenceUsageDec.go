@@ -6,10 +6,7 @@ package %PACKAGE%
 // and sends to the recycle bin all objects left without references.
 // This goes recursively through the whole sub-tree.
 func (ms *ModelState) DecreaseUsage(ref KReference) {
-	refType, constant, value := parseKrefBasic(ref)
-	if constant {
-		return
-	}
+	refType, dataRef, value := parseKrefBasic(ref)
 
 	switch refType {
 	case boolRef:
@@ -36,7 +33,7 @@ func (ms *ModelState) DecreaseUsage(ref KReference) {
 		}
 	default:
 		// object types
-		obj := ms.getReferencedObject(value, constant)
+		obj := ms.getData(dataRef).getReferencedObject(value)
 		obj.decreaseUsage(ms)
 	}
 }

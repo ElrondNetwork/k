@@ -8,13 +8,12 @@ import (
 )
 
 var inputBackup []m.KReference
-var backupModel = m.NewModel()
 
 // saves a copy of the arguments, so we can later check if they changed during the call
 func (interpreter *Interpreter) backupInput(args ...m.KReference) {
 	inputBackup = make([]m.KReference, len(args))
 	for i := 0; i < len(args); i++ {
-		inputBackup[i] = m.DeepCopy(interpreter.Model, backupModel, args[i], false)
+		inputBackup[i] = interpreter.Model.DeepCopy(args[i])
 	}
 }
 
@@ -24,9 +23,9 @@ func (interpreter *Interpreter) checkImmutable(t *testing.T, args ...m.KReferenc
 		t.Error("Test not set up properly. Should be the same number of parameters as the last backupInput call.")
 	}
 	for i := 0; i < len(args); i++ {
-		copyAgain := m.DeepCopy(interpreter.Model, backupModel, args[i], false)
-		if !backupModel.Equals(copyAgain, inputBackup[i]) {
-			t.Errorf("Input state changed! Got:%s Want:%s", interpreter.Model.PrettyPrint(args[i]), backupModel.PrettyPrint(inputBackup[i]))
+		copyAgain := interpreter.Model.DeepCopy(args[i])
+		if !interpreter.Model.Equals(copyAgain, inputBackup[i]) {
+			t.Errorf("Input state changed! Got:%s Want:%s", interpreter.Model.PrettyPrint(args[i]), interpreter.Model.PrettyPrint(inputBackup[i]))
 
 		}
 	}

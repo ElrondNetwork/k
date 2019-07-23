@@ -4,10 +4,7 @@ package %PACKAGE%
 
 // Preserve prevents argument and any objects contained by it from being recycled ever again.
 func (ms *ModelState) Preserve(ref KReference) {
-	refType, constant, value := parseKrefBasic(ref)
-	if constant {
-		return
-	}
+	refType, dataRef, value := parseKrefBasic(ref)
 
 	switch refType {
 	case boolRef:
@@ -32,7 +29,7 @@ func (ms *ModelState) Preserve(ref KReference) {
 		}
 	default:
 		// object types
-		obj := ms.getReferencedObject(value, constant)
+		obj := ms.getData(dataRef).getReferencedObject(value)
 		obj.preserve(ms)
 	}
 }

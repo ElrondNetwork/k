@@ -162,7 +162,8 @@ public class GoBackend implements Backend {
                     "kmapkey.go",
                     "kref.go",
                     "printK.go", "printPretty.go",
-                    "referenceUsageInc.go", "referenceUsageDec.go", "referenceRecycle.go", "referencePreserve.go")) {
+                    "referenceUsageInc.go", "referenceUsageDec.go", "referenceRecycle.go", "referencePreserve.go",
+                    "transfer.go")) {
                 if (options.naive) {
                     packageManager.copyFileToPackage(
                             files.resolveKBase("include/go/model/naive/" + fileName),
