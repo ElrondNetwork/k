@@ -12,7 +12,7 @@ type KObject interface {
 	referenceType() kreferenceType
 	equals(ms *ModelState, other KObject) bool
 	deepCopy(ms *ModelState) KObject
-	transfer(from, to *ModelData) KObject
+	transferContents(from, to *ModelData)
 	prettyPrint(ms *ModelState, sb *strings.Builder, indent int)
 	kprint(ms *ModelState, sb *strings.Builder)
 	collectionsToK(ms *ModelState) KReference
@@ -179,9 +179,17 @@ func (md *ModelData) PrintStats() {
 	fmt.Printf("\n   Recycle bin - BigInt                   %d (cap: %d)", len(md.bigIntRecycleBin), cap(md.bigIntRecycleBin))
 }
 
-// PrintStats simply prints some statistics to the console.
+// PrintStats simply prints statistics on the main data container to the console.
 // Useful for checking the size of the model.
 func (ms *ModelState) PrintStats() {
+	fmt.Print("\nMain data container:")
+	ms.mainData.PrintStats()
+	fmt.Println()
+}
+
+// PrintAllStats simply prints some statistics to the console.
+// Useful for checking the size of the model.
+func (ms *ModelState) PrintAllStats() {
 	fmt.Print("\nMain data container:")
 	ms.mainData.PrintStats()
 	fmt.Print("\nMemoization data container:")

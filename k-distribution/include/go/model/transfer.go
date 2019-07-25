@@ -3,8 +3,8 @@
 package %PACKAGE%
 
 // transfer copies the structures underlying a reference from one data container to another.
-// It is similar to deep copy.
 // Will only transfer references that actually point to the "from" model.
+// It is a destructive operation, i.e. source sub-tree is no longer usable after transfer.
 func transfer(from, to *ModelData, ref KReference) KReference {
 	refType, dataRef, value := parseKrefBasic(ref)
 	if dataRef != from.selfRef {
@@ -15,8 +15,9 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 	if isCollectionType(refType) {
 		_, _, sortInt, labelInt, index := parseKrefCollection(ref)
 		obj := from.getReferencedObject(index)
-		copiedObj := obj.transfer(from, to)
-		return to.addCollectionObject(Sort(sortInt), KLabel(labelInt), copiedObj)
+		obj.transferContents(from, to)
+		from.allObjects[index] = nil
+		return to.addCollectionObject(Sort(sortInt), KLabel(labelInt), obj)
 	}
 
 	switch refType {
@@ -47,14 +48,18 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 	case kapplyRef:
 		_, _, label, arity, index := parseKrefKApply(ref)
 		if arity == 0 {
-			return to.newKApply(label)
+			return createKrefKApply(to.selfRef, label, 0, 0)
 		}
-		argSlice := from.allKApplyArgs[index : index+arity]
-		argCopy := make([]KReference, len(argSlice))
-		for i, child := range argSlice {
-			argCopy[i] = transfer(from, to, child)
+		// 1. allocate
+		toArgStartIndex := uint64(len(to.allKApplyArgs))
+		for i := uint64(0); i < arity; i++ {
+			to.allKApplyArgs = append(to.allKApplyArgs, 0)
 		}
-		return to.newKApply(label, argCopy...)
+		// 2. transfer
+		for i := uint64(0); i < arity; i++ {
+			to.allKApplyArgs[toArgStartIndex+i] = transfer(from, to, from.allKApplyArgs[index+i])
+		}
+		return createKrefKApply(to.selfRef, label, arity, uint64(toArgStartIndex))
 	case stringRef:
 		_, _, startIndex, length := parseKrefBytes(ref)
 		if length == 0 {
@@ -73,80 +78,45 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 	default:
 		// object types
 		obj := from.getReferencedObject(value)
-		copiedObj := obj.transfer(from, to)
-		return to.addObject(copiedObj)
+		obj.transferContents(from, to)
+		from.allObjects[value] = nil
+		return to.addObject(obj)
 	}
 }
 
-func (k *InjectedKLabel) transfer(from, to *ModelData) KObject {
-	return k
+func (k *InjectedKLabel) transferContents(from, to *ModelData) {
 }
 
-func (k *KVariable) transfer(from, to *ModelData) KObject {
-	return k
+func (k *KVariable) transferContents(from, to *ModelData) {
 }
 
-func (k *Map) transfer(from, to *ModelData) KObject {
-	mapCopy := make(map[KMapKey]KReference)
+func (k *Map) transferContents(from, to *ModelData) {
 	for key, val := range k.Data {
-		mapCopy[key] = transfer(from, to, val)
-	}
-	return &Map{
-		Sort:  k.Sort,
-		Label: k.Label,
-		Data:  mapCopy,
+		k.Data[key] = transfer(from, to, val)
 	}
 }
 
-func (k *List) transfer(from, to *ModelData) KObject {
-	listCopy := make([]KReference, len(k.Data))
+func (k *List) transferContents(from, to *ModelData) {
 	for i, elem := range k.Data {
-		listCopy[i] = transfer(from, to, elem)
-	}
-	return &List{
-		Sort:  k.Sort,
-		Label: k.Label,
-		Data:  listCopy,
+		k.Data[i] = transfer(from, to, elem)
 	}
 }
 
-func (k *Set) transfer(from, to *ModelData) KObject {
-	mapCopy := make(map[KMapKey]bool)
-	for key := range k.Data {
-		mapCopy[key] = true
-	}
-	return &Set{
-		Sort:  k.Sort,
-		Label: k.Label,
-		Data:  mapCopy,
-	}
+func (k *Set) transferContents(from, to *ModelData) {
 }
 
-func (k *Array) transfer(from, to *ModelData) KObject {
-	dataCopy := make([]KReference, len(k.Data.data))
+func (k *Array) transferContents(from, to *ModelData) {
 	for i, elem := range k.Data.data {
-		dataCopy[i] = transfer(from, to, elem)
+		k.Data.data[i] = transfer(from, to, elem)
 	}
-
-	return &Array{
-		Sort: k.Sort,
-		Data: &DynamicArray{
-			MaxSize: k.Data.MaxSize,
-			data:    dataCopy,
-			Default: transfer(from, to, k.Data.Default),
-			ms:      k.Data.ms,
-		},
-	}
+	k.Data.Default = transfer(from, to, k.Data.Default)
 }
 
-func (k *MInt) transfer(from, to *ModelData) KObject {
-	return k
+func (k *MInt) transferContents(from, to *ModelData) {
 }
 
-func (k *Float) transfer(from, to *ModelData) KObject {
-	return k
+func (k *Float) transferContents(from, to *ModelData) {
 }
 
-func (k *StringBuffer) transfer(from, to *ModelData) KObject {
-	return k
+func (k *StringBuffer) transferContents(from, to *ModelData) {
 }
