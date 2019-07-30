@@ -8,15 +8,15 @@ import (
 	"math/big"
 )
 
-const maxSmallInt = math.MaxInt32
-const minSmallInt = math.MinInt32
+const maxSmallInt int64 = (1 << 59) - 1
+const minSmallInt int64 = -maxSmallInt
 
 var maxSmallIntAsBigInt = big.NewInt(maxSmallInt)
 var minSmallIntAsBigInt = big.NewInt(minSmallInt)
 
 // only attempt to multiply as small int numbers less than the sqrt of this max, by a safety margin
 // otherwise play it safe and perform big.Int multiplication
-var maxSmallMultiplicationInt = int64(math.Sqrt(float64(math.MaxInt32))) - 100
+var maxSmallMultiplicationInt = int64(math.Sqrt(float64(maxSmallInt))) - 100
 var minSmallMultiplicationInt = -maxSmallMultiplicationInt
 
 // only attempt to parse as small int strings shorter than this
@@ -193,7 +193,7 @@ func NewIntConstant(stringRepresentation string) KReference {
 
 // FromInt converts a Go integer to an integer in the model
 func (ms *ModelState) FromInt(x int) KReference {
-	if x >= minSmallInt && x <= maxSmallInt {
+	if int64(x) >= minSmallInt && int64(x) <= maxSmallInt {
 		return createKrefSmallInt(int64(x))
 	}
 	ref, obj := ms.newBigIntObject()
@@ -213,7 +213,7 @@ func (ms *ModelState) FromInt64(x int64) KReference {
 
 // FromUint64 converts a uint64 to an integer in the model
 func (ms *ModelState) FromUint64(x uint64) KReference {
-	if x <= maxSmallInt {
+	if x <= uint64(maxSmallInt) {
 		return createKrefSmallInt(int64(x))
 	}
 	ref, obj := ms.newBigIntObject()
