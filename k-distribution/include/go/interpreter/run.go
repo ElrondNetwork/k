@@ -128,8 +128,8 @@ func (i *Interpreter) TakeStepsNoThread(k m.KReference) error {
 }
 
 // gcFrequencyMask indicates how often we perform garbage collection
-// every 1024 steps in this case
-const gcFrequencyMask = (1 << 10) - 1
+// every 65536 steps in this case.
+const gcFrequencyMask = (1 << 16) - 1
 
 func (i *Interpreter) runSteps(maxSteps int) error {
 	running := true
