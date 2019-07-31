@@ -56,12 +56,13 @@ public class InterpreterDefGen {
         sb.append("// Interpreter is a container with a reference to model and basic options").newLine();
         sb.append("type Interpreter struct").beginBlock();
 
-        sb.appendIndentedLine("Model         *m.ModelState");
-        sb.appendIndentedLine("currentStep   int");
-        sb.appendIndentedLine("MaxSteps      int");
-        sb.appendIndentedLine("state         m.KReference");
-        sb.appendIndentedLine("traceHandlers []traceHandler");
-        sb.appendIndentedLine("Verbose       bool");
+        sb.appendIndentedLine("Model             *m.ModelState");
+        sb.appendIndentedLine("currentStep       int");
+        sb.appendIndentedLine("checksSinceLastGc int");
+        sb.appendIndentedLine("MaxSteps          int");
+        sb.appendIndentedLine("state             m.KReference");
+        sb.appendIndentedLine("traceHandlers     []traceHandler");
+        sb.appendIndentedLine("Verbose           bool");
 
         // hook references here
         if (fields.size() > 0) {
@@ -79,12 +80,13 @@ public class InterpreterDefGen {
         sb.append(") *Interpreter").beginBlock();
         sb.newLine();
         sb.writeIndent().append("return &Interpreter").beginBlock();
-        sb.appendIndentedLine("Model:         m.NewModel(),");
-        sb.appendIndentedLine("MaxSteps:      0,");
-        sb.appendIndentedLine("currentStep:   -1, // meaning that no processing started yet");
-        sb.appendIndentedLine("state:         m.NullReference,");
-        sb.appendIndentedLine("traceHandlers: nil,");
-        sb.appendIndentedLine("Verbose:       false,");
+        sb.appendIndentedLine("Model:             m.NewModel(),");
+        sb.appendIndentedLine("MaxSteps:          0,");
+        sb.appendIndentedLine("currentStep:       -1, // meaning that no processing started yet");
+        sb.appendIndentedLine("checksSinceLastGc: 0,");
+        sb.appendIndentedLine("state:             m.NullReference,");
+        sb.appendIndentedLine("traceHandlers:     nil,");
+        sb.appendIndentedLine("Verbose:           false,");
         for (FieldDefinition field : fields) {
             sb.appendIndentedLine(field.fieldName, ": ", field.fieldName, ",");
         }
