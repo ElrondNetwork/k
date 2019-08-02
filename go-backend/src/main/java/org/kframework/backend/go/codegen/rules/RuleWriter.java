@@ -10,8 +10,8 @@ import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
 import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
-import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
+import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.processors.AccumulateRuleVars;
 import org.kframework.backend.go.processors.LookupExtractor;
 import org.kframework.backend.go.processors.LookupVarExtractor;
@@ -87,6 +87,11 @@ public class RuleWriter {
             // also collect vars from lookups
             new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
 
+            // var indexes
+            VarContainer vars = new VarContainer(
+                    accumLhsVars.vars(),
+                    accumRhsVars.vars());
+
             // if !matched
             sb.writeIndent().append("if !matched").beginBlock();
 
@@ -96,8 +101,7 @@ public class RuleWriter {
             RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
                     nameProvider, matchWriter,
                     functionInfo.arguments,
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars(),
+                    vars,
                     alreadySeenLhsVariables,
                     false);
             if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
@@ -111,8 +115,7 @@ public class RuleWriter {
             writeLookups(sb, ruleNum,
                     functionInfo,
                     lookups,
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars(),
+                    vars,
                     alreadySeenLhsVariables);
 
             // output requires
@@ -120,7 +123,7 @@ public class RuleWriter {
             if (!requires.equals(BooleanUtils.TRUE)) {
                 sb.appendIndentedLine("// REQUIRES ", ToKast.apply(requires));
                 RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
-                        accumLhsVars.vars(), tempVarCounters,
+                        vars, tempVarCounters,
                         sb.getCurrentIndent());
                 sideCondVisitor.apply(requires);
                 sideCondVisitor.writeEvalCalls(sb);
@@ -137,7 +140,7 @@ public class RuleWriter {
             sb.appendIndentedLine("// RHS");
             traceLine(sb, type, ruleNum, r);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                    accumLhsVars.vars(), tempVarCounters,
+                    vars, tempVarCounters,
                     sb.getCurrentIndent(),
                     true, functionInfo);
             rhsWriter.apply(right);
@@ -152,7 +155,9 @@ public class RuleWriter {
 
             // return some info regarding the written rule
             boolean alwaysMatches = !lhsWriter.containsIf() && !requiresContainsIf;
-            return new RuleInfo(alwaysMatches);
+            return new RuleInfo(
+                    alwaysMatches,
+                    vars.varIndexes.getNrVars(), vars.varIndexes.getNrBoolVars());
         } catch (NoSuchElementException e) {
             System.err.println(r);
             throw e;
@@ -165,7 +170,7 @@ public class RuleWriter {
     private void writeLookups(GoStringBuilder sb, int ruleNum,
                               FunctionInfo functionInfo,
                               List<Lookup> lookups,
-                              RuleVars lhsVars, RuleVars rhsVars,
+                              VarContainer vars,
                               Set<KVariable> alreadySeenLhsVariables) {
         if (lookups.isEmpty()) {
             return;
@@ -182,20 +187,20 @@ public class RuleWriter {
             RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
                     nameProvider, matchWriter,
                     new FunctionParams(0),
-                    lhsVars, rhsVars,
+                    vars,
                     alreadySeenLhsVariables,
                     false);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                    rhsVars, tempVarCounters,
+                    vars, tempVarCounters,
                     sb.getCurrentIndent(),
                     false, functionInfo);
             rhsWriter.apply(lookup.getRhs());
 
             switch (lookup.getType()) {
             case MATCH:
-                String matchVar = "matchEval" + lookupIndex;
+                String matchVar = vars.varIndexes.oneTimeVariableMVRef("matchEval" + lookupIndex);
                 rhsWriter.writeEvalCalls(sb);
-                sb.writeIndent().append(matchVar).append(" := ");
+                sb.writeIndent().append(matchVar).append(" = ");
                 rhsWriter.writeReturnValue(sb);
 
                 sb.newLine();
@@ -223,12 +228,13 @@ public class RuleWriter {
                 lhsWriter = new RuleLhsWriter(sb, data,
                         nameProvider, matchWriter,
                         new FunctionParams(0),
-                        lhsVars, rhsVars,
+                        vars,
                         alreadySeenLhsVariables,
                         false);
                 writeChoiceLookup(
                         sb, lookup,
                         "setChoice" + lookupIndex, "GetSetObject",
+                        vars,
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -236,12 +242,13 @@ public class RuleWriter {
                 lhsWriter = new RuleLhsWriter(sb, data,
                         nameProvider, matchWriter,
                         new FunctionParams(0),
-                        lhsVars, rhsVars,
+                        vars,
                         alreadySeenLhsVariables,
                         false);
                 writeChoiceLookup(
                         sb, lookup,
                         "mapChoice" + lookupIndex, "GetMapObject",
+                        vars,
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -256,6 +263,7 @@ public class RuleWriter {
     private void writeChoiceLookup(
             GoStringBuilder sb, Lookup lookup,
             String varPrefix, String expectedKType,
+            VarContainer vars,
             String reapply,
             RuleLhsWriter lhsWriter, RuleRhsWriterBase rhsWriter) {
 

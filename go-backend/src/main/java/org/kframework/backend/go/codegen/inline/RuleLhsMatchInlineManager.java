@@ -65,7 +65,7 @@ public class RuleLhsMatchInlineManager implements RuleLhsMatchWriter {
     public void appendPredicateMatch(String hookName, GoStringBuilder sb, String subject, String sortName) {
         switch(hookName) {
         case "INT.Int":
-            sb.append("rt := ").append(subject).append(" >> refTypeShift; rt == uint64(smallPositiveIntRef) || rt == uint64(smallNegativeIntRef) || rt == uint64(bigIntRef)");
+            sb.append("i.tempTypeVar = ").append(subject).append(" >> refTypeShift; i.tempTypeVar == uint64(smallPositiveIntRef) || i.tempTypeVar == uint64(smallNegativeIntRef) || i.tempTypeVar == uint64(bigIntRef)");
             return;
         case "FLOAT.Float":
             sb.append(subject).append(">>refTypeShift == uint64(floatRef)");

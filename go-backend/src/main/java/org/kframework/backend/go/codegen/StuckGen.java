@@ -29,11 +29,16 @@ public class StuckGen {
         sb.append(packageManager.goGeneratedFileComment).append("\n\n");
         sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
 
+        int maxNrVars = 0;
+        int maxNrBoolVars = 0;
+
         sb.append("import (\n");
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
         sb.append("func (i *Interpreter) makeStuck(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
+        sb.appendIndentedLine("var v [makeStuckFuncNrVars]KReference");
+        sb.appendIndentedLine("var bv [makeStuckFuncNrBoolVars]bool");
 
         if (data.makeStuck != null) {
             sb.appendIndentedLine("matched := false");
@@ -41,11 +46,20 @@ public class StuckGen {
                     data.makeStuck, sb, RuleType.REGULAR, stuckRuleNumber,
                     FunctionInfo.systemFunctionInfo("makeStuck", 1));
             assert !ruleInfo.alwaysMatches();
+            if (ruleInfo.nrVars > maxNrVars) {
+                maxNrVars = ruleInfo.nrVars;
+            }
+            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.nrBoolVars;
+            }
         }
+        sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
         sb.appendIndentedLine("return c, nil");
         sb.endOneBlock().newLine();
 
         sb.append("func (i *Interpreter) makeUnstuck(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
+        sb.appendIndentedLine("var v [makeStuckFuncNrVars]KReference");
+        sb.appendIndentedLine("var bv [makeStuckFuncNrBoolVars]bool");
 
         if (data.makeUnstuck != null) {
             sb.appendIndentedLine("matched := false");
@@ -53,9 +67,20 @@ public class StuckGen {
                     data.makeUnstuck, sb, RuleType.REGULAR, stuckRuleNumber,
                     FunctionInfo.systemFunctionInfo("makeUnstuck", 1));
             assert !ruleInfo.alwaysMatches();
+            if (ruleInfo.nrVars > maxNrVars) {
+                maxNrVars = ruleInfo.nrVars;
+            }
+            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.nrBoolVars;
+            }
         }
+        sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
         sb.appendIndentedLine("return c, nil");
         sb.endOneBlock().newLine();
+
+        sb.appendIndentedLine("const makeStuckFuncNrVars = ", Integer.toString(maxNrVars));
+        sb.appendIndentedLine("const makeStuckFuncNrBoolVars = ", Integer.toString(maxNrBoolVars));
+        sb.newLine();
 
         return sb.toString();
     }

@@ -72,119 +72,66 @@ public class StepFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        writeStepFunction(sb, sortedRules);
+        int maxNrVars = 0;
+        int maxNrBoolVars = 0;
 
-        return sb.toString();
-    }
+        sb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
+        sb.appendIndentedLine("config := c");
+        sb.appendIndentedLine("matched := false");
+        sb.appendIndentedLine("v := i.stepTempVars");
+        sb.appendIndentedLine("bv := i.stepTempBoolVars");
 
-    public String generateLookupsStep() {
-        GoStringBuilder sb = new GoStringBuilder();
-        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
-        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
-
-        sb.append("import (\n");
-        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
-        sb.append(")\n\n");
-
-        writeLookupsStepFunction(sb, sortedRules);
-
-        return sb.toString();
-    }
-
-    public String generateStepRules() {
-        GoStringBuilder sb = new GoStringBuilder();
-        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
-        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
-
-        sb.append("import (\n");
-        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
-        sb.append(")\n\n");
-
-        writeStepRules(sb, sortedRules);
-
-        return sb.toString();
-    }
-
-
-    private void writeStepRules(GoStringBuilder sb, List<Rule> sortedRules) {
         for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
             int ruleNum = entry.getKey();
             Rule r = entry.getValue();
-
-            String funcName = "stepRule" + ruleNum;
-
-            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.KReference, config m.KReference) (m.KReference, error)").beginBlock();
-            sb.appendIndentedLine("matched := false");
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
                     FunctionInfo.systemFunctionInfo("step", 1));
             assert !ruleInfo.alwaysMatches();
-
-            sb.appendIndentedLine("return c, noStep");
-            sb.endOneBlock().newLine();
+            if (ruleInfo.nrVars > maxNrVars) {
+                maxNrVars = ruleInfo.nrVars;
+            }
+            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.nrBoolVars;
+            }
         }
+
+        sb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
+        sb.endOneBlock().newLine();
+
+        sb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
+        sb.appendIndentedLine("matched := false");
+        sb.appendIndentedLine("v := i.stepTempVars");
+        sb.appendIndentedLine("bv := i.stepTempBoolVars");
 
         for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
             int ruleNum = entry.getKey();
             Rule r = entry.getValue();
 
-            String funcName = "stepLookupRule" + ruleNum;
-
-            sb.append("func (i *Interpreter) ").append(funcName).append("(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
-            sb.appendIndentedLine("matched := false");
-
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     r, sb, RuleType.REGULAR, ruleNum,
                     FunctionInfo.systemFunctionInfo("stepLookups", 1));
             assert !ruleInfo.alwaysMatches();
-
-            sb.appendIndentedLine("return c, noStep");
-            sb.endOneBlock().newLine();
-        }
-    }
-
-    private void writeStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
-        sb.writeIndent().append("config := c").newLine();
-        sb.appendIndentedLine("var result m.KReference");
-        sb.appendIndentedLine("var err error");
-        for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
-            int ruleNum = entry.getKey();
-            String funcName = "stepRule" + ruleNum;
-            sb.appendIndentedLine("result, err = i.", funcName, "(c, config)");
-            sb.writeIndent().append("if err == nil").beginBlock();
-            sb.appendIndentedLine("return result, nil");
-            sb.endOneBlock();
-            sb.writeIndent().append("if _, isNoStep := err.(*noStepError); !isNoStep").beginBlock();
-            sb.appendIndentedLine("return result, err");
-            sb.endOneBlock();
-        }
-
-        sb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
-        sb.endOneBlock().newLine();
-    }
-
-    private void writeLookupsStepFunction(GoStringBuilder sb, List<Rule> sortedRules) {
-        sb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
-        sb.appendIndentedLine("var result m.KReference");
-        sb.appendIndentedLine("var err error");
-        for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
-            int ruleNum = entry.getKey();
-            String funcName = "stepLookupRule" + ruleNum;
-            sb.appendIndentedLine("result, err = i.", funcName, "(c, config, guard)");
-            sb.writeIndent().append("if err == nil").beginBlock();
-            sb.appendIndentedLine("return result, nil");
-            sb.endOneBlock();
-            sb.writeIndent().append("if _, isNoStep := err.(*noStepError); !isNoStep").beginBlock();
-            sb.appendIndentedLine("return result, err");
-            sb.endOneBlock();
+            if (ruleInfo.nrVars > maxNrVars) {
+                maxNrVars = ruleInfo.nrVars;
+            }
+            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.nrBoolVars;
+            }
         }
 
         sb.appendIndentedLine("return c, noStep");
         sb.endOneBlock().newLine();
-    }
 
+        sb.appendIndentedLine("// indicates the maximum number of variables required by a rule");
+        sb.appendIndentedLine("// needed to initialize the matched variables (mv) slice");
+        sb.appendIndentedLine("const stepMaxVarCount = " + maxNrVars);
+        sb.appendIndentedLine("const stepMaxBoolVarCount = " + maxNrBoolVars);
+        sb.newLine();
+
+        return sb.toString();
+    }
 
     private int sortRules(Rule r1, Rule r2) {
         return ComparisonChain.start()

@@ -17,6 +17,11 @@ func (i *Interpreter) warn(message string) {
 func doNothing(c m.KReference) {
 }
 
+// tricks the compiler to stop complaining about unused vars/boolVars variable in some cases
+// never gets called
+func doNothingWithVars(varsLen, boolVarLen int) {
+}
+
 // DebugPrint ... prints a K item to console, useful for debugging
 func (i *Interpreter) DebugPrint(info string, c m.KReference) {
 	fmt.Printf("debug %s: %s\n", info, i.Model.PrettyPrint(c))

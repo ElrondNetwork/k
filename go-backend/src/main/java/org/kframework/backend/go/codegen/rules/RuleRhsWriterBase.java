@@ -2,8 +2,8 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
-import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
+import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -35,7 +35,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
-    protected final RuleVars lhsVars;
+    protected final VarContainer vars;
     protected final TempVarCounters tempVarCounters;
     protected final int topLevelIndent;
 
@@ -54,14 +54,14 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     public RuleRhsWriterBase(DefinitionData data,
                              GoNameProvider nameProvider,
-                             RuleVars lhsVars,
+                             VarContainer vars,
                              TempVarCounters tempVarCounters,
                              int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.nameProvider = nameProvider;
-        this.lhsVars = lhsVars;
+        this.vars = vars;
         this.tempVarCounters = tempVarCounters;
     }
 
@@ -117,9 +117,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     protected void applyKApplyExecute(KApply k) {
-        int evalVarIndex = tempVarCounters.consumeEvalVarIndex();
-        String evalVarName = "eval" + evalVarIndex;
-        String errVarName = "err" + evalVarIndex;
+        String evalVarName = vars.varIndexes.oneTimeVariableMVRef("eval");
 
         // return the eval variable
         currentSb.append(evalVarName);
@@ -146,7 +144,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
             // no hook
             // regular eval"KEQUAL.ite"
             // evalX, errX := func <funcName> (...)
-            evalSb.writeIndent().append(evalVarName).append(", ").append(errVarName).append(" := ");
+            evalSb.writeIndent().append(evalVarName).append(", i.evalErr = ");
             evalSb.append("i.");
             evalSb.append(nameProvider.evalFunctionName(k.klabel())); // func name
             if (k.items().size() == 0) { // call parameters
@@ -163,8 +161,8 @@ public abstract class RuleRhsWriterBase extends VisitK {
                 evalSb.decreaseIndent();
                 evalSb.newLine();
             }
-            evalSb.writeIndent().append("if ").append(errVarName).append(" != nil").beginBlock();
-            evalSb.writeIndent().append("return m.NoResult, ").append(errVarName).newLine();
+            evalSb.writeIndent().append("if i.evalErr != nil").beginBlock();
+            evalSb.writeIndent().append("return m.NoResult, i.evalErr").newLine();
             evalSb.endOneBlock();
             break;
         }
@@ -182,7 +180,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         assert k.klist().items().size() == 3;
 
         // arg0 (the condition) is treated normally
-        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("// ", ToKast.apply(k));
         evalSb.writeIndent().append("if m.IsTrue(");
         apply(k.klist().items().get(0)); // 1st argument, the condition
         evalSb.append(")").beginBlock("rhs if-then-else");
@@ -224,7 +222,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         // because there are cases when evaluating it causes the entire execution to fail
         assert k.klist().items().size() == 2;
 
-        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("// ", ToKast.apply(k));
         evalSb.writeIndent().append(evalVarName).append(" = ");
         apply(k.klist().items().get(0));
         evalSb.newLine();
@@ -252,7 +250,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         // because there are cases when evaluating it causes the entire execution to fail
         assert k.klist().items().size() == 2;
 
-        evalSb.appendIndentedLine("var ", evalVarName, " m.KReference // ", ToKast.apply(k));
+        evalSb.appendIndentedLine("// ", ToKast.apply(k));
         evalSb.writeIndent().append(evalVarName).append(" = ");
         apply(k.klist().items().get(0));
         evalSb.newLine();
@@ -363,19 +361,19 @@ public abstract class RuleRhsWriterBase extends VisitK {
     @Override
     public void apply(KVariable v) {
         start();
-        String varName = lhsVars.getVarName(v);
+        String varName = vars.varIndexes.kvariableMVRef(v);
         if (varName == null) {
             currentSb.append("/* varName=null */ m.InternedBottom");
             end();
             return;
         }
 
-        if (!lhsVars.containsVar(v) && varName.startsWith("?")) {
+        if (!vars.lhsVars.containsVar(v) && varName.startsWith("?")) {
             throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
-        } else if (!lhsVars.containsVar(v)) {
+        } else if (!vars.lhsVars.containsVar(v)) {
             currentSb.append("panic(\"Stuck!\")");
         } else {
-            KLabel listVar = lhsVars.listVars.get(varName);
+            KLabel listVar = vars.lhsVars.listVars.get(varName);
             if (listVar != null) {
                 Sort sort = data.mainModule.sortFor().apply(listVar);
                 currentSb.append("&m.List{Sort: m.").append(nameProvider.sortVariableName(sort));

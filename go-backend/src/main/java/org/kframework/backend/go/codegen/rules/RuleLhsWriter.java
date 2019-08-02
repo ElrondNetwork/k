@@ -6,7 +6,7 @@ import org.kframework.backend.go.codegen.GoBuiltin;
 import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionParams;
-import org.kframework.backend.go.model.RuleVars;
+import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.kil.Attribute;
@@ -35,8 +35,8 @@ public class RuleLhsWriter extends VisitK {
     private final GoNameProvider nameProvider;
     private final RuleLhsMatchWriter matchWriter;
     private final FunctionParams functionVars;
-    private final RuleVars lhsVars;
-    private final RuleVars rhsVars;
+    private final VarContainer vars;
+
 
     /**
      * Whenever we see a variable more than once, instead of adding a variable declaration, we add a check that the two instances are equal.
@@ -80,7 +80,7 @@ public class RuleLhsWriter extends VisitK {
                          GoNameProvider nameProvider,
                          RuleLhsMatchWriter matchWriter,
                          FunctionParams functionVars,
-                         RuleVars lhsVars, RuleVars rhsVars,
+                         VarContainer vars,
                          Set<KVariable> alreadySeenVariables,
                          boolean startWithScopeBlockIfNecessary) {
         this.sb = sb;
@@ -88,8 +88,7 @@ public class RuleLhsWriter extends VisitK {
         this.nameProvider = nameProvider;
         this.matchWriter = matchWriter;
         this.functionVars = functionVars;
-        this.lhsVars = lhsVars;
-        this.rhsVars = rhsVars;
+        this.vars = vars;
         this.alreadySeenVariables = alreadySeenVariables;
         this.startWithScopeBlockIfNecessary = startWithScopeBlockIfNecessary;
     }
@@ -142,15 +141,13 @@ public class RuleLhsWriter extends VisitK {
             K value = k.klist().items().get(1);
 
             //magic down-ness
-            String ktVar = "kt" + kitemIndex;
-            kitemIndex++;
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent();
             String subject = consumeSubject();
             sb.append("if ");
             matchWriter.appendKTokenMatch(sb, subject, nameProvider.sortVariableName(sort));
             sb.beginBlock("lhs KApply #KToken");
-            nextSubject = "i.Model.KTokenValue(" + ktVar + ")";
+            nextSubject = subject;
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             handleExpressionType(ExpressionType.IF);
@@ -224,23 +221,24 @@ public class RuleLhsWriter extends VisitK {
             String kappVar;
             String aliasComment = "";
             if (alias != null) {
-                kappVar = lhsVars.getVarName(alias);
+                kappVar = vars.lhsVars.getVarName(alias);
                 aliasComment = " as " + alias.name();
             } else {
                 kappVar = "kapp" + kitemIndex;
                 kitemIndex++;
             }
+            String kappMV = vars.varIndexes.oneTimeVariableMVRef(kappVar);
 
             handleExpressionType(ExpressionType.IF);
+            sb.appendIndentedLine(kappMV, " = ", subject);
             sb.writeIndent().append("if ");
-            matchWriter.appendKApplyMatch(sb, subject, nameProvider.klabelVariableName(k.klabel()), arity);
+            matchWriter.appendKApplyMatch(sb, kappMV, nameProvider.klabelVariableName(k.klabel()), arity);
             sb.beginBlock(ToKast.apply(k), aliasComment);
-            if (arity > 0) {
-                sb.appendIndentedLine(kappVar, " := ", subject);
-            }
             int i = 0;
             for (K item : k.klist().items()) {
-                nextSubject = "i.Model.KApplyArg(" + kappVar + ", " + i + ")";
+                String kappItemMV = vars.varIndexes.oneTimeVariableMVRef(kappVar + "Item" + i);
+                sb.appendIndentedLine(kappItemMV, " = i.Model.KApplyArg(", kappMV, ", ", Integer.toString(i), ")");
+                nextSubject = kappItemMV;
                 apply(item);
                 i++;
             }
@@ -338,7 +336,7 @@ public class RuleLhsWriter extends VisitK {
 
     @Override
     public void apply(KVariable k) {
-        String varName = lhsVars.getVarName(k);
+        String varName = vars.varIndexes.kvariableMVRef(k);
 
         if (alreadySeenVariables.contains(k)) {
             handleExpressionType(ExpressionType.IF);
@@ -359,10 +357,10 @@ public class RuleLhsWriter extends VisitK {
                 matchWriter.appendPredicateMatch(hook, sb, subject, nameProvider.sortVariableName(s));
                 sb.beginBlock("lhs KVariable with hook:" + hook);
 
-                boolean varNeeded = rhsVars.containsVar(k) // needed in RHS
-                        || lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
+                boolean varNeeded = vars.rhsVars.containsVar(k) // needed in RHS
+                        || vars.lhsVars.getVarCount(k) > 1; // needed in LHS, when it reappears
                 if (varNeeded) {
-                    sb.appendIndentedLine(varName, " := ", subject, " // ", ToKast.apply((K) k));
+                    sb.appendIndentedLine(varName, " = ", subject, " // ", ToKast.apply((K) k));
                 } else {
                     sb.appendIndentedLine("// unused variable: ", ToKast.apply((K) k));
                 }
@@ -378,18 +376,11 @@ public class RuleLhsWriter extends VisitK {
             handleExpressionType(ExpressionType.NOTHING);
             sb.writeIndent();
             sb.append("// "); // no code here, it is redundant
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable _\n");
-        } else if (!rhsVars.containsVar(k)) {
-            handleExpressionType(ExpressionType.NOTHING);
-            String subject = consumeSubject();
-            sb.writeIndent();
-            sb.append("doNothing(").append(subject).append(") ");
-            sb.append("// "); // no code here, go will complain that the variable is not used, and will refuse to compile
-            sb.append(varName).append(" := ").append(subject).append(" // lhs KVariable not used").newLine();
+            sb.append(varName).append(" = ").append(consumeSubject()).append(" // lhs KVariable _\n");
         } else {
             handleExpressionType(ExpressionType.STATEMENT);
             sb.writeIndent();
-            sb.append(varName).append(" := ").append(consumeSubject()).append(" // lhs KVariable ").append(k.name()).newLine();
+            sb.append(varName).append(" = ").append(consumeSubject()).append(" // lhs KVariable ").append(k.name()).newLine();
         }
     }
 
@@ -406,13 +397,13 @@ public class RuleLhsWriter extends VisitK {
             return;
         default:
             int nrHeads = k.items().size() - 1;
-            String kseqVarName = "kseq" + kitemIndex;
+            String kseqVarName = vars.varIndexes.oneTimeVariableMVRef("kseq" + kitemIndex);
             kitemIndex++;
 
             // the subject might be an expression, call it only once, in the if
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent().append("if ");
-            sb.append(kseqVarName).append(" := ").append(consumeSubject()).append("; ");
+            sb.append(kseqVarName).append(" = ").append(consumeSubject()).append("; ");
             String subject = kseqVarName;
 
             // match condition
@@ -426,14 +417,15 @@ public class RuleLhsWriter extends VisitK {
 
             // declare head(s)/tails
             String kseqTail = "";
+            String[] headMVRefs = new String[nrHeads];
             for (int i = 0; i < nrHeads; i++) {
                 // split into head :: tail, if subject is KSequence; subject :: emptySequence otherwise
                 // if multiple heads required, split repeatedly
-                String kseqHead = kseqVarName + "Head" + i;
-                kseqTail = kseqVarName + "Tail" + i;
+                headMVRefs[i] = vars.varIndexes.oneTimeVariableMVRef(kseqVarName + "Head" + i);
+                kseqTail = vars.varIndexes.oneTimeVariableMVRef(kseqVarName + "Tail" + i);
                 sb.writeIndent().append("_, ");
-                sb.append(kseqHead).append(", ");
-                sb.append(kseqTail).append(" := i.Model.KSequenceSplitHeadTail(").append(subject).append(") // ");
+                sb.append(headMVRefs[i]).append(", ");
+                sb.append(kseqTail).append(" = i.Model.KSequenceSplitHeadTail(").append(subject).append(") // ");
                 sb.append(ToKast.apply(k.items().get(i))).append(" ~> ...");
                 sb.newLine();
 
@@ -443,8 +435,7 @@ public class RuleLhsWriter extends VisitK {
 
             // process heads
             for (int i = 0; i < nrHeads; i++) {
-                String kseqHead = kseqVarName + "Head" + i;
-                nextSubject = kseqHead;
+                nextSubject = headMVRefs[i];
                 apply(k.items().get(i));
             }
 

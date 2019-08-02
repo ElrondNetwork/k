@@ -6,12 +6,16 @@ public class FunctionInfo {
 
     public final KLabel label;
     public final String goName;
+    public final String nrVarsConstName;
+    public final String nrBoolVarsConstName;
     public final boolean isMemo;
     public final FunctionParams arguments;
 
     private FunctionInfo(KLabel label, String goName, boolean isMemo, int arity) {
         this.label = label;
         this.goName = goName;
+        this.nrVarsConstName = goName + "NrVars";
+        this.nrBoolVarsConstName = goName + "NrBoolVars";
         this.isMemo = isMemo;
         this.arguments = new FunctionParams(arity);
     }

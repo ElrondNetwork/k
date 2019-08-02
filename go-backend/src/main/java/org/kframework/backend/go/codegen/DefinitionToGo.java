@@ -230,7 +230,7 @@ public class DefinitionToGo {
         List<List<KLabel>> functionOrder = sortFunctions(klabelRuleMap, functions, anywhereKLabels, dependencies); // result no longer required
         Set<KLabel> impurities = functions.stream().filter(lbl -> mainModule.attributesFor().apply(lbl).contains(Attribute.IMPURE_KEY)).collect(Collectors.toSet());
         impurities.addAll(ancestors(impurities, dependencies));
-        Set<KLabel> constants = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
+        Set<KLabel> constantLabels = functions.stream().filter(lbl -> !impurities.contains(lbl) && stream(mainModule.productionsFor().apply(lbl)).filter(p -> p.arity() == 0).findAny().isPresent()).collect(Collectors.toSet());
 
         RuleCounter ruleCounter = new RuleCounter();
         int memoCounter = 0;
@@ -247,6 +247,11 @@ public class DefinitionToGo {
                 sb.append(functionInfo.goName);
                 sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.KReference, guard int) (m.KReference, error)");
                 sb.beginBlock();
+
+                // extract rules
+                List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
+                sb.appendIndentedLine("var v [", functionInfo.nrVarsConstName, "]KReference");
+                sb.appendIndentedLine("var bv [", functionInfo.nrBoolVarsConstName, "]bool");
 
                 // loop needed for tail recursion
                 sb.writeIndent().append("for true").beginBlock();
@@ -347,7 +352,8 @@ public class DefinitionToGo {
                 }
 
                 // main!
-                List<Rule> rules = functionRules.get(functionLabel).stream().sorted(this::sortFunctionRules).collect(Collectors.toList());
+                int maxNrVars = 0;
+                int maxNrBoolVars = 0;
                 for (Rule r : rules) {
                     if (unreachableCode) {
                         sb.appendIndentedLine("// unreachable");
@@ -359,6 +365,12 @@ public class DefinitionToGo {
                         RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleNum, functionInfo);
                         if (ruleInfo.alwaysMatches()) {
                             unreachableCode = true;
+                        }
+                        if (ruleInfo.nrVars > maxNrVars) {
+                            maxNrVars = ruleInfo.nrVars;
+                        }
+                        if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                            maxNrBoolVars = ruleInfo.nrBoolVars;
                         }
                     }
                 }
@@ -378,12 +390,17 @@ public class DefinitionToGo {
                 }
 
                 sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
+                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
                 sb.appendIndentedLine("return m.NullReference, nil");
                 sb.endOneBlock(); // func
                 sb.newLine();
 
+                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(maxNrVars));
+                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(maxNrBoolVars));
+                sb.newLine();
+
                 // not yet sure if we're keeping these
-                if (constants.contains(functionLabel)) {
+                if (constantLabels.contains(functionLabel)) {
                     sb.append("//var ").append(nameProvider.constFunctionName(functionLabel));
                     sb.append(" K = ").append(nameProvider.evalFunctionName(functionLabel));
                     sb.append("(m.InternedBottom)\n\n");
@@ -403,15 +420,26 @@ public class DefinitionToGo {
                 sb.append("(").append(functionInfo.arguments.parameterDeclaration()).append("config m.KReference, guard int) (m.KReference, error)");
                 sb.beginBlock();
 
+                List<Rule> rules = anywhereRules.get(functionLabel);
+                sb.appendIndentedLine("var v [", functionInfo.nrVarsConstName, "]KReference");
+                sb.appendIndentedLine("var bv [", functionInfo.nrBoolVarsConstName, "]bool");
+
                 // loop needed for tail recursion
                 sb.writeIndent().append("for true").beginBlock();
                 sb.appendIndentedLine("matched := false");
 
                 // main!
-                List<Rule> rules = anywhereRules.get(functionLabel);
+                int maxNrVars = 0;
+                int maxNrBoolVars = 0;
                 for (Rule r : rules) {
                     int ruleNum = ruleCounter.consumeRuleIndex();
                     RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleNum, functionInfo);
+                    if (ruleInfo.nrVars > maxNrVars) {
+                        maxNrVars = ruleInfo.nrVars;
+                    }
+                    if (ruleInfo.nrBoolVars > maxNrBoolVars) {
+                        maxNrBoolVars = ruleInfo.nrBoolVars;
+                    }
                 }
 
                 // final return
@@ -421,8 +449,13 @@ public class DefinitionToGo {
                 sb.append("), nil").newLine();
 
                 sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
+                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
                 sb.appendIndentedLine("return m.NullReference, nil");
                 sb.endOneBlock(); // func
+                sb.newLine();
+
+                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(maxNrVars));
+                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(maxNrBoolVars));
                 sb.newLine();
             }
         }

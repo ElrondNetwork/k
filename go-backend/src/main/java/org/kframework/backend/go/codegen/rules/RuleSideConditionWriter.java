@@ -2,8 +2,8 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
-import org.kframework.backend.go.model.RuleVars;
 import org.kframework.backend.go.model.TempVarCounters;
+import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -23,16 +23,16 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
 
     public RuleSideConditionWriter(DefinitionData data,
                                    GoNameProvider nameProvider,
-                                   RuleVars lhsVars,
+                                   VarContainer vars,
                                    TempVarCounters tempVarCounters,
                                    int tabsIndent) {
-        super(data, nameProvider, lhsVars, tempVarCounters, tabsIndent, "if ".length());
+        super(data, nameProvider, vars, tempVarCounters, tabsIndent, "if ".length());
     }
 
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleSideConditionWriter(data, nameProvider,
-                lhsVars, tempVarCounters,
+                vars, tempVarCounters,
                 indent);
     }
 
@@ -98,8 +98,8 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                     currentSb = evalSb;
 
                     // get arg1 evaluation first
-                    String andVarName = "evalAnd" + tempVarCounters.consumeEvalVarIndex();
-                    evalSb.appendIndentedLine("var ", andVarName, " bool // ", ToKast.apply(k));
+                    evalSb.appendIndentedLine("// ", ToKast.apply(k));
+                    String andVarName = vars.varIndexes.evalBoolVarRef("evalAnd");
                     evalSb.writeIndent().append(andVarName).append(" = ");
                     apply(arg1);
                     evalSb.newLine();
@@ -132,8 +132,8 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                 GoStringBuilder backupSb = currentSb;
                 currentSb = evalSb;
 
-                String orVarName = "evalOr" + tempVarCounters.consumeEvalVarIndex();
-                evalSb.appendIndentedLine("var ", orVarName, " bool // ", ToKast.apply(k));
+                evalSb.appendIndentedLine("// ", ToKast.apply(k));
+                String orVarName = vars.varIndexes.evalBoolVarRef("evalOr");
 
                 // get arg1 evaluation first
                 evalSb.writeIndent().append(orVarName).append(" = ");

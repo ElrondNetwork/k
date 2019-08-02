@@ -57,9 +57,13 @@ public class InterpreterDefGen {
         sb.append("type Interpreter struct").beginBlock();
 
         sb.appendIndentedLine("Model             *m.ModelState");
+        sb.appendIndentedLine("MaxSteps          int");
         sb.appendIndentedLine("currentStep       int");
         sb.appendIndentedLine("checksSinceLastGc int");
-        sb.appendIndentedLine("MaxSteps          int");
+        sb.appendIndentedLine("stepTempVars      []m.KReference // temporary variables, used during execution");
+        sb.appendIndentedLine("stepTempBoolVars  []bool // temporary bool evaluation results, used during execution");
+        sb.appendIndentedLine("evalErr           error // used during execution");
+        sb.appendIndentedLine("tempTypeVar       uint64 // used during execution");
         sb.appendIndentedLine("state             m.KReference");
         sb.appendIndentedLine("traceHandlers     []traceHandler");
         sb.appendIndentedLine("Verbose           bool");
@@ -84,6 +88,10 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("MaxSteps:          0,");
         sb.appendIndentedLine("currentStep:       -1, // meaning that no processing started yet");
         sb.appendIndentedLine("checksSinceLastGc: 0,");
+        sb.appendIndentedLine("stepTempVars:      make([]m.KReference, stepMaxVarCount),");
+        sb.appendIndentedLine("stepTempBoolVars:  make([]bool, stepMaxBoolVarCount),");
+        sb.appendIndentedLine("evalErr:           nil,");
+        sb.appendIndentedLine("tempTypeVar:       0,");
         sb.appendIndentedLine("state:             m.NullReference,");
         sb.appendIndentedLine("traceHandlers:     nil,");
         sb.appendIndentedLine("Verbose:           false,");
