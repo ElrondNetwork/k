@@ -2,7 +2,6 @@ package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
-import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.kore.K;
@@ -18,11 +17,10 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
             DefinitionData data,
             GoNameProvider nameProvider,
             VarContainer vars,
-            TempVarCounters tempVarCounters,
             int tabsIndent,
             boolean isTopLevelReturn,
             FunctionInfo parentFunction) {
-        super(data, nameProvider, vars, tempVarCounters, tabsIndent, 0);
+        super(data, nameProvider, vars, tabsIndent, 0);
         this.isTopLevelReturn = isTopLevelReturn;
         this.parentFunction = parentFunction;
     }
@@ -30,7 +28,7 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleRhsWriter(data, nameProvider,
-                vars, tempVarCounters,
+                vars,
                 indent,
                 false, parentFunction);
     }

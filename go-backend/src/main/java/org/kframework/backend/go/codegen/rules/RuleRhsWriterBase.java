@@ -2,7 +2,6 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
-import org.kframework.backend.go.model.TempVarCounters;
 import org.kframework.backend.go.model.VarContainer;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
@@ -36,7 +35,6 @@ public abstract class RuleRhsWriterBase extends VisitK {
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
     protected final VarContainer vars;
-    protected final TempVarCounters tempVarCounters;
     protected final int topLevelIndent;
 
     protected boolean newlineNext = false;
@@ -55,14 +53,12 @@ public abstract class RuleRhsWriterBase extends VisitK {
     public RuleRhsWriterBase(DefinitionData data,
                              GoNameProvider nameProvider,
                              VarContainer vars,
-                             TempVarCounters tempVarCounters,
                              int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.nameProvider = nameProvider;
         this.vars = vars;
-        this.tempVarCounters = tempVarCounters;
     }
 
     protected abstract RuleRhsWriterBase newInstanceWithSameConfig(int indent);

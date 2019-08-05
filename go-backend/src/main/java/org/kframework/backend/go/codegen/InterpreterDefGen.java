@@ -64,6 +64,7 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("stepTempBoolVars  []bool // temporary bool evaluation results, used during execution");
         sb.appendIndentedLine("evalErr           error // used during execution");
         sb.appendIndentedLine("tempTypeVar       uint64 // used during execution");
+        sb.appendIndentedLine("tempBoolVar       bool // used during execution");
         sb.appendIndentedLine("state             m.KReference");
         sb.appendIndentedLine("traceHandlers     []traceHandler");
         sb.appendIndentedLine("Verbose           bool");
@@ -91,7 +92,6 @@ public class InterpreterDefGen {
         sb.appendIndentedLine("stepTempVars:      make([]m.KReference, stepMaxVarCount),");
         sb.appendIndentedLine("stepTempBoolVars:  make([]bool, stepMaxBoolVarCount),");
         sb.appendIndentedLine("evalErr:           nil,");
-        sb.appendIndentedLine("tempTypeVar:       0,");
         sb.appendIndentedLine("state:             m.NullReference,");
         sb.appendIndentedLine("traceHandlers:     nil,");
         sb.appendIndentedLine("Verbose:           false,");

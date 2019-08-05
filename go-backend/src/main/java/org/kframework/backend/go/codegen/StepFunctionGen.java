@@ -3,6 +3,7 @@ package org.kframework.backend.go.codegen;
 
 import com.google.common.collect.ComparisonChain;
 import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
+import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 import org.kframework.backend.go.codegen.rules.RuleWriter;
 import org.kframework.backend.go.gopackage.GoPackageManager;
 import org.kframework.backend.go.model.DefinitionData;
@@ -48,7 +49,7 @@ public class StepFunctionGen {
                 .collect(Collectors.toList());
 
         Map<Boolean, List<Rule>> groupedByLookup = sortedRules.stream()
-                .collect(Collectors.groupingBy(RuleWriter::hasLookups));
+                .collect(Collectors.groupingBy(RuleLhsTreeWriter::hasLookups));
         if (groupedByLookup.containsKey(false)) {
             for (Rule r : groupedByLookup.get(false)) {
                 int ruleNum = ruleCounter.consumeRuleIndex();

@@ -227,10 +227,11 @@ public class RuleLhsWriter extends VisitK {
                 kappVar = "kapp" + kitemIndex;
                 kitemIndex++;
             }
-            String kappMV = vars.varIndexes.oneTimeVariableMVRef(kappVar);
+            //String kappMV = vars.varIndexes.oneTimeVariableMVRef(kappVar);
+            String kappMV = subject;
 
             handleExpressionType(ExpressionType.IF);
-            sb.appendIndentedLine(kappMV, " = ", subject);
+            //sb.appendIndentedLine(kappMV, " = ", subject);
             sb.writeIndent().append("if ");
             matchWriter.appendKApplyMatch(sb, kappMV, nameProvider.klabelVariableName(k.klabel()), arity);
             sb.beginBlock(ToKast.apply(k), aliasComment);
@@ -403,8 +404,8 @@ public class RuleLhsWriter extends VisitK {
             // the subject might be an expression, call it only once, in the if
             handleExpressionType(ExpressionType.IF);
             sb.writeIndent().append("if ");
-            sb.append(kseqVarName).append(" = ").append(consumeSubject()).append("; ");
-            String subject = kseqVarName;
+            //sb.append(kseqVarName).append(" = ").append(consumeSubject()).append("; ");
+            String subject = consumeSubject();
 
             // match condition
             if (nrHeads == 1) {
