@@ -3,17 +3,9 @@ package org.kframework.backend.go.model;
 
 public class RuleInfo {
 
-    private final boolean alwaysMatches;
-    public int nrVars;
-    public int nrBoolVars;
+    public int maxNrVars;
+    public int maxNrBoolVars;
 
-    public RuleInfo(boolean alwaysMatches, int nrVars, int nrBoolVars) {
-        this.alwaysMatches = alwaysMatches;
-        this.nrVars = nrVars;
-        this.nrBoolVars = nrBoolVars;
-    }
 
-    public boolean alwaysMatches() {
-        return alwaysMatches;
-    }
+
 }

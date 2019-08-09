@@ -12,6 +12,9 @@ public class LhsHashKTokenTreeNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsHashKTokenTreeNode)) {
             return false;
         }

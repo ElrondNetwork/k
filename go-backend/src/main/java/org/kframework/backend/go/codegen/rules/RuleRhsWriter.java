@@ -2,7 +2,7 @@ package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
-import org.kframework.backend.go.model.VarContainer;
+import org.kframework.backend.go.model.TempVarManager;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
@@ -16,11 +16,11 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
     public RuleRhsWriter(
             DefinitionData data,
             GoNameProvider nameProvider,
-            VarContainer vars,
+            TempVarManager varManager,
             int tabsIndent,
             boolean isTopLevelReturn,
             FunctionInfo parentFunction) {
-        super(data, nameProvider, vars, tabsIndent, 0);
+        super(data, nameProvider, varManager, tabsIndent, 0);
         this.isTopLevelReturn = isTopLevelReturn;
         this.parentFunction = parentFunction;
     }
@@ -28,7 +28,7 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleRhsWriter(data, nameProvider,
-                vars,
+                varManager,
                 indent,
                 false, parentFunction);
     }
@@ -42,17 +42,18 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
     @Override
     public void apply(K k) {
         if (isTopLevelReturn) {
-            if (parentFunction != null && !parentFunction.isSystemFunction()) {
-                if (k instanceof KApply) {
-                    KApply kapp = (KApply)k;
-                    if (kapp.klabel() == parentFunction.label &&
-                            kapp.klist().items().size() == parentFunction.arguments.arity()) {
-                        // tail recursion detected!
-                        writeTailRecursionEval(kapp);
-                        return;
-                    }
-                }
-            }
+//            // temporarily disabled tail recursion, until the LHS structure supports this
+//            if (parentFunction != null && !parentFunction.isSystemFunction()) {
+//                if (k instanceof KApply) {
+//                    KApply kapp = (KApply)k;
+//                    if (kapp.klabel() == parentFunction.label &&
+//                            kapp.klist().items().size() == parentFunction.arguments.arity()) {
+//                        // tail recursion detected!
+//                        writeTailRecursionEval(kapp);
+//                        return;
+//                    }
+//                }
+//            }
 
             currentSb.append("return ");
             super.apply(k);

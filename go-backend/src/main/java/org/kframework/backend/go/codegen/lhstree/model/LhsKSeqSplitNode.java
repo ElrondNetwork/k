@@ -14,6 +14,9 @@ public class LhsKSeqSplitNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKSeqSplitNode)) {
             return false;
         }
@@ -23,8 +26,8 @@ public class LhsKSeqSplitNode extends LhsTreeNode {
 
     @Override
     public void write(RuleLhsTreeWriter writer) {
-        headSubject = writer.vars.varIndexes.oneTimeVariableMVRef("kseqHead");
-        tailSubject = writer.vars.varIndexes.oneTimeVariableMVRef("kseqTail");
+        headSubject = oneTimeVariableMVRef("kseqHead");
+        tailSubject = oneTimeVariableMVRef("kseqTail");
 
         writer.sb.writeIndent().append("_, ");
         writer.sb.append(headSubject).append(", ");

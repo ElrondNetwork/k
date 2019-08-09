@@ -16,6 +16,9 @@ public class LhsKVarPredicateNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKVarPredicateNode)) {
             return false;
         }

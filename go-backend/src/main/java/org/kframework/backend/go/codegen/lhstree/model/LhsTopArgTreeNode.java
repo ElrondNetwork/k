@@ -13,8 +13,19 @@ public class LhsTopArgTreeNode extends LhsTreeNode {
     }
 
     @Override
+    protected void changeParent(LhsTreeNode logicalParent) {
+        if (!(logicalParent instanceof LhsTopTreeNode)) {
+            throw new RuntimeException("LhsTopArgTreeNode can only have a LhsTopTreeNode as logical parent");
+        }
+        super.changeParent(logicalParent);
+    }
+
+    @Override
     public boolean matches(LhsTreeNode other) {
-        if (!(other instanceof LhsKApplyArgNode)) {
+        if (other == this) {
+            return true;
+        }
+        if (!(other instanceof LhsTopArgTreeNode)) {
             return false;
         }
         LhsTopArgTreeNode otherNode = (LhsTopArgTreeNode) other;
@@ -30,7 +41,4 @@ public class LhsTopArgTreeNode extends LhsTreeNode {
         subject = argVarName;
     }
 
-    public void mergeTree(LhsTreeNode other) {
-        this.merge(other);
-    }
 }

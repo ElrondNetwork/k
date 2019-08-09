@@ -15,6 +15,9 @@ public class LhsKVarAlreadySeenNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKVarAlreadySeenNode)) {
             return false;
         }
@@ -30,7 +33,7 @@ public class LhsKVarAlreadySeenNode extends LhsTreeNode {
     @Override
     public void write(RuleLhsTreeWriter writer) {
         subject = logicalParent.subject;
-        String varName = writer.vars.varIndexes.kvariableMVRef(seenVar);
+        String varName = getKVariableMVRef(seenVar);
         writer.sb.writeIndent();
         writer.sb.append("if i.Model.Equals(").append(subject).append(", ").append(varName).append(")");
         writer.sb.beginBlock("lhs KVariable, which reappears:" + seenVar.name());

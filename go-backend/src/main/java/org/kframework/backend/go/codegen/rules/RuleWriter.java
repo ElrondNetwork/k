@@ -7,6 +7,7 @@ import org.kframework.backend.go.codegen.inline.RuleLhsMatchWriter;
 import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeBuilder;
 import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 import org.kframework.backend.go.codegen.lhstree.model.LhsLeafTreeNode;
+import org.kframework.backend.go.codegen.lhstree.model.LhsTopTreeNode;
 import org.kframework.backend.go.model.DefinitionData;
 import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.Lookup;
@@ -19,7 +20,6 @@ import org.kframework.backend.go.processors.LookupVarExtractor;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
-import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.compile.RewriteToTop;
 import org.kframework.definition.Rule;
 import org.kframework.kore.K;
@@ -30,6 +30,7 @@ import org.kframework.utils.errorsystem.KEMException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -45,82 +46,75 @@ public class RuleWriter {
         this.matchWriter = matchWriter;
     }
 
-    public RuleInfo writeRule(Rule r, GoStringBuilder sb, RuleType type, int ruleNum,
+    public RuleInfo writeRule(Map<Integer, Rule> rules, GoStringBuilder sb, RuleType type,
                               FunctionInfo functionInfo) {
-        try {
-            int ruleIndent = sb.getCurrentIndent();
 
-            sb.appendIndentedLine("// rule #" + ruleNum);
-            appendSourceComment(sb, r);
-            sb.writeIndent().append("// ");
-            GoStringUtil.appendRuleComment(sb, r);
-            sb.newLine();
+        int initialIndent = sb.getCurrentIndent();
 
-            K left = RewriteToTop.toLeft(r.body());
-            K requires = r.requires();
-            K right = RewriteToTop.toRight(r.body());
+        RuleInfo result = new RuleInfo();
+        LhsTopTreeNode topNode = null;
+        for (Map.Entry<Integer, Rule> entry : rules.entrySet()) {
+            Integer ruleNum = entry.getKey();
+            Rule r = entry.getValue();
+            try {
 
-            // we need the variables beforehand, so we retrieve them here
-            AccumulateRuleVars accumLhsVars = new AccumulateRuleVars(nameProvider);
-            accumLhsVars.apply(left);
+                K left = RewriteToTop.toLeft(r.body());
+                K requires = r.requires();
+                K right = RewriteToTop.toRight(r.body());
 
-            // lookups!
-            LookupExtractor lookupExtractor = new LookupExtractor();
-            requires = lookupExtractor.apply(requires); // also, lookups are eliminated from requires
-            List<Lookup> lookups = lookupExtractor.getExtractedLookups();
+                // we need the variables beforehand, so we retrieve them here
+                AccumulateRuleVars accumLhsVars = new AccumulateRuleVars(nameProvider);
+                accumLhsVars.apply(left);
 
-            // some evaluations can be precomputed
-            PrecomputePredicates optimizeTransf = new PrecomputePredicates(
-                    data, accumLhsVars.vars());
-            requires = optimizeTransf.apply(requires);
-            right = optimizeTransf.apply(right);
+                // lookups!
+                LookupExtractor lookupExtractor = new LookupExtractor();
+                requires = lookupExtractor.apply(requires); // also, lookups are eliminated from requires
+                List<Lookup> lookups = lookupExtractor.getExtractedLookups();
 
-            // check which variables are actually used in requires or in rhs
-            // note: this has to happen *after* PrecomputePredicates does its job
-            AccumulateRuleVars accumRhsVars = new AccumulateRuleVars(nameProvider);
-            accumRhsVars.apply(requires);
-            accumRhsVars.apply(right);
+                // some evaluations can be precomputed
+                PrecomputePredicates optimizeTransf = new PrecomputePredicates(
+                        data, accumLhsVars.vars());
+                requires = optimizeTransf.apply(requires);
+                right = optimizeTransf.apply(right);
 
-            // also collect vars from lookups
-            new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
+                // check which variables are actually used in requires or in rhs
+                // note: this has to happen *after* PrecomputePredicates does its job
+                AccumulateRuleVars accumRhsVars = new AccumulateRuleVars(nameProvider);
+                accumRhsVars.apply(requires);
+                accumRhsVars.apply(right);
 
-            // var indexes
-            VarContainer vars = new VarContainer(
-                    accumLhsVars.vars(),
-                    accumRhsVars.vars());
+                // also collect vars from lookups
+                new LookupVarExtractor(accumLhsVars, accumRhsVars).apply(lookups);
 
-            // if !matched
-            sb.writeIndent().append("if !matched").beginBlock();
+                // var indexes
+                VarContainer vars = new VarContainer(
+                        accumLhsVars.vars(),
+                        accumRhsVars.vars());
 
-            // output main LHS
-            sb.writeIndent().append("// LHS").newLine();
-            Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
+                // output main LHS
+                //sb.writeIndent().append("// LHS").newLine();
+                Set<KVariable> alreadySeenLhsVariables = new HashSet<>(); // shared between main LHS and lookup LHS
 
-            // LHS
-            RuleLhsTreeBuilder treeBuilder = new RuleLhsTreeBuilder(
-                    data,
-                    nameProvider,
-                    functionInfo.arguments,
-                    alreadySeenLhsVariables);
-            if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
-                KApply kapp = (KApply) left;
-                treeBuilder.applyTopArgs(kapp.klist().items());
-            } else {
-                treeBuilder.applyTopArgs(Collections.singleton(left));
-            }
+                // LHS
+                RuleLhsTreeBuilder treeBuilder = new RuleLhsTreeBuilder(
+                        data,
+                        nameProvider,
+                        functionInfo.arguments,
+                        alreadySeenLhsVariables);
+                if (type == RuleType.ANYWHERE || type == RuleType.FUNCTION) {
+                    KApply kapp = (KApply) left;
+                    treeBuilder.applyTopArgs(kapp.klist().items());
+                } else {
+                    treeBuilder.applyTopArgs(Collections.singleton(left));
+                }
 
-            // leaf
-            LhsLeafTreeNode leaf = new LhsLeafTreeNode(treeBuilder.getLastNode(),
-                    type, ruleNum,
-                    functionInfo,
-                    r, lookups, requires, right,
-                    vars,
-                    alreadySeenLhsVariables);
-            treeBuilder.addNode(leaf);
-
-            RuleLhsTreeWriter treeWriter = new RuleLhsTreeWriter(sb, data,
-                    nameProvider, matchWriter, vars);
-            treeWriter.writeLhsTree(treeBuilder.topNode);
+                // leaf
+                LhsLeafTreeNode leaf = new LhsLeafTreeNode(treeBuilder.getLastNode(),
+                        type, ruleNum,
+                        functionInfo,
+                        r, lookups, requires, right,
+                        alreadySeenLhsVariables);
+                treeBuilder.addNode(leaf);
 
 //            RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
 //                    nameProvider, matchWriter,
@@ -128,42 +122,35 @@ public class RuleWriter {
 //                    vars,
 //                    alreadySeenLhsVariables,
 //                    false);
-
-
-            // done
-            sb.endAllBlocks(ruleIndent);
-            sb.newLine();
-
-            // return some info regarding the written rule
-            //boolean alwaysMatches = !lhsWriter.containsIf() && !requiresContainsIf;
-            return new RuleInfo(
-                    false,
-                    vars.varIndexes.getNrVars(), vars.varIndexes.getNrBoolVars());
-        } catch (NoSuchElementException e) {
-            System.err.println(r);
-            throw e;
-        } catch (KEMException e) {
-            e.exception.addTraceFrame("while compiling rule at " + r.att().getOptional(Source.class).map(Object::toString).orElse("<none>") + ":" + r.att().getOptional(Location.class).map(Object::toString).orElse("<none>"));
-            throw e;
-        }
-    }
-
-    private static void appendSourceComment(GoStringBuilder sb, Rule r) {
-        String source;
-        if (r.source().isPresent()) {
-            source = r.source().get().source();
-            if (source.contains("/")) {
-                source = source.substring(source.lastIndexOf("/") + 1);
+                if (topNode == null) {
+                    topNode = treeBuilder.topNode;
+                } else {
+                    topNode.mergeTree(treeBuilder.topNode);
+                }
+            } catch (NoSuchElementException e) {
+                System.err.println(r);
+                throw e;
+            } catch (KEMException e) {
+                e.exception.addTraceFrame("while compiling rule at " + r.att().getOptional(Source.class).map(Object::toString).orElse("<none>") + ":" + r.att().getOptional(Location.class).map(Object::toString).orElse("<none>"));
+                throw e;
             }
-        } else {
-            source = "?";
         }
-        String startLine;
-        if (r.location().isPresent()) {
-            startLine = Integer.toString(r.location().get().startLine());
-        } else {
-            startLine = "?";
+
+        if (topNode != null) {
+            RuleLhsTreeWriter treeWriter = new RuleLhsTreeWriter(sb, data,
+                    nameProvider, matchWriter);
+            treeWriter.writeLhsTree(topNode);
+
+            result.maxNrVars = topNode.maxNrVars();
+            result.maxNrBoolVars = topNode.maxNrBoolVars();
         }
-        sb.appendIndentedLine("// source: ", source, " @", startLine);
+
+        // done
+        sb.endAllBlocks(initialIndent);
+        sb.newLine();
+
+        // return some info regarding the written rules
+        return result;
     }
+
 }

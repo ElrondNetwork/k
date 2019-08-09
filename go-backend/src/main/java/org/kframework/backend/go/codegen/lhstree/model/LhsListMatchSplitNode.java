@@ -19,6 +19,9 @@ public class LhsListMatchSplitNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsListMatchSplitNode)) {
             return false;
         }
@@ -35,8 +38,8 @@ public class LhsListMatchSplitNode extends LhsTreeNode {
 
     @Override
     public void write(RuleLhsTreeWriter writer) {
-        headSubject = writer.vars.varIndexes.oneTimeVariableMVRef("listHead");
-        tailSubject = writer.vars.varIndexes.oneTimeVariableMVRef("listTail");
+        headSubject = oneTimeVariableMVRef("listHead");
+        tailSubject = oneTimeVariableMVRef("listTail");
 
         writer.sb.writeIndent().append("if i.tempBoolVar, ");
         writer.sb.append(headSubject).append(", ").append(tailSubject);

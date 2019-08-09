@@ -89,7 +89,7 @@ public class RuleLhsTreeBuilder extends VisitK {
         int i = 0;
         for (K topArg : topArgs) {
             LhsTopArgTreeNode node = new LhsTopArgTreeNode(topNode, i, functionVars.varName(i));
-            currentNode.addChild(node);
+            currentNode.chainNode(node);
             currentNode = node;
             i++;
             apply(topArg);
@@ -101,7 +101,7 @@ public class RuleLhsTreeBuilder extends VisitK {
     }
 
     public void addNode(LhsTreeNode node) {
-        currentNode.addChild(node);
+        currentNode.chainNode(node);
         currentNode = node;
     }
 
@@ -115,12 +115,12 @@ public class RuleLhsTreeBuilder extends VisitK {
 
             String sortName = nameProvider.sortVariableName(sort);
             LhsHashKTokenTreeNode node = new LhsHashKTokenTreeNode(currentNode, sortName);
-            currentNode.addChild(node);
+            currentNode.chainNode(node);
             currentNode = node;
             apply(value);
         } else if (k.klabel().name().equals("#Bottom")) {
             LhsBottomTreeNode node = new LhsBottomTreeNode(currentNode);
-            currentNode.addChild(node);
+            currentNode.chainNode(node);
             currentNode = node;
         } else if (data.functions.contains(k.klabel())) {
             if (data.collectionFor.containsKey(k.klabel())) {
@@ -138,14 +138,14 @@ public class RuleLhsTreeBuilder extends VisitK {
                                 nameProvider.sortVariableName(sort),
                                 nameProvider.klabelVariableName(collectionLabel),
                                 "empty list "+ ToKast.apply(k));
-                        currentNode.addChild(node);
+                        currentNode.chainNode(node);
                         currentNode = node;
                     } else if (k.items().size() == 2) {
                         LhsListMatchSplitNode listNode = new LhsListMatchSplitNode(currentNode,
                                 nameProvider.sortVariableName(sort),
                                 nameProvider.klabelVariableName(collectionLabel),
                                 "list "+ ToKast.apply(k));
-                        currentNode.addChild(listNode);
+                        currentNode.chainNode(listNode);
                         currentNode = listNode;
 
 
@@ -160,13 +160,13 @@ public class RuleLhsTreeBuilder extends VisitK {
                             throw KEMException.internalError("List element should only have 1 argument");
                         }
                         LhsListHeadNode headNode = new LhsListHeadNode(listNode);
-                        currentNode.addChild(headNode);
+                        currentNode.chainNode(headNode);
                         currentNode = headNode;
                         apply(headListElem.items().get(0)); // not the element itself, but its contents
 
                         // tail
                         LhsListTailNode tailNode = new LhsListTailNode(listNode);
-                        currentNode.addChild(tailNode);
+                        currentNode.chainNode(tailNode);
                         currentNode = tailNode;
                         if (k.items().get(1) instanceof KApply) {
                             KApply tail = (KApply) k.items().get(1);
@@ -191,13 +191,13 @@ public class RuleLhsTreeBuilder extends VisitK {
             }
 
             LhsKApplyNode kappNode = new LhsKApplyNode(currentNode, nameProvider.klabelVariableName(k.klabel()), arity, comment);
-            currentNode.addChild(kappNode);
+            currentNode.chainNode(kappNode);
             currentNode = kappNode;
 
             int i = 0;
             for (K item : k.klist().items()) {
                 LhsKApplyArgNode argNode = new LhsKApplyArgNode(kappNode, i);
-                currentNode.addChild(argNode);
+                currentNode.chainNode(argNode);
                 currentNode = argNode;
                 apply(item);
                 i++;
@@ -226,7 +226,7 @@ public class RuleLhsTreeBuilder extends VisitK {
     @Override
     public void apply(KToken k) {
         LhsKTokenNode node = new LhsKTokenNode(currentNode, k);
-        currentNode.addChild(node);
+        currentNode.chainNode(node);
         currentNode = node;
     }
 
@@ -234,7 +234,7 @@ public class RuleLhsTreeBuilder extends VisitK {
     public void apply(KVariable k) {
         if (alreadySeenVariables.contains(k)) {
             LhsKVarAlreadySeenNode node = new LhsKVarAlreadySeenNode(currentNode, k);
-            currentNode.addChild(node);
+            currentNode.chainNode(node);
             currentNode = node;
             return;
         }
@@ -249,13 +249,13 @@ public class RuleLhsTreeBuilder extends VisitK {
                 LhsKVarPredicateNode predicateNode = new LhsKVarPredicateNode(currentNode, hook,
                         nameProvider.sortVariableName(s),
                         comment);
-                currentNode.addChild(predicateNode);
+                currentNode.chainNode(predicateNode);
                 currentNode = predicateNode;
             }
         }
 
         LhsKVarNode node = new LhsKVarNode(currentNode, k);
-        currentNode.addChild(node);
+        currentNode.chainNode(node);
         currentNode = node;
     }
 
@@ -265,13 +265,13 @@ public class RuleLhsTreeBuilder extends VisitK {
         case 0:
             // comment only
             LhsKSeqEmptyNode emptyNode = new LhsKSeqEmptyNode(currentNode, ToKast.apply(k));
-            currentNode.addChild(emptyNode);
+            currentNode.chainNode(emptyNode);
             currentNode = emptyNode;
             return;
         case 1:
             // no KSequence, go straight to the only item
             LhsKSeqOneNode node = new LhsKSeqOneNode(currentNode, ToKast.apply(k));
-            currentNode.addChild(node);
+            currentNode.chainNode(node);
             currentNode = node;
             apply(k.items().get(0));
             return;
@@ -279,7 +279,7 @@ public class RuleLhsTreeBuilder extends VisitK {
             int nrHeads = k.items().size() - 1;
 
             LhsKSeqMatchNode matchNode = new LhsKSeqMatchNode(currentNode, nrHeads, ToKast.apply(k));
-            currentNode.addChild(matchNode);
+            currentNode.chainNode(matchNode);
             currentNode = matchNode;
 
             LhsTreeNode kseqNode = matchNode;
@@ -290,7 +290,7 @@ public class RuleLhsTreeBuilder extends VisitK {
                 // if multiple heads required, split repeatedly
                 String splitComment = ToKast.apply(k.items().get(i)) + " ~> ...";
                 LhsKSeqSplitNode splitNode = new LhsKSeqSplitNode(kseqNode, splitComment);
-                currentNode.addChild(splitNode);
+                currentNode.chainNode(splitNode);
                 currentNode = splitNode;
 
                 headNodes[i] = new LhsKSeqHeadNode(splitNode);
@@ -299,7 +299,7 @@ public class RuleLhsTreeBuilder extends VisitK {
                 tailNode = new LhsKSeqTailNode(splitNode);
                 if (i < nrHeads-1) {
                     // add all tails except the last
-                    currentNode.addChild(tailNode);
+                    currentNode.chainNode(tailNode);
                     currentNode = tailNode;
                 }
 
@@ -309,13 +309,13 @@ public class RuleLhsTreeBuilder extends VisitK {
 
             // process heads
             for (int i = 0; i < nrHeads; i++) {
-                currentNode.addChild(headNodes[i]);
+                currentNode.chainNode(headNodes[i]);
                 currentNode = headNodes[i];
                 apply(k.items().get(i));
             }
 
             // process tail
-            currentNode.addChild(tailNode);
+            currentNode.chainNode(tailNode);
             currentNode = tailNode;
             apply(k.items().get(nrHeads));
 

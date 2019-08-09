@@ -4,12 +4,13 @@ import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.Lookup;
 import org.kframework.backend.go.model.RuleType;
-import org.kframework.backend.go.model.VarContainer;
 import org.kframework.definition.Rule;
 import org.kframework.kore.K;
 import org.kframework.kore.KVariable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class LhsLeafTreeNode extends LhsTreeNode {
@@ -21,10 +22,9 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     public final K requires;
     public final K right;
 
-    public final VarContainer vars;
-    public final Set<KVariable> alreadySeenLhsVariables;
+    public final Map<KVariable, String> variablesDeclaredInLeaf = new HashMap<>();
 
-    public LhsLeafTreeNode(LhsTreeNode logicalParent, RuleType type, int ruleNum, FunctionInfo functionInfo, Rule rule, List<Lookup> lookups, K requires, K right, VarContainer vars, Set<KVariable> alreadySeenLhsVariables) {
+    public LhsLeafTreeNode(LhsTreeNode logicalParent, RuleType type, int ruleNum, FunctionInfo functionInfo, Rule rule, List<Lookup> lookups, K requires, K right, Set<KVariable> alreadySeenLhsVariables) {
         super(logicalParent);
         this.type = type;
         this.ruleNum = ruleNum;
@@ -33,8 +33,6 @@ public class LhsLeafTreeNode extends LhsTreeNode {
         this.lookups = lookups;
         this.requires = requires;
         this.right = right;
-        this.vars = vars;
-        this.alreadySeenLhsVariables = alreadySeenLhsVariables;
     }
 
     @Override
@@ -45,5 +43,27 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     @Override
     public void write(RuleLhsTreeWriter writer) {
         writer.writeLeaf(this);
+    }
+
+    @Override
+    public String addKVariableMVRef(KVariable k) {
+        if (super.getKVariableMVRef(k) != null) {
+            throw new RuntimeException("cannot add to LhsLeafTreeNode a variable already declared in a previous node");
+        }
+        if (variablesDeclaredInLeaf.containsKey(k)) {
+            throw new RuntimeException("cannot add the same KVariable twice in LhsLeafTreeNode");
+        }
+        String mvRef = nextVar(k.name());
+        variablesDeclaredInLeaf.put(k, mvRef);
+        return mvRef;
+    }
+
+    @Override
+    public String getKVariableMVRef(KVariable k) {
+        String mvRef = variablesDeclaredInLeaf.get(k);
+        if (mvRef != null) {
+            return mvRef;
+        }
+        return super.getKVariableMVRef(k);
     }
 }

@@ -2,7 +2,7 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
-import org.kframework.backend.go.model.VarContainer;
+import org.kframework.backend.go.model.TempVarManager;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -13,7 +13,6 @@ import org.kframework.kore.InjectedKLabel;
 import org.kframework.kore.K;
 import org.kframework.kore.KApply;
 import org.kframework.kore.KAs;
-import org.kframework.kore.KLabel;
 import org.kframework.kore.KRewrite;
 import org.kframework.kore.KSequence;
 import org.kframework.kore.KToken;
@@ -34,7 +33,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     protected final DefinitionData data;
     protected final GoNameProvider nameProvider;
-    protected final VarContainer vars;
+    protected final TempVarManager varManager;
     protected final int topLevelIndent;
 
     protected boolean newlineNext = false;
@@ -52,13 +51,13 @@ public abstract class RuleRhsWriterBase extends VisitK {
 
     public RuleRhsWriterBase(DefinitionData data,
                              GoNameProvider nameProvider,
-                             VarContainer vars,
+                             TempVarManager varManager,
                              int tabsIndent, int returnValSpacesIndent) {
         this.topLevelIndent = tabsIndent;
         this.currentSb = new GoStringBuilder(tabsIndent, returnValSpacesIndent);
         this.data = data;
         this.nameProvider = nameProvider;
-        this.vars = vars;
+        this.varManager = varManager;
     }
 
     protected abstract RuleRhsWriterBase newInstanceWithSameConfig(int indent);
@@ -113,7 +112,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     protected void applyKApplyExecute(KApply k) {
-        String evalVarName = vars.varIndexes.oneTimeVariableMVRef("eval");
+        String evalVarName = varManager.oneTimeVariableMVRef("eval");
 
         // return the eval variable
         currentSb.append(evalVarName);
@@ -357,30 +356,15 @@ public abstract class RuleRhsWriterBase extends VisitK {
     @Override
     public void apply(KVariable v) {
         start();
-        String varName = vars.varIndexes.kvariableMVRef(v);
+        String varName = varManager.getKVariableMVRef(v);
         if (varName == null) {
             currentSb.append("/* varName=null */ m.InternedBottom");
             end();
             return;
         }
 
-        if (!vars.lhsVars.containsVar(v) && varName.startsWith("?")) {
-            throw KEMException.internalError("Failed to compile rule due to unmatched variable on right-hand-side. This is likely due to an unsupported collection pattern: " + varName, v);
-        } else if (!vars.lhsVars.containsVar(v)) {
-            currentSb.append("panic(\"Stuck!\")");
-        } else {
-            KLabel listVar = vars.lhsVars.listVars.get(varName);
-            if (listVar != null) {
-                Sort sort = data.mainModule.sortFor().apply(listVar);
-                currentSb.append("&m.List{Sort: m.").append(nameProvider.sortVariableName(sort));
-                currentSb.append(", Label: m.").append(nameProvider.klabelVariableName(listVar));
-                //currentSb.append(", ");
-                //currentSb.append(varOccurrance);
-                currentSb.append(" /* ??? */}");
-            } else {
-                currentSb.append(varName);
-            }
-        }
+        currentSb.append(varName);
+
         end();
     }
 

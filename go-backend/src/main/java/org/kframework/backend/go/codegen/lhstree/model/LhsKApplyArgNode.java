@@ -3,7 +3,7 @@ package org.kframework.backend.go.codegen.lhstree.model;
 import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 
 public class LhsKApplyArgNode extends LhsTreeNode {
-    public final LhsKApplyNode kappParent;
+    public LhsKApplyNode kappParent;
     public final int argIndex;
 
     public LhsKApplyArgNode(LhsKApplyNode kappParent, int argIndex) {
@@ -13,7 +13,22 @@ public class LhsKApplyArgNode extends LhsTreeNode {
     }
 
     @Override
+    protected void changeParent(LhsTreeNode logicalParent) {
+        if (!(logicalParent instanceof LhsKApplyNode)) {
+            throw new RuntimeException("LhsKApplyArgNode can only have a LhsKApplyNode as logical parent");
+        }
+        kappParent = (LhsKApplyNode)logicalParent;
+        if (argIndex >= kappParent.arity) {
+            throw new RuntimeException("LhsKApplyArgNode cannot have argument index that exceeds parent KApply arity");
+        }
+        super.changeParent(logicalParent);
+    }
+
+    @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKApplyArgNode)) {
             return false;
         }
@@ -27,7 +42,7 @@ public class LhsKApplyArgNode extends LhsTreeNode {
 
     @Override
     public void write(RuleLhsTreeWriter writer) {
-        subject = writer.vars.varIndexes.oneTimeVariableMVRef("kappVar");
+        subject = oneTimeVariableMVRef("kappVar");
         writer.sb.appendIndentedLine(subject, " = i.Model.KApplyArg(", logicalParent.subject, ", ", Integer.toString(argIndex), ")");
 
     }

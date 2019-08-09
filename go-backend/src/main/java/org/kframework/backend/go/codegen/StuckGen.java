@@ -11,6 +11,8 @@ import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
 
+import java.util.Collections;
+
 public class StuckGen {
 
     private final DefinitionData data;
@@ -42,15 +44,16 @@ public class StuckGen {
 
         if (data.makeStuck != null) {
             sb.appendIndentedLine("matched := false");
+
             RuleInfo ruleInfo = ruleWriter.writeRule(
-                    data.makeStuck, sb, RuleType.REGULAR, stuckRuleNumber,
+                    Collections.singletonMap(stuckRuleNumber, data.makeStuck),
+                    sb, RuleType.REGULAR,
                     FunctionInfo.systemFunctionInfo("makeStuck", 1));
-            assert !ruleInfo.alwaysMatches();
-            if (ruleInfo.nrVars > maxNrVars) {
-                maxNrVars = ruleInfo.nrVars;
+            if (ruleInfo.maxNrVars > maxNrVars) {
+                maxNrVars = ruleInfo.maxNrVars;
             }
-            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                maxNrBoolVars = ruleInfo.nrBoolVars;
+            if (ruleInfo.maxNrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.maxNrBoolVars;
             }
         }
         sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
@@ -64,14 +67,14 @@ public class StuckGen {
         if (data.makeUnstuck != null) {
             sb.appendIndentedLine("matched := false");
             RuleInfo ruleInfo = ruleWriter.writeRule(
-                    data.makeUnstuck, sb, RuleType.REGULAR, stuckRuleNumber,
+                    Collections.singletonMap(stuckRuleNumber, data.makeUnstuck),
+                    sb, RuleType.REGULAR,
                     FunctionInfo.systemFunctionInfo("makeUnstuck", 1));
-            assert !ruleInfo.alwaysMatches();
-            if (ruleInfo.nrVars > maxNrVars) {
-                maxNrVars = ruleInfo.nrVars;
+            if (ruleInfo.maxNrVars > maxNrVars) {
+                maxNrVars = ruleInfo.maxNrVars;
             }
-            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                maxNrBoolVars = ruleInfo.nrBoolVars;
+            if (ruleInfo.maxNrBoolVars > maxNrBoolVars) {
+                maxNrBoolVars = ruleInfo.maxNrBoolVars;
             }
         }
         sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called

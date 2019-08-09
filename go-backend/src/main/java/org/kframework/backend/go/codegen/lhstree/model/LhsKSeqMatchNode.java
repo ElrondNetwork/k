@@ -14,6 +14,9 @@ public class LhsKSeqMatchNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKSeqMatchNode)) {
             return false;
         }
@@ -28,7 +31,6 @@ public class LhsKSeqMatchNode extends LhsTreeNode {
     @Override
     public void write(RuleLhsTreeWriter writer) {
         subject = logicalParent.subject;
-        writer.vars.varIndexes.oneTimeVariableMVRef("TEMP_DELETE_THIS");
 
         writer.sb.writeIndent().append("if ");
         if (minLength == 1) {

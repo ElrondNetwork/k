@@ -13,7 +13,7 @@ import org.kframework.backend.go.model.FunctionInfo;
 import org.kframework.backend.go.model.FunctionParams;
 import org.kframework.backend.go.model.Lookup;
 import org.kframework.backend.go.model.RuleType;
-import org.kframework.backend.go.model.VarContainer;
+import org.kframework.backend.go.model.TempVarManager;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -22,27 +22,23 @@ import org.kframework.builtin.BooleanUtils;
 import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.definition.Rule;
 import org.kframework.kore.KApply;
-import org.kframework.kore.KVariable;
 import org.kframework.kore.VisitK;
 import org.kframework.unparser.ToKast;
 import org.kframework.utils.errorsystem.KEMException;
 
 import java.util.List;
-import java.util.Set;
 
 public class RuleLhsTreeWriter {
     public final GoStringBuilder sb;
     public final DefinitionData data;
     public final GoNameProvider nameProvider;
     public final RuleLhsMatchWriter matchWriter;
-    public final VarContainer vars;
 
-    public RuleLhsTreeWriter(GoStringBuilder sb, DefinitionData data, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter, VarContainer vars) {
+    public RuleLhsTreeWriter(GoStringBuilder sb, DefinitionData data, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter) {
         this.sb = sb;
         this.data = data;
         this.nameProvider = nameProvider;
         this.matchWriter = matchWriter;
-        this.vars = vars;
     }
 
     public void writeLhsTree(LhsTopTreeNode top) {
@@ -52,33 +48,40 @@ public class RuleLhsTreeWriter {
     private void writeLhsNode(LhsTreeNode node) {
         int currentIndent = sb.getCurrentIndent();
         node.write(this);
-        for (LhsTreeNode child : node.children) {
+        for (LhsTreeNode child : node.successors) {
+            child.predecessor = node;
             writeLhsNode(child);
         }
         sb.endAllBlocks(currentIndent);
     }
 
     public void writeLeaf(LhsLeafTreeNode leafNode) {
+        sb.appendIndentedLine("// rule #" + leafNode.ruleNum);
+        appendSourceComment(sb, leafNode.rule);
+        sb.writeIndent().append("// ");
+        GoStringUtil.appendRuleComment(sb, leafNode.rule);
+        sb.newLine();
+
+        // if !matched
+        sb.writeIndent().append("if !matched").beginBlock();
+
         // output lookups
         writeLookups(sb, leafNode.ruleNum,
                 leafNode.functionInfo,
                 leafNode.lookups,
-                vars,
-                leafNode.alreadySeenLhsVariables);
+                leafNode);
 
         // output leafNode.requires
-        boolean requiresContainsIf = false;
         if (!leafNode.requires.equals(BooleanUtils.TRUE)) {
             sb.appendIndentedLine("// REQUIRES ", ToKast.apply(leafNode.requires));
             RuleSideConditionWriter sideCondVisitor = new RuleSideConditionWriter(data, nameProvider,
-                    vars,
+                    leafNode,
                     sb.getCurrentIndent());
             sideCondVisitor.apply(leafNode.requires);
             sideCondVisitor.writeEvalCalls(sb);
             sb.writeIndent().append("if ");
             sideCondVisitor.writeReturnValue(sb);
             sb.beginBlock();
-            requiresContainsIf = true;
         } else if (leafNode.requires.att().contains(PrecomputePredicates.COMMENT_KEY)) {
             // just a comment, so we know what happened
             sb.appendIndentedLine("// REQUIRES precomputed " + leafNode.requires.att().get(PrecomputePredicates.COMMENT_KEY));
@@ -88,7 +91,7 @@ public class RuleLhsTreeWriter {
         sb.appendIndentedLine("// RHS");
         traceLine(sb, leafNode.type, leafNode.ruleNum, leafNode.rule);
         RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                vars,
+                leafNode,
                 sb.getCurrentIndent(),
                 true, leafNode.functionInfo);
         rhsWriter.apply(leafNode.right);
@@ -101,8 +104,7 @@ public class RuleLhsTreeWriter {
     private void writeLookups(GoStringBuilder sb, int ruleNum,
                               FunctionInfo functionInfo,
                               List<Lookup> lookups,
-                              VarContainer vars,
-                              Set<KVariable> alreadySeenLhsVariables) {
+                              TempVarManager varManager) {
         if (lookups.isEmpty()) {
             return;
         }
@@ -118,18 +120,17 @@ public class RuleLhsTreeWriter {
             RuleLhsWriter lhsWriter = new RuleLhsWriter(sb, data,
                     nameProvider, matchWriter,
                     new FunctionParams(0),
-                    vars,
-                    alreadySeenLhsVariables,
+                    varManager,
                     false);
             RuleRhsWriter rhsWriter = new RuleRhsWriter(data, nameProvider,
-                    vars,
+                    varManager,
                     sb.getCurrentIndent(),
                     false, functionInfo);
             rhsWriter.apply(lookup.getRhs());
 
             switch (lookup.getType()) {
             case MATCH:
-                String matchVar = vars.varIndexes.oneTimeVariableMVRef("matchEval" + lookupIndex);
+                String matchVar = varManager.oneTimeVariableMVRef("matchEval" + lookupIndex);
                 rhsWriter.writeEvalCalls(sb);
                 sb.writeIndent().append(matchVar).append(" = ");
                 rhsWriter.writeReturnValue(sb);
@@ -159,13 +160,12 @@ public class RuleLhsTreeWriter {
                 lhsWriter = new RuleLhsWriter(sb, data,
                         nameProvider, matchWriter,
                         new FunctionParams(0),
-                        vars,
-                        alreadySeenLhsVariables,
+                        varManager,
                         false);
                 writeChoiceLookup(
                         sb, lookup,
                         "setChoice" + lookupIndex, "GetSetObject",
-                        vars,
+                        varManager,
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -173,13 +173,12 @@ public class RuleLhsTreeWriter {
                 lhsWriter = new RuleLhsWriter(sb, data,
                         nameProvider, matchWriter,
                         new FunctionParams(0),
-                        vars,
-                        alreadySeenLhsVariables,
+                        varManager,
                         false);
                 writeChoiceLookup(
                         sb, lookup,
                         "mapChoice" + lookupIndex, "GetMapObject",
-                        vars,
+                        varManager,
                         reapply,
                         lhsWriter, rhsWriter);
                 break;
@@ -195,7 +194,7 @@ public class RuleLhsTreeWriter {
     private void writeChoiceLookup(
             GoStringBuilder sb, Lookup lookup,
             String varPrefix, String expectedKType,
-            VarContainer vars,
+            TempVarManager varManager,
             String reapply,
             RuleLhsWriter lhsWriter, RuleRhsWriterBase rhsWriter) {
 
@@ -309,5 +308,22 @@ public class RuleLhsTreeWriter {
         return numLookups(r) > 0;
     }
 
-
+    private static void appendSourceComment(GoStringBuilder sb, Rule r) {
+        String source;
+        if (r.source().isPresent()) {
+            source = r.source().get().source();
+            if (source.contains("/")) {
+                source = source.substring(source.lastIndexOf("/") + 1);
+            }
+        } else {
+            source = "?";
+        }
+        String startLine;
+        if (r.location().isPresent()) {
+            startLine = Integer.toString(r.location().get().startLine());
+        } else {
+            startLine = "?";
+        }
+        sb.appendIndentedLine("// source: ", source, " @", startLine);
+    }
 }

@@ -15,6 +15,9 @@ public class LhsKVarNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKVarNode)) {
             return false;
         }
@@ -29,10 +32,18 @@ public class LhsKVarNode extends LhsTreeNode {
 
     @Override
     public void write(RuleLhsTreeWriter writer) {
-        subject = writer.vars.varIndexes.kvariableMVRef(kvar);
+        subject = nextVar(kvar.name());
         writer.sb.writeIndent();
         writer.sb.append(subject).append(" = ").append(logicalParent.subject);
         writer.sb.append(" // lhs KVariable ").append(kvar.name()).newLine();
         //writer.sb.append(" // ").append(kvar.name()).newLine();
+    }
+
+    @Override
+    public String getKVariableMVRef(KVariable k) {
+        if (Objects.equals(k, this.kvar)) {
+            return subject;
+        }
+        return super.getKVariableMVRef(k);
     }
 }

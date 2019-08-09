@@ -12,6 +12,9 @@ public class LhsKSeqEmptyNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
+        if (other == this) {
+            return true;
+        }
         if (!(other instanceof LhsKSeqEmptyNode)) {
             return false;
         }

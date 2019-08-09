@@ -25,7 +25,6 @@ import org.kframework.backend.go.model.RuleInfo;
 import org.kframework.backend.go.model.RuleType;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
-import org.kframework.backend.go.strings.GoStringUtil;
 import org.kframework.builtin.BooleanUtils;
 import org.kframework.compile.ConvertDataStructureToLookup;
 import org.kframework.compile.DeconstructIntegerAndFloatLiterals;
@@ -63,6 +62,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.kframework.Collections.*;
@@ -352,28 +352,11 @@ public class DefinitionToGo {
                 }
 
                 // main!
-                int maxNrVars = 0;
-                int maxNrBoolVars = 0;
+                Map<Integer, Rule> ruleMap = new TreeMap<>();
                 for (Rule r : rules) {
-                    if (unreachableCode) {
-                        sb.appendIndentedLine("// unreachable");
-                        sb.writeIndent().append("// ");
-                        GoStringUtil.appendRuleComment(sb, r);
-                        sb.newLine();
-                    } else {
-                        int ruleNum = ruleCounter.consumeRuleIndex();
-                        RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.FUNCTION, ruleNum, functionInfo);
-                        if (ruleInfo.alwaysMatches()) {
-                            unreachableCode = true;
-                        }
-                        if (ruleInfo.nrVars > maxNrVars) {
-                            maxNrVars = ruleInfo.nrVars;
-                        }
-                        if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                            maxNrBoolVars = ruleInfo.nrBoolVars;
-                        }
-                    }
+                    ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
+                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, RuleType.FUNCTION, functionInfo);
 
                 if (!unreachableCode) {
                     // stuck!
@@ -395,8 +378,8 @@ public class DefinitionToGo {
                 sb.endOneBlock(); // func
                 sb.newLine();
 
-                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(maxNrVars));
-                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(maxNrBoolVars));
+                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(ruleInfo.maxNrVars));
+                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(ruleInfo.maxNrBoolVars));
                 sb.newLine();
 
                 // not yet sure if we're keeping these
@@ -429,18 +412,11 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("matched := false");
 
                 // main!
-                int maxNrVars = 0;
-                int maxNrBoolVars = 0;
+                Map<Integer, Rule> ruleMap = new TreeMap<>();
                 for (Rule r : rules) {
-                    int ruleNum = ruleCounter.consumeRuleIndex();
-                    RuleInfo ruleInfo = ruleWriter.writeRule(r, sb, RuleType.ANYWHERE, ruleNum, functionInfo);
-                    if (ruleInfo.nrVars > maxNrVars) {
-                        maxNrVars = ruleInfo.nrVars;
-                    }
-                    if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                        maxNrBoolVars = ruleInfo.nrBoolVars;
-                    }
+                    ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
+                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, RuleType.ANYWHERE, functionInfo);
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
@@ -454,8 +430,8 @@ public class DefinitionToGo {
                 sb.endOneBlock(); // func
                 sb.newLine();
 
-                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(maxNrVars));
-                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(maxNrBoolVars));
+                sb.appendIndentedLine("const ", functionInfo.nrVarsConstName, " = ", Integer.toString(ruleInfo.maxNrVars));
+                sb.appendIndentedLine("const ", functionInfo.nrBoolVarsConstName, " = ", Integer.toString(ruleInfo.maxNrBoolVars));
                 sb.newLine();
             }
         }

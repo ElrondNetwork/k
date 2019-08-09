@@ -5,23 +5,12 @@ import org.kframework.kore.KVariable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VarIndexes {
+public class TempVarIndexes implements TempVarManager {
     private int nrVars = 0;
     private int nrBoolVars = 0;
     public final Map<KVariable, Integer> kvariableIndexes = new HashMap<>();
-    public final Map<String, Integer> varNameToIndex = new HashMap<>();
 
-    public VarIndexes() {
-    }
-
-    public String variableMVRef(String varName) {
-        Integer index = varNameToIndex.get(varName);
-        if (index == null) {
-            index = nrVars;
-            nrVars++;
-            varNameToIndex.put(varName, index);
-        }
-        return "v[" + index + "]";
+    public TempVarIndexes() {
     }
 
     public String oneTimeVariableMVRef(String varName) {
@@ -31,7 +20,12 @@ public class VarIndexes {
         return "v[" + index + "]";
     }
 
-    public String kvariableMVRef(KVariable k) {
+    @Override
+    public String addKVariableMVRef(KVariable k) {
+        throw new RuntimeException("deprecated");
+    }
+
+    public String getKVariableMVRef(KVariable k) {
         Integer index = kvariableIndexes.get(k);
         if (index == null) {
             index = nrVars;

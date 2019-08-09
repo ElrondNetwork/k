@@ -2,7 +2,7 @@
 package org.kframework.backend.go.codegen.rules;
 
 import org.kframework.backend.go.model.DefinitionData;
-import org.kframework.backend.go.model.VarContainer;
+import org.kframework.backend.go.model.TempVarManager;
 import org.kframework.backend.go.processors.PrecomputePredicates;
 import org.kframework.backend.go.strings.GoNameProvider;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -22,15 +22,15 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
 
     public RuleSideConditionWriter(DefinitionData data,
                                    GoNameProvider nameProvider,
-                                   VarContainer vars,
+                                   TempVarManager varManager,
                                    int tabsIndent) {
-        super(data, nameProvider, vars, tabsIndent, "if ".length());
+        super(data, nameProvider, varManager, tabsIndent, "if ".length());
     }
 
     @Override
     protected RuleRhsWriterBase newInstanceWithSameConfig(int indent) {
         return new RuleSideConditionWriter(data, nameProvider,
-                vars,
+                varManager,
                 indent);
     }
 
@@ -97,7 +97,7 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
 
                     // get arg1 evaluation first
                     evalSb.appendIndentedLine("// ", ToKast.apply(k));
-                    String andVarName = vars.varIndexes.evalBoolVarRef("evalAnd");
+                    String andVarName = varManager.evalBoolVarRef("evalAnd");
                     evalSb.writeIndent().append(andVarName).append(" = ");
                     apply(arg1);
                     evalSb.newLine();
@@ -131,7 +131,7 @@ public class RuleSideConditionWriter extends RuleRhsWriterBase {
                 currentSb = evalSb;
 
                 evalSb.appendIndentedLine("// ", ToKast.apply(k));
-                String orVarName = vars.varIndexes.evalBoolVarRef("evalOr");
+                String orVarName = varManager.evalBoolVarRef("evalOr");
 
                 // get arg1 evaluation first
                 evalSb.writeIndent().append(orVarName).append(" = ");

@@ -73,30 +73,15 @@ public class StepFunctionGen {
         sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
         sb.append(")\n\n");
 
-        int maxNrVars = 0;
-        int maxNrBoolVars = 0;
-
         sb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
         sb.appendIndentedLine("config := c");
         sb.appendIndentedLine("matched := false");
         sb.appendIndentedLine("v := i.stepTempVars");
         sb.appendIndentedLine("bv := i.stepTempBoolVars");
 
-        for (Map.Entry<Integer, Rule> entry : stepRules.entrySet()) {
-            int ruleNum = entry.getKey();
-            Rule r = entry.getValue();
-
-            RuleInfo ruleInfo = ruleWriter.writeRule(
-                    r, sb, RuleType.REGULAR, ruleNum,
-                    FunctionInfo.systemFunctionInfo("step", 1));
-            assert !ruleInfo.alwaysMatches();
-            if (ruleInfo.nrVars > maxNrVars) {
-                maxNrVars = ruleInfo.nrVars;
-            }
-            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                maxNrBoolVars = ruleInfo.nrBoolVars;
-            }
-        }
+        RuleInfo ruleInfo = ruleWriter.writeRule(
+                stepRules, sb, RuleType.REGULAR,
+                FunctionInfo.systemFunctionInfo("step", 1));
 
         sb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
         sb.endOneBlock().newLine();
@@ -106,20 +91,15 @@ public class StepFunctionGen {
         sb.appendIndentedLine("v := i.stepTempVars");
         sb.appendIndentedLine("bv := i.stepTempBoolVars");
 
-        for (Map.Entry<Integer, Rule> entry : lookupRules.entrySet()) {
-            int ruleNum = entry.getKey();
-            Rule r = entry.getValue();
+        RuleInfo lookupRuleInfo = ruleWriter.writeRule(
+                lookupRules, sb, RuleType.REGULAR,
+                FunctionInfo.systemFunctionInfo("stepLookups", 1));
 
-            RuleInfo ruleInfo = ruleWriter.writeRule(
-                    r, sb, RuleType.REGULAR, ruleNum,
-                    FunctionInfo.systemFunctionInfo("stepLookups", 1));
-            assert !ruleInfo.alwaysMatches();
-            if (ruleInfo.nrVars > maxNrVars) {
-                maxNrVars = ruleInfo.nrVars;
-            }
-            if (ruleInfo.nrBoolVars > maxNrBoolVars) {
-                maxNrBoolVars = ruleInfo.nrBoolVars;
-            }
+        if (lookupRuleInfo.maxNrVars > ruleInfo.maxNrVars) {
+            ruleInfo.maxNrVars = lookupRuleInfo.maxNrVars;
+        }
+        if (lookupRuleInfo.maxNrBoolVars > ruleInfo.maxNrBoolVars) {
+            ruleInfo.maxNrBoolVars = lookupRuleInfo.maxNrBoolVars;
         }
 
         sb.appendIndentedLine("return c, noStep");
@@ -127,8 +107,8 @@ public class StepFunctionGen {
 
         sb.appendIndentedLine("// indicates the maximum number of variables required by a rule");
         sb.appendIndentedLine("// needed to initialize the matched variables (mv) slice");
-        sb.appendIndentedLine("const stepMaxVarCount = " + maxNrVars);
-        sb.appendIndentedLine("const stepMaxBoolVarCount = " + maxNrBoolVars);
+        sb.appendIndentedLine("const stepMaxVarCount = " + ruleInfo.maxNrVars);
+        sb.appendIndentedLine("const stepMaxBoolVarCount = " + ruleInfo.maxNrBoolVars);
         sb.newLine();
 
         return sb.toString();
