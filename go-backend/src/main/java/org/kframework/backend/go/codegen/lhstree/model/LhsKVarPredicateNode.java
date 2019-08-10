@@ -16,22 +16,23 @@ public class LhsKVarPredicateNode extends LhsTreeNode {
 
     @Override
     public boolean matches(LhsTreeNode other) {
-        if (other == this) {
-            return true;
-        }
-        if (!(other instanceof LhsKVarPredicateNode)) {
-            return false;
-        }
-        LhsKVarPredicateNode otherNode = (LhsKVarPredicateNode)other;
-
-        if (!hook.equals(otherNode.hook)) {
-            return false;
-        }
-        if (!sortName.equals(otherNode.sortName)) {
-            return false;
-        }
-
-        return otherNode.logicalParent.matches(logicalParent);
+        return false; // TODO: debug why merging these nodes causes everything to crash
+//        if (other == this) {
+//            return true;
+//        }
+//        if (!(other instanceof LhsKVarPredicateNode)) {
+//            return false;
+//        }
+//        LhsKVarPredicateNode otherNode = (LhsKVarPredicateNode)other;
+//
+//        if (!hook.equals(otherNode.hook)) {
+//            return false;
+//        }
+//        if (!sortName.equals(otherNode.sortName)) {
+//            return false;
+//        }
+//
+//        return otherNode.logicalParent.matches(logicalParent);
     }
 
     @Override
