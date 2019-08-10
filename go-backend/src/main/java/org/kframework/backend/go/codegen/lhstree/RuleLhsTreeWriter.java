@@ -42,11 +42,13 @@ public class RuleLhsTreeWriter {
     }
 
     public void writeLhsTree(LhsTopTreeNode top) {
+        top.findRulesBelow();
         writeLhsNode(top);
     }
 
     private void writeLhsNode(LhsTreeNode node) {
         int currentIndent = sb.getCurrentIndent();
+        node.writeRuleInfo(this);
         node.write(this);
         for (LhsTreeNode child : node.successors) {
             child.predecessor = node;

@@ -36,6 +36,12 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     }
 
     @Override
+    public void findRulesBelow() {
+        rulesBelow.clear();
+        rulesBelow.add(ruleNum);
+    }
+
+    @Override
     public boolean matches(LhsTreeNode other) {
         return false;
     }

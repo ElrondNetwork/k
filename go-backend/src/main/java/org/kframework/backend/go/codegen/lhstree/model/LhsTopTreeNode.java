@@ -25,6 +25,12 @@ public class LhsTopTreeNode extends LhsTreeNode {
     public void write(RuleLhsTreeWriter writer) {
     }
 
+    public void writeRuleInfo(RuleLhsTreeWriter writer) {
+        writer.sb.writeIndent().append("// all rules: ");
+        writeCommaSeparatedRuleNumbers(writer.sb);
+        writer.sb.newLine();
+    }
+
     public void mergeTree(LhsTreeNode other) {
         this.merge(other);
     }

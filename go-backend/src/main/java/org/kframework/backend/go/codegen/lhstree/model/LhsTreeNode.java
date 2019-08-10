@@ -3,10 +3,13 @@ package org.kframework.backend.go.codegen.lhstree.model;
 
 import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 import org.kframework.backend.go.model.TempVarManager;
+import org.kframework.backend.go.strings.GoStringBuilder;
 import org.kframework.kore.KVariable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public abstract class LhsTreeNode implements TempVarManager {
     protected LhsTreeNode logicalParent;
@@ -15,6 +18,7 @@ public abstract class LhsTreeNode implements TempVarManager {
     public final List<LhsTreeNode> successors = new ArrayList<>();
     protected String subject;
 
+    protected final Set<Integer> rulesBelow = new TreeSet<>();
     private Integer nrVars = null;
     private Integer nrBoolVars = null;
 
@@ -62,6 +66,39 @@ public abstract class LhsTreeNode implements TempVarManager {
 
         // the merged node should not be usable after this
         other.successors.clear();
+    }
+
+    public void findRulesBelow() {
+        rulesBelow.clear();
+        for (LhsTreeNode succ : successors) {
+            succ.findRulesBelow();
+            rulesBelow.addAll(succ.rulesBelow);
+        }
+    }
+
+    public void writeRuleInfo(RuleLhsTreeWriter writer) {
+        if (rulesBelow.size() == predecessor.rulesBelow.size()) {
+            return; // only print when rule set is getting split
+        }
+        if (rulesBelow.size() == 1) {
+            writer.sb.writeIndent().append("// rule: ");
+        } else {
+            writer.sb.writeIndent().append("// rules: ");
+        }
+        writeCommaSeparatedRuleNumbers(writer.sb);
+        writer.sb.newLine();
+    }
+
+    protected void writeCommaSeparatedRuleNumbers(GoStringBuilder sb) {
+        boolean first = true;
+        for (Integer ruleNum : rulesBelow) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(ruleNum);
+        }
     }
 
     @Override
