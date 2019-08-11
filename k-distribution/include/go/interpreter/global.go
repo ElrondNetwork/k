@@ -24,5 +24,5 @@ func doNothingWithVars(varsLen, boolVarLen int) {
 
 // DebugPrint ... prints a K item to console, useful for debugging
 func (i *Interpreter) DebugPrint(info string, c m.KReference) {
-	fmt.Printf("debug %s: %s\n", info, i.Model.PrettyPrint(c))
+	fmt.Printf("debug (step %d) %s: %s\n", i.currentStep, info, i.Model.PrettyPrint(c))
 }
