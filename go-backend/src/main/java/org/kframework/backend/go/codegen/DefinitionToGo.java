@@ -356,7 +356,7 @@ public class DefinitionToGo {
                 for (Rule r : rules) {
                     ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
-                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, RuleType.FUNCTION, functionInfo);
+                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, null, RuleType.FUNCTION, functionInfo);
 
                 if (!unreachableCode) {
                     // stuck!
@@ -416,7 +416,7 @@ public class DefinitionToGo {
                 for (Rule r : rules) {
                     ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
-                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, RuleType.ANYWHERE, functionInfo);
+                RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, null, RuleType.ANYWHERE, functionInfo);
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());

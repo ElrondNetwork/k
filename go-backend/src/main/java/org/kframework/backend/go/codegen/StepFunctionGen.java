@@ -35,6 +35,9 @@ public class StepFunctionGen {
 
     private final RuleCounter ruleCounter = new RuleCounter();
 
+    GoStringBuilder stepFuncSb = new GoStringBuilder();
+    GoStringBuilder stepRhsSb = new GoStringBuilder();
+
     public StepFunctionGen(DefinitionData data, GoPackageManager packageManager, GoNameProvider nameProvider, RuleLhsMatchWriter matchWriter) {
         this.data = data;
         this.packageManager = packageManager;
@@ -64,35 +67,43 @@ public class StepFunctionGen {
         }
     }
 
-    public String generateStep() {
-        GoStringBuilder sb = new GoStringBuilder();
-        sb.append(packageManager.goGeneratedFileComment).append("\n\n");
-        sb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
+    public void generateStepFunctionCode() {
+        stepFuncSb.append(packageManager.goGeneratedFileComment).append("\n\n");
+        stepFuncSb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
+        stepFuncSb.append("import (\n");
+        stepFuncSb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
+        stepFuncSb.append(")\n\n");
 
-        sb.append("import (\n");
-        sb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
-        sb.append(")\n\n");
+        stepRhsSb.append(packageManager.goGeneratedFileComment).append("\n\n");
+        stepRhsSb.append("package ").append(packageManager.interpreterPackage.getName()).append(" \n\n");
+        stepRhsSb.append("import (\n");
+        stepRhsSb.append("\tm \"").append(packageManager.modelPackage.getGoPath()).append("\"\n");
+        stepRhsSb.append(")\n\n");
 
-        sb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
-        sb.appendIndentedLine("config := c");
-        sb.appendIndentedLine("matched := false");
-        sb.appendIndentedLine("v := i.stepTempVars");
-        sb.appendIndentedLine("bv := i.stepTempBoolVars");
+        stepFuncSb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
+        stepFuncSb.appendIndentedLine("config := c");
+        stepFuncSb.appendIndentedLine("matched := false");
+        stepFuncSb.appendIndentedLine("v := i.stepTempVars");
+        stepFuncSb.appendIndentedLine("bv := i.stepTempBoolVars");
 
         RuleInfo ruleInfo = ruleWriter.writeRule(
-                stepRules, sb, RuleType.REGULAR,
+                stepRules,
+                stepFuncSb, stepRhsSb,
+                RuleType.REGULAR,
                 FunctionInfo.systemFunctionInfo("step", 1));
 
-        sb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
-        sb.endOneBlock().newLine();
+        stepFuncSb.writeIndent().append("return i.stepLookups(c, config, -1)\n");
+        stepFuncSb.endOneBlock().newLine();
 
-        sb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
-        sb.appendIndentedLine("matched := false");
-        sb.appendIndentedLine("v := i.stepTempVars");
-        sb.appendIndentedLine("bv := i.stepTempBoolVars");
+        stepFuncSb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
+        stepFuncSb.appendIndentedLine("matched := false");
+        stepFuncSb.appendIndentedLine("v := i.stepTempVars");
+        stepFuncSb.appendIndentedLine("bv := i.stepTempBoolVars");
 
         RuleInfo lookupRuleInfo = ruleWriter.writeRule(
-                lookupRules, sb, RuleType.REGULAR,
+                lookupRules,
+                stepFuncSb, stepRhsSb,
+                RuleType.REGULAR,
                 FunctionInfo.systemFunctionInfo("stepLookups", 1));
 
         if (lookupRuleInfo.maxNrVars > ruleInfo.maxNrVars) {
@@ -102,16 +113,26 @@ public class StepFunctionGen {
             ruleInfo.maxNrBoolVars = lookupRuleInfo.maxNrBoolVars;
         }
 
-        sb.appendIndentedLine("return c, noStep");
-        sb.endOneBlock().newLine();
+        stepFuncSb.appendIndentedLine("return c, noStep");
+        stepFuncSb.endOneBlock().newLine();
 
-        sb.appendIndentedLine("// indicates the maximum number of variables required by a rule");
-        sb.appendIndentedLine("// needed to initialize the matched variables (mv) slice");
-        sb.appendIndentedLine("const stepMaxVarCount = " + ruleInfo.maxNrVars);
-        sb.appendIndentedLine("const stepMaxBoolVarCount = " + ruleInfo.maxNrBoolVars);
-        sb.newLine();
+        stepFuncSb.appendIndentedLine("// stepMaxVarCount indicates the maximum number of variables required by a rule");
+        stepFuncSb.appendIndentedLine("// needed to initialize the step variables (i.stepTempVars) slice");
+        stepFuncSb.appendIndentedLine("const stepMaxVarCount = " + ruleInfo.maxNrVars);
+        stepFuncSb.newLine();
 
-        return sb.toString();
+        stepFuncSb.appendIndentedLine("// stepMaxBoolVarCount indicates the maximum number of boolean variables required by a rule");
+        stepFuncSb.appendIndentedLine("// needed to initialize the boolean variables (i.stepTempBoolVars) slice");
+        stepFuncSb.appendIndentedLine("const stepMaxBoolVarCount = " + ruleInfo.maxNrBoolVars);
+        stepFuncSb.newLine();
+    }
+
+    public String outputStepFunctionCode() {
+        return stepFuncSb.toString();
+    }
+
+    public String outputStepRhsCode() {
+        return stepRhsSb.toString();
     }
 
     private int sortRules(Rule r1, Rule r2) {
@@ -121,6 +142,5 @@ public class StepFunctionGen {
                 //.compareFalseFirst(indexesPoorly(r1), indexesPoorly(r2))
                 .result();
     }
-
 
 }

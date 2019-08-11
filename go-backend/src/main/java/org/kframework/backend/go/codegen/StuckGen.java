@@ -47,7 +47,8 @@ public class StuckGen {
 
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     Collections.singletonMap(stuckRuleNumber, data.makeStuck),
-                    sb, RuleType.REGULAR,
+                    sb, null,
+                    RuleType.REGULAR,
                     FunctionInfo.systemFunctionInfo("makeStuck", 1));
             if (ruleInfo.maxNrVars > maxNrVars) {
                 maxNrVars = ruleInfo.maxNrVars;
@@ -68,7 +69,8 @@ public class StuckGen {
             sb.appendIndentedLine("matched := false");
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     Collections.singletonMap(stuckRuleNumber, data.makeUnstuck),
-                    sb, RuleType.REGULAR,
+                    sb, null,
+                    RuleType.REGULAR,
                     FunctionInfo.systemFunctionInfo("makeUnstuck", 1));
             if (ruleInfo.maxNrVars > maxNrVars) {
                 maxNrVars = ruleInfo.maxNrVars;

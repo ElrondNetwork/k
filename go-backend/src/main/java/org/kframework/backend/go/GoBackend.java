@@ -104,8 +104,11 @@ public class GoBackend implements Backend {
             packageManager.saveToPackage(packageManager.interpreterPackage, "eval.go",
                     new EvalFunctionGen(data, packageManager, nameProvider).generate());
             StepFunctionGen stepFunctionGen = new StepFunctionGen(data, packageManager, nameProvider, matchWriter);
+            stepFunctionGen.generateStepFunctionCode();
             packageManager.saveToPackage(packageManager.interpreterPackage, "step.go",
-                    stepFunctionGen.generateStep());
+                    stepFunctionGen.outputStepFunctionCode());
+            packageManager.saveToPackage(packageManager.interpreterPackage, "stepRhs.go",
+                    stepFunctionGen.outputStepRhsCode());
             packageManager.saveToPackage(packageManager.interpreterPackage, "functions.go",
                     def.definition());
             packageManager.saveToPackage(packageManager.interpreterPackage, "stuck.go",

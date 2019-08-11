@@ -46,7 +46,9 @@ public class RuleWriter {
         this.matchWriter = matchWriter;
     }
 
-    public RuleInfo writeRule(Map<Integer, Rule> rules, GoStringBuilder sb, RuleType type,
+    public RuleInfo writeRule(Map<Integer, Rule> rules,
+                              GoStringBuilder sb, GoStringBuilder rhsSb,
+                              RuleType type,
                               FunctionInfo functionInfo) {
 
         int initialIndent = sb.getCurrentIndent();
@@ -137,7 +139,9 @@ public class RuleWriter {
         }
 
         if (topNode != null) {
-            RuleLhsTreeWriter treeWriter = new RuleLhsTreeWriter(sb, data,
+            RuleLhsTreeWriter treeWriter = new RuleLhsTreeWriter(
+                    sb, rhsSb,
+                    data,
                     nameProvider, matchWriter);
             treeWriter.writeLhsTree(topNode);
 
