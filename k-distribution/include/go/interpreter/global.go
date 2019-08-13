@@ -22,6 +22,10 @@ func doNothing(c m.KReference) {
 func doNothingWithVars(varsLen, boolVarLen int) {
 }
 
+func invalidVariable(varName string) m.KReference {
+    panic("invalid variable: " + varName)
+}
+
 // DebugPrint ... prints a K item to console, useful for debugging
 func (i *Interpreter) DebugPrint(info string, c m.KReference) {
 	fmt.Printf("debug (step %d) %s: %s\n", i.currentStep, info, i.Model.PrettyPrint(c))

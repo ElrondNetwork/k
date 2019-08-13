@@ -190,7 +190,7 @@ public class RuleLhsTreeBuilder extends VisitK {
                 comment += " as " + alias.name();
             }
 
-            LhsKApplyNode kappNode = new LhsKApplyNode(currentNode, nameProvider.klabelVariableName(k.klabel()), arity, comment);
+            LhsKApplyNode kappNode = new LhsKApplyNode(currentNode, nameProvider.klabelVariableName(k.klabel()), arity, alias, comment);
             currentNode.chainNode(kappNode);
             currentNode = kappNode;
 

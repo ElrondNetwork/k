@@ -358,7 +358,7 @@ public abstract class RuleRhsWriterBase extends VisitK {
         start();
         String varName = varManager.getKVariableMVRef(v);
         if (varName == null) {
-            currentSb.append("/* varName=null */ m.InternedBottom");
+            currentSb.append("/* var not found: " + v.name() + " */ invalidVariable(\"" + v.name() + "\"");
             end();
             return;
         }
