@@ -45,6 +45,7 @@ public class RuleLhsTreeWriter {
 
     public void writeLhsTree(LhsTopTreeNode top) {
         top.findRulesBelow();
+        top.populateDFOrderIndex(0);
         writeLhsNode(top);
     }
 
@@ -70,7 +71,8 @@ public class RuleLhsTreeWriter {
         sb.writeIndent().append("if !matched").beginBlock();
 
         // output lookups
-        writeLookups(sb, leafNode.ruleNum,
+        writeLookups(sb,
+                leafNode.getDFOrderIndex(),
                 leafNode.functionInfo,
                 leafNode.lookups,
                 leafNode);
@@ -127,7 +129,8 @@ public class RuleLhsTreeWriter {
 
     }
 
-    private void writeLookups(GoStringBuilder mainSb, int ruleNum,
+    private void writeLookups(GoStringBuilder mainSb,
+                              int guardIndex,
                               FunctionInfo functionInfo,
                               List<Lookup> lookups,
                               TempVarManager varManager) {
@@ -135,11 +138,11 @@ public class RuleLhsTreeWriter {
             return;
         }
         mainSb.appendIndentedLine("// LOOKUPS");
-        mainSb.writeIndent().append("if guard < ").append(ruleNum).beginBlock();
+        mainSb.writeIndent().append("if guard < ").append(guardIndex).beginBlock();
 
         int lookupIndex = 0;
         for (Lookup lookup : lookups) {
-            String reapply = "return i." + functionInfo.goName + "(" + functionInfo.arguments.callParameters() + "config, " + ruleNum + ") // reapply";
+            String reapply = "return i." + functionInfo.goName + "(" + functionInfo.arguments.callParameters() + "config, " + guardIndex + ") // reapply";
 
             mainSb.appendIndentedLine("// lookup:", lookup.comment());
 

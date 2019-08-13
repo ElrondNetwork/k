@@ -76,6 +76,13 @@ public abstract class LhsTreeNode implements TempVarManager {
         }
     }
 
+    public int populateDFOrderIndex(int nextIndex) {
+        for (LhsTreeNode succ : successors) {
+            nextIndex = succ.populateDFOrderIndex(nextIndex);
+        }
+        return nextIndex;
+    }
+
     public void writeRuleInfo(RuleLhsTreeWriter writer) {
         if (rulesBelow.size() == predecessor.rulesBelow.size()) {
             return; // only print when rule set is getting split

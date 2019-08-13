@@ -22,6 +22,8 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     public final K requires;
     public final K right;
 
+    private int dfOrderIndex;
+
     public final Map<KVariable, String> variablesDeclaredInLeaf = new HashMap<>();
 
     public LhsLeafTreeNode(LhsTreeNode logicalParent, RuleType type, int ruleNum, FunctionInfo functionInfo, Rule rule, List<Lookup> lookups, K requires, K right, Set<KVariable> alreadySeenLhsVariables) {
@@ -39,6 +41,16 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     public void findRulesBelow() {
         rulesBelow.clear();
         rulesBelow.add(ruleNum);
+    }
+
+    @Override
+    public int populateDFOrderIndex(int nextIndex) {
+        dfOrderIndex = nextIndex;
+        return nextIndex + 1;
+    }
+
+    public int getDFOrderIndex() {
+        return dfOrderIndex;
     }
 
     @Override
