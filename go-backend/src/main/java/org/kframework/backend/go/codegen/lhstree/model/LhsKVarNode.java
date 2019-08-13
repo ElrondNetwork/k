@@ -32,17 +32,14 @@ public class LhsKVarNode extends LhsTreeNode {
 
     @Override
     public void write(RuleLhsTreeWriter writer) {
-        subject = nextVar(kvar.name());
-        writer.sb.writeIndent();
-        writer.sb.append(subject).append(" = ").append(logicalParent.subject);
-        writer.sb.append(" // lhs KVariable ").append(kvar.name()).newLine();
-        //writer.sb.append(" // ").append(kvar.name()).newLine();
+        subject = logicalParent.subject;
+        writer.sb.appendIndentedLine("// KVariable ", kvar.name(), " = ", subject);
     }
 
     @Override
     public String getKVariableMVRef(KVariable k) {
         if (Objects.equals(k, this.kvar)) {
-            return subject;
+            return subject + " /*" + kvar.name() + "*/";
         }
         return super.getKVariableMVRef(k);
     }
