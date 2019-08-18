@@ -455,7 +455,7 @@ public class DefinitionToGo {
 
         for (int i = 1; i <= arity; i++) {
             // launch a warning, compute, return result without memoization
-            sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := i.Model.MapKey(c" + i + ")");
+            sb.appendIndentedLine("c" + i + "AsKey, ok" + i + " := m.GetMemoKey(c" + i + ")");
             sb.writeIndent().append("if !ok" + i).beginBlock();
             sb.appendIndentedLine("i.warn(\"Memo keys unsuitable in ", evalFunctionName, "\")");
             sb.writeIndent().append("return i.");
