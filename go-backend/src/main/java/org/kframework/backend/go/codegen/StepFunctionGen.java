@@ -82,7 +82,6 @@ public class StepFunctionGen {
 
         stepFuncSb.append("func (i *Interpreter) step(c m.KReference) (m.KReference, error)").beginBlock();
         stepFuncSb.appendIndentedLine("config := c");
-        stepFuncSb.appendIndentedLine("matched := false");
         stepFuncSb.appendIndentedLine("v := i.stepTempVars");
         stepFuncSb.appendIndentedLine("bv := i.stepTempBoolVars");
 
@@ -96,7 +95,6 @@ public class StepFunctionGen {
         stepFuncSb.endOneBlock().newLine();
 
         stepFuncSb.append("func (i *Interpreter) stepLookups(c m.KReference, config m.KReference, guard int) (m.KReference, error)").beginBlock();
-        stepFuncSb.appendIndentedLine("matched := false");
         stepFuncSb.appendIndentedLine("v := i.stepTempVars");
         stepFuncSb.appendIndentedLine("bv := i.stepTempBoolVars");
 

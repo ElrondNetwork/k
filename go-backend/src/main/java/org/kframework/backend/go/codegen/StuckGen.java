@@ -43,8 +43,6 @@ public class StuckGen {
         sb.appendIndentedLine("var bv [makeStuckFuncNrBoolVars]bool");
 
         if (data.makeStuck != null) {
-            sb.appendIndentedLine("matched := false");
-
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     Collections.singletonMap(stuckRuleNumber, data.makeStuck),
                     sb, null,
@@ -66,7 +64,6 @@ public class StuckGen {
         sb.appendIndentedLine("var bv [makeStuckFuncNrBoolVars]bool");
 
         if (data.makeUnstuck != null) {
-            sb.appendIndentedLine("matched := false");
             RuleInfo ruleInfo = ruleWriter.writeRule(
                     Collections.singletonMap(stuckRuleNumber, data.makeUnstuck),
                     sb, null,

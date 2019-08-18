@@ -73,9 +73,6 @@ public class RuleLhsTreeWriter {
             sb.appendIndentedLine("// [structural]");
         }
 
-        // if !matched
-        sb.writeIndent().append("if !matched").beginBlock();
-
         // output lookups
         writeLookups(sb,
                 leafNode.getDFOrderIndex(),

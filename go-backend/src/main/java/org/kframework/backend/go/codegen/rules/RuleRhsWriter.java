@@ -42,18 +42,18 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
     @Override
     public void apply(K k) {
         if (isTopLevelReturn) {
-//            // temporarily disabled tail recursion, until the LHS structure supports this
-//            if (parentFunction != null && !parentFunction.isSystemFunction()) {
-//                if (k instanceof KApply) {
-//                    KApply kapp = (KApply)k;
-//                    if (kapp.klabel() == parentFunction.label &&
-//                            kapp.klist().items().size() == parentFunction.arguments.arity()) {
-//                        // tail recursion detected!
-//                        writeTailRecursionEval(kapp);
-//                        return;
-//                    }
-//                }
-//            }
+            // temporarily disabled tail recursion, until the LHS structure supports this
+            if (parentFunction != null && !parentFunction.isSystemFunction()) {
+                if (k instanceof KApply) {
+                    KApply kapp = (KApply)k;
+                    if (kapp.klabel() == parentFunction.label &&
+                            kapp.klist().items().size() == parentFunction.arguments.arity()) {
+                        // tail recursion detected!
+                        writeTailRecursionEval(kapp);
+                        return;
+                    }
+                }
+            }
 
             currentSb.append("return ");
             super.apply(k);
@@ -72,7 +72,7 @@ public class RuleRhsWriter extends RuleRhsWriterBase {
             currentSb.append(parentFunction.arguments.varName(i)).append(" = ");
             apply(kapp.klist().items().get(i));
         }
-        currentSb.newLine().writeIndent().append("matched = true");
+        currentSb.newLine().writeIndent().append("goto FuncTop");
 
     }
 

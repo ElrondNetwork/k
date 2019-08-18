@@ -253,9 +253,8 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("var v [", functionInfo.nrVarsConstName, "]KReference");
                 sb.appendIndentedLine("var bv [", functionInfo.nrBoolVarsConstName, "]bool");
 
-                // loop needed for tail recursion
-                sb.writeIndent().append("for true").beginBlock();
-                sb.appendIndentedLine("matched := false");
+                // label needed for tail recursion
+                sb.appendIndentedLine("FuncTop:");
 
                 // if we print a return under no if, all code that follows is unreachable
                 boolean unreachableCode = false;
@@ -322,9 +321,7 @@ public class DefinitionToGo {
                             if (unreachableCode) {
                                 sb.append("/* (unreachable) ");
                             }
-                            sb.append("if !matched").beginBlock();
                             sb.appendIndentedLine("return m.BoolTrue, nil // predicate rule: ", sortHook);
-                            sb.endOneBlockNoNewline();
                             if (unreachableCode) {
                                 sb.append(" */");
                             }
@@ -336,13 +333,11 @@ public class DefinitionToGo {
                                 sb.append("/* (unreachable) ");
                             }
                             //String ifClause = GoBuiltin.LHS_KVARIABLE_HOOKS.get(sortHook).apply("c", sortName);
-                            sb.append("if !matched").beginBlock();
                             sb.writeIndent().append("if ");
                             matchWriter.appendPredicateMatch(sortHook, sb, "c", nameProvider.sortVariableName(sort));
                             sb.beginBlock("predicate rule: ", sortHook);
                             sb.appendIndentedLine("return m.BoolTrue, nil");
                             sb.endOneBlock(); // if predicate ...
-                            sb.endOneBlockNoNewline(); // if !matched ...
                             if (unreachableCode) {
                                 sb.append(" */");
                             }
@@ -357,24 +352,21 @@ public class DefinitionToGo {
                     ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
                 RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, null, RuleType.FUNCTION, functionInfo);
+                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT);
 
-                if (!unreachableCode) {
-                    // stuck!
-                    sb.writeIndent().append("if !matched").beginBlock();
-                    sb.writeIndent().append("return m.NoResult, &stuckError{ms: i.Model, funcName: \"").append(functionInfo.goName).append("\", args: ");
-                    if (functionInfo.arguments.arity() == 0) {
-                        sb.append("nil");
-                    } else {
-                        sb.append("[]m.KReference{");
-                        sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
-                        sb.append("}");
-                    }
-                    sb.append("}").newLine();
+                // stuck!
+                sb.writeIndent().append("return m.NoResult, &stuckError{ms: i.Model, funcName: \"").append(functionInfo.goName).append("\", args: ");
+                if (functionInfo.arguments.arity() == 0) {
+                    sb.append("nil");
+                } else {
+                    sb.append("[]m.KReference{");
+                    sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
+                    sb.append("}");
                 }
+                sb.append("}").newLine();
 
-                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
-                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
-                sb.appendIndentedLine("return m.NullReference, nil");
+                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv)) // unreachable"); // just to stop Go complaining about unused vars, never gets called
+                sb.appendIndentedLine("goto FuncTop // unreachable");
                 sb.endOneBlock(); // func
                 sb.newLine();
 
@@ -407,9 +399,8 @@ public class DefinitionToGo {
                 sb.appendIndentedLine("var v [", functionInfo.nrVarsConstName, "]KReference");
                 sb.appendIndentedLine("var bv [", functionInfo.nrBoolVarsConstName, "]bool");
 
-                // loop needed for tail recursion
-                sb.writeIndent().append("for true").beginBlock();
-                sb.appendIndentedLine("matched := false");
+                // label needed for tail recursion
+                sb.appendIndentedLine("FuncTop:");
 
                 // main!
                 Map<Integer, Rule> ruleMap = new TreeMap<>();
@@ -417,6 +408,7 @@ public class DefinitionToGo {
                     ruleMap.put(ruleCounter.consumeRuleIndex(), r);
                 }
                 RuleInfo ruleInfo = ruleWriter.writeRule(ruleMap, sb, null, RuleType.ANYWHERE, functionInfo);
+                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
 
                 // final return
                 sb.appendIndentedLine("lbl := m.", nameProvider.klabelVariableName(functionLabel), " // ", functionLabel.name());
@@ -424,9 +416,8 @@ public class DefinitionToGo {
                 sb.append(functionInfo.arguments.paramNamesSeparatedByComma());
                 sb.append("), nil").newLine();
 
-                sb.endAllBlocks(GoStringBuilder.FUNCTION_BODY_INDENT); // for true
-                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv))"); // just to stop Go complaining about unused vars, never gets called
-                sb.appendIndentedLine("return m.NullReference, nil");
+                sb.appendIndentedLine("doNothingWithVars(len(v), len(bv)) // unreachable"); // just to stop Go complaining about unused vars, never gets called
+                sb.appendIndentedLine("goto FuncTop // unreachable");
                 sb.endOneBlock(); // func
                 sb.newLine();
 
