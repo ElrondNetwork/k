@@ -8,5 +8,5 @@ public class ConstantKTokens {
     public final Map<String, String> intConstants = new TreeMap<>();
     public final Map<String, String> stringConstants = new TreeMap<>();
     public final Map<String, String> tokenConstants = new TreeMap<>();
-
+    public final Map<String, String> kapply0Constants = new TreeMap<>();
 }

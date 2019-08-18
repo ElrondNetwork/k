@@ -44,6 +44,12 @@ public class ConstantsGen {
         }
         sb.newLine();
 
+        sb.appendIndentedLine("// KApply0 constants");
+        for (Map.Entry<String, String> entry : constants.kapply0Constants.entrySet()) {
+            sb.appendIndentedLine("var ", entry.getKey(), " = ", entry.getValue());
+        }
+        sb.newLine();
+
         return sb.toString();
     }
 

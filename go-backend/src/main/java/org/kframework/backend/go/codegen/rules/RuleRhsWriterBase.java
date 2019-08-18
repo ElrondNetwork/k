@@ -97,18 +97,25 @@ public abstract class RuleRhsWriterBase extends VisitK {
     }
 
     private void applyKApplyAsIs(KApply k) {
-        currentSb.append("i.Model.NewKApply(m.").append(nameProvider.klabelVariableName(k.klabel()));
-        currentSb.append(", // as-is ").append(k.klabel().name());
-        currentSb.increaseIndent();
-        for (K item : k.klist().items()) {
-            newlineNext = true;
-            apply(item);
-            currentSb.append(",");
+        if (k.klist().size() == 0) {
+            String constVarName = nameProvider.constVariableName("Kapply0", k.klabel().name());
+            String constValue = "m.NewKApplyConstant(m." + nameProvider.klabelVariableName(k.klabel()) + ")";
+            data.constants.kapply0Constants.put(constVarName, constValue);
+            currentSb.append(constVarName);
+        } else {
+            currentSb.append("i.Model.NewKApply(m.").append(nameProvider.klabelVariableName(k.klabel()));
+            currentSb.append(", // as-is ").append(k.klabel().name());
+            currentSb.increaseIndent();
+            for (K item : k.klist().items()) {
+                newlineNext = true;
+                apply(item);
+                currentSb.append(",");
+            }
+            currentSb.decreaseIndent();
+            currentSb.newLine();
+            currentSb.writeIndent();
+            currentSb.append(")");
         }
-        currentSb.decreaseIndent();
-        currentSb.newLine();
-        currentSb.writeIndent();
-        currentSb.append(")");
     }
 
     protected void applyKApplyExecute(KApply k) {
