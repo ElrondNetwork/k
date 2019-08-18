@@ -33,6 +33,8 @@ public class LhsTopTreeNode extends LhsTreeNode {
 
     public void mergeTree(LhsTreeNode other) {
         this.merge(other);
+        this.populateRuleAttributeInfo();
+        this.sortSuccessors();
     }
 
     @Override

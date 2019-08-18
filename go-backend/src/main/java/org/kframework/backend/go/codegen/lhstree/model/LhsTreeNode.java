@@ -1,6 +1,7 @@
 package org.kframework.backend.go.codegen.lhstree.model;
 
 
+import com.google.common.collect.ComparisonChain;
 import org.kframework.backend.go.codegen.lhstree.RuleLhsTreeWriter;
 import org.kframework.backend.go.model.TempVarManager;
 import org.kframework.backend.go.strings.GoStringBuilder;
@@ -19,6 +20,8 @@ public abstract class LhsTreeNode implements TempVarManager {
     protected String subject;
 
     protected final Set<Integer> rulesBelow = new TreeSet<>();
+    protected boolean containsOwise;
+    protected boolean containsStructural;
     private Integer nrVars = null;
     private Integer nrBoolVars = null;
 
@@ -81,6 +84,35 @@ public abstract class LhsTreeNode implements TempVarManager {
             nextIndex = succ.populateDFOrderIndex(nextIndex);
         }
         return nextIndex;
+    }
+
+    /**
+     * Sets flags containsOwise and containsStructural.
+     */
+    protected void populateRuleAttributeInfo() {
+        for (LhsTreeNode succ : successors) {
+            succ.populateRuleAttributeInfo();
+            if (succ.containsOwise) {
+                this.containsOwise = true;
+            }
+            if (succ.containsStructural) {
+                this.containsStructural = true;
+            }
+        }
+    }
+
+    protected void sortSuccessors() {
+        for (LhsTreeNode succ : successors) {
+            succ.sortSuccessors();
+        }
+        successors.sort((node1, node2) -> sortRules(node1, node2));
+    }
+
+    private static int sortRules(LhsTreeNode node1, LhsTreeNode node2) {
+        return ComparisonChain.start()
+                .compareTrueFirst(node1.containsStructural, node2.containsStructural)
+                .compareFalseFirst(node1.containsOwise, node2.containsOwise)
+                .result();
     }
 
     public void writeRuleInfo(RuleLhsTreeWriter writer) {

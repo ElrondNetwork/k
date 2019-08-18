@@ -54,6 +54,12 @@ public class LhsLeafTreeNode extends LhsTreeNode {
     }
 
     @Override
+    protected void populateRuleAttributeInfo() {
+        this.containsOwise = rule.att().contains("owise");
+        this.containsStructural = rule.att().contains("structural");
+    }
+
+    @Override
     public boolean matches(LhsTreeNode other) {
         return false;
     }

@@ -66,6 +66,12 @@ public class RuleLhsTreeWriter {
         sb.writeIndent().append("// ");
         GoStringUtil.appendRuleComment(sb, leafNode.rule);
         sb.newLine();
+        if (leafNode.rule.att().contains("owise")) {
+            sb.appendIndentedLine("// [owise]");
+        }
+        if (leafNode.rule.att().contains("structural")) {
+            sb.appendIndentedLine("// [structural]");
+        }
 
         // if !matched
         sb.writeIndent().append("if !matched").beginBlock();
