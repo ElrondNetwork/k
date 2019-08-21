@@ -46,11 +46,11 @@ func (k *InjectedKLabel) recycleUnused(ms *ModelState) {
 func (k *KVariable) recycleUnused(ms *ModelState) {
 }
 
-func (k *Map) recycleUnused(ms *ModelState) {
-	for _, v := range k.Data {
-		ms.RecycleUnused(v)
-	}
-}
+// func (k *Map) recycleUnused(ms *ModelState) {
+// 	for _, v := range k.Data {
+// 		ms.RecycleUnused(v)
+// 	}
+// }
 
 func (k *List) recycleUnused(ms *ModelState) {
 	for _, item := range k.Data {

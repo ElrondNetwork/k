@@ -44,11 +44,11 @@ func (k *InjectedKLabel) decreaseUsage(ms *ModelState) {
 func (k *KVariable) decreaseUsage(ms *ModelState) {
 }
 
-func (k *Map) decreaseUsage(ms *ModelState) {
-	for _, v := range k.Data {
-		ms.DecreaseUsage(v)
-	}
-}
+// func (k *Map) decreaseUsage(ms *ModelState) {
+// 	for _, v := range k.Data {
+// 		ms.DecreaseUsage(v)
+// 	}
+// }
 
 func (k *List) decreaseUsage(ms *ModelState) {
 	for _, item := range k.Data {

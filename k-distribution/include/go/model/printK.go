@@ -26,7 +26,7 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 
 	// collection types
 	if isCollectionType(refType) {
-		_, _, _, _, index := parseKrefCollection(ref)
+		_, _, _, _, index, _ := parseKrefCollection(ref)
 		obj := ms.getData(dataRef).getReferencedObject(index)
 		obj.kprint(ms, sb)
 		return
@@ -64,6 +64,9 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 	case ktokenRef:
 		ktoken, _ := ms.GetKTokenObject(ref)
 		kprintKToken(sb, ktoken.Sort, ktoken.Value, false)
+	case mapRef:
+		toK := ms.CollectionsToK(ref)
+		ms.kprintToStringBuilder(sb, toK)
 	default:
 		// object types
 		obj := ms.getData(dataRef).getReferencedObject(value)
@@ -116,11 +119,6 @@ func kprintKToken(sb *strings.Builder, sort Sort, value string, escape bool) {
 
 func (k *KVariable) kprint(ms *ModelState, sb *strings.Builder) {
 	sb.WriteString(fmt.Sprintf("var %s", k.Name))
-}
-
-func (k *Map) kprint(ms *ModelState, sb *strings.Builder) {
-	toK := k.collectionsToK(ms)
-	ms.kprintToStringBuilder(sb, toK)
 }
 
 func (k *List) kprint(ms *ModelState, sb *strings.Builder) {

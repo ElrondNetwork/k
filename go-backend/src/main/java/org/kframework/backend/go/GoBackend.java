@@ -153,7 +153,8 @@ public class GoBackend implements Backend {
             for (String fileName : Arrays.asList(
                     "collectionsToK.go",
                     "data.go",
-                    "dataBool.go", "dataCollections.go",
+                    "dataBool.go",
+                    "dataCollections.go", "dataCollectionsMap.go",
                     "dataInt.go",
                     "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
                     "dataString.go", "dataOthers.go",
@@ -223,6 +224,7 @@ public class GoBackend implements Backend {
                         "hooks_bytes_test.go",
                         "hooks_int_test.go",
                         "hooks_kequal_test.go",
+                        "hooks_map_test.go",
                         "hooks_string_test.go",
                         "ksequenceutil_test.go",
                         "testutil.go")) {

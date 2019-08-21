@@ -47,11 +47,11 @@ func (k *InjectedKLabel) increaseUsage(ms *ModelState) {
 func (k *KVariable) increaseUsage(ms *ModelState) {
 }
 
-func (k *Map) increaseUsage(ms *ModelState) {
-	for _, v := range k.Data {
-		ms.IncreaseUsage(v)
-	}
-}
+// func (k *Map) increaseUsage(ms *ModelState) {
+// 	for _, v := range k.Data {
+// 		ms.IncreaseUsage(v)
+// 	}
+// }
 
 func (k *List) increaseUsage(ms *ModelState) {
 	for _, item := range k.Data {

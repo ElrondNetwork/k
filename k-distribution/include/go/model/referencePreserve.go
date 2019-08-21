@@ -40,11 +40,11 @@ func (k *InjectedKLabel) preserve(ms *ModelState) {
 func (k *KVariable) preserve(ms *ModelState) {
 }
 
-func (k *Map) preserve(ms *ModelState) {
-	for _, v := range k.Data {
-		ms.Preserve(v)
-	}
-}
+// func (k *Map) preserve(ms *ModelState) {
+// 	for _, v := range k.Data {
+// 		ms.Preserve(v)
+// 	}
+// }
 
 func (k *List) preserve(ms *ModelState) {
 	for _, item := range k.Data {

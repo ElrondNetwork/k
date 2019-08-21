@@ -49,35 +49,35 @@ public class InlineMatchGen {
         }
 
         sb.newLine();
-        sb.appendIndentedLine("const collectionMatchMask uint64 = ((refTypeMask << refModelShift << refCollectionSortShift) | refCollectionSortMask) << refCollectionLabelShift << refCollectionIndexShift");
+        sb.appendIndentedLine("const collectionMatchMask uint64 = ((refTypeMask << refModelShift << refCollectionSortShift) | refCollectionSortMask) << refCollectionLabelShift << refCollectionIndexShift << refCollectionLengthShift");
         sb.newLine();
 
         for (String sortName : inlineManager.mapSortNames) {
             sb.append("const ").append(inlineManager.mapMatchConstName((sortName)));
             sb.append(" = ((uint64(mapRef) << refModelShift << refCollectionSortShift) | uint64(m.");
             sb.append(sortName);
-            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift");
+            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift << refCollectionLengthShift");
             sb.newLine();
         }
         for (String sortName : inlineManager.setSortNames) {
             sb.append("const ").append(inlineManager.setMatchConstName((sortName)));
             sb.append(" = ((uint64(setRef) << refModelShift << refCollectionSortShift) | uint64(m.");
             sb.append(sortName);
-            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift");
+            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift << refCollectionLengthShift");
             sb.newLine();
         }
         for (String sortName : inlineManager.listSortNames) {
             sb.append("const ").append(inlineManager.listMatchConstName((sortName)));
             sb.append(" = ((uint64(listRef) << refModelShift << refCollectionSortShift) | uint64(m.");
             sb.append(sortName);
-            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift");
+            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift << refCollectionLengthShift");
             sb.newLine();
         }
         for (String sortName : inlineManager.arraySortNames) {
             sb.append("const ").append(inlineManager.arrayMatchConstName((sortName)));
             sb.append(" = ((uint64(arrayRef) << refModelShift << refCollectionSortShift) | uint64(m.");
             sb.append(sortName);
-            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift");
+            sb.append(")) << refCollectionLabelShift << refCollectionIndexShift << refCollectionLengthShift");
             sb.newLine();
         }
 
