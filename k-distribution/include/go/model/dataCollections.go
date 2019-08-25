@@ -46,8 +46,13 @@ func (ms *ModelState) CollectionSortName(ref KReference) (string, bool) {
 	return "", false
 }
 
+// IsSet returns true if reference points to a set
+func (ms *ModelState) IsSet(ref KReference) bool {
+	return getRefType(ref) == setRef
+}
+
 // IsSet returns true if reference points to a set with given sort
-func (ms *ModelState) IsSet(ref KReference, expectedSort Sort) bool {
+func (ms *ModelState) IsSetWithSort(ref KReference, expectedSort Sort) bool {
 	refType, _, sort, _, _, _ := parseKrefCollection(ref)
 	return refType == setRef && sort == uint64(expectedSort)
 }

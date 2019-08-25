@@ -154,7 +154,7 @@ public class GoBackend implements Backend {
                     "collectionsToK.go",
                     "data.go",
                     "dataBool.go",
-                    "dataCollections.go", "dataCollectionsMap.go",
+                    "dataCollections.go", "dataCollectionsLookups.go", "dataCollectionsMap.go",
                     "dataInt.go",
                     "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
                     "dataString.go", "dataOthers.go",

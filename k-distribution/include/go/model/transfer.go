@@ -84,10 +84,13 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 		previousToIndex := -1
 		for fromIndex != -1 {
 			elem := from.allMapElements[fromIndex]
+			transferredKey := transfer(from, to, elem.key)
+			transferredValue := transfer(from, to, elem.value)
+			// careful: newIndex+append should be atomic, transfer of key/value must not happen between the two
 			newIndex := len(to.allMapElements)
 			to.allMapElements = append(to.allMapElements, mapElementData{
-				key:   transfer(from, to, elem.key),
-				value: transfer(from, to, elem.value),
+				key:   transferredKey,
+				value: transferredValue,
 				next:  -1,
 			})
 			if previousToIndex != -1 {

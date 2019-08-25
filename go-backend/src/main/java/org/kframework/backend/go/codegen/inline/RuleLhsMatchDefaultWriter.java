@@ -56,10 +56,10 @@ public class RuleLhsMatchDefaultWriter implements RuleLhsMatchWriter {
             sb.append("m.IsMint(").append(subject).append(")");
             return;
         case "MAP.Map":
-            sb.append("i.Model.IsMap(").append(subject).append(", m.").append(sortName).append(")");
+            sb.append("i.Model.IsMapWithSort(").append(subject).append(", m.").append(sortName).append(")");
             return;
         case "SET.Set":
-            sb.append("i.Model.IsSet(").append(subject).append(", m.").append(sortName).append(")");
+            sb.append("i.Model.IsSetWithSort(").append(subject).append(", m.").append(sortName).append(")");
             return;
         case "LIST.List":
             sb.append("i.Model.IsList(").append(subject).append(", m.").append(sortName).append(")");

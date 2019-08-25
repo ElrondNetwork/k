@@ -196,7 +196,8 @@ public class RuleLhsTreeWriter {
                         false);
                 writeChoiceLookup(
                         mainSb, lookup,
-                        "setChoice" + lookupIndex, "GetSetObject",
+                        "setChoice" + lookupIndex,
+                        "IsSet", "SetChoiceLookup",
                         varManager,
                         reapply,
                         lhsWriter, rhsWriter);
@@ -209,7 +210,8 @@ public class RuleLhsTreeWriter {
                         false);
                 writeChoiceLookup(
                         mainSb, lookup,
-                        "mapChoice" + lookupIndex, "GetMapObject",
+                        "mapChoice" + lookupIndex,
+                        "IsMap", "MapKeyChoiceLookup",
                         varManager,
                         reapply,
                         lhsWriter, rhsWriter);
@@ -222,75 +224,48 @@ public class RuleLhsTreeWriter {
         }
     }
 
-
     private void writeChoiceLookup(
             GoStringBuilder mainSb, Lookup lookup,
-            String varPrefix, String expectedKType,
+            String varPrefix, String predicateFunc, String iteratorCall,
             TempVarManager varManager,
             String reapply,
             RuleLhsWriter lhsWriter, RuleRhsWriterBase rhsWriter) {
 
-        String setChoiceVar = varPrefix + "Eval";
-        String setVar = varPrefix + "Obj";
-        String isSetVar = varPrefix + "TypeOk";
+        String choiceSubject = varPrefix + "Subj";
         String choiceKeyVar = varPrefix + "Key";
-        String choiceKeyKItem = varPrefix + "Elem";
-        String choiceVar = varPrefix + "Result";
+        String choiceResult = varPrefix + "Result";
         String errVar = varPrefix + "Err";
 
         rhsWriter.writeEvalCalls(mainSb);
-        mainSb.writeIndent().append(setChoiceVar).append(" := ");
+        mainSb.writeIndent().append(choiceSubject).append(" := ");
         rhsWriter.writeReturnValue(mainSb);
         mainSb.newLine();
 
-        mainSb.writeIndent()
-                .append(setVar).append(", ").append(isSetVar).append(" := i.Model.")
-                .append(expectedKType).append("(")
-                .append(setChoiceVar).append(")").newLine();
-        mainSb.writeIndent().append("if !").append(isSetVar).beginBlock();
-        mainSb.writeIndent().append(reapply).newLine();
-        mainSb.endOneBlock();
+        mainSb.writeIndent().append("if i.Model.").append(predicateFunc).append("(").append(choiceSubject).append(")").beginBlock();
 
-        mainSb.appendIndentedLine("var ", choiceVar, " m.KReference = m.InternedBottom");
-        int forIndent = mainSb.getCurrentIndent();
-        mainSb.writeIndent().append("for ").append(choiceKeyVar).append(" := range ").append(setVar).append(".Data").beginBlock();
-        mainSb.appendIndentedLine("var ", errVar, " error");
-        mainSb.appendIndentedLine(choiceKeyKItem, ", ", errVar, " := i.Model.ToKItem(", choiceKeyVar, ")");
-        mainSb.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
-        mainSb.appendIndentedLine("return m.NoResult, ", errVar);
-        mainSb.endOneBlock();
+        int foreachIndent = mainSb.getCurrentIndent();
+        mainSb.writeIndent().append(choiceResult).append(", ").append(errVar).append(" := ");
+        mainSb.append("i.Model.").append(iteratorCall);
+        mainSb.append("(").append(choiceSubject).append(", func (").append(choiceKeyVar).append(" KReference) (KReference, error)").beginBlock();
 
-        // this will be after the end of the for, reapply if we didn't hit return in the for loop
-        mainSb.addCallbackAfterReturningFromBlock(forIndent, s -> {
+        mainSb.addCallbackBeforeReturningFromBlock(foreachIndent, s -> {
             s.newLine();
-            s.writeIndent().append("if ").append(choiceVar).append(" == m.InternedBottom").beginBlock();
-            s.appendIndentedLine(reapply);
-            s.endOneBlock();
-            s.appendIndentedLine("return ", choiceVar, ", nil");
-        });
-
-        lhsWriter.setNextSubject(choiceKeyKItem);
-        lhsWriter.apply(lookup.getLhs());
-
-        // the function goes inside
-        // I made it a function just because I didn't feel like changing the RHS returns
-        // it can also be done without this function, but then the RHS must assign the result to choice var instead of returning
-        int funcIndent = mainSb.getCurrentIndent();
-        mainSb.writeIndent().append(choiceVar).append(", ").append(errVar).append(" = ");
-        mainSb.append("func() (m.KReference, error)").beginBlock();
-
-        mainSb.addCallbackBeforeReturningFromBlock(funcIndent, s -> {
-            s.newLine();
-            s.appendIndentedLine("return m.InternedBottom, nil // #setChoice end");
+            s.appendIndentedLine("return m.InternedBottom, nil // #choice end");
             s.endOneBlock();
         });
-
-        mainSb.addCallbackAfterReturningFromBlock(funcIndent, s -> {
-            s.append("()").newLine(); // function call
+        mainSb.addCallbackAfterReturningFromBlock(foreachIndent, s -> {
+            s.append(") // choice foreach end");
+            s.newLine();
             s.writeIndent().append("if ").append(errVar).append(" != nil").beginBlock();
             s.appendIndentedLine("return m.NoResult, ", errVar);
             s.endOneBlock();
+            s.writeIndent().append("if ").append(choiceResult).append(" != m.InternedBottom").beginBlock();
+            s.appendIndentedLine("return ", choiceResult, ", nil");
+            s.endOneBlock();
         });
+
+        lhsWriter.setNextSubject(choiceKeyVar);
+        lhsWriter.apply(lookup.getLhs());
     }
 
     private static String traceRuleTypeString(RuleType ruleType) {

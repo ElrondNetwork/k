@@ -2,8 +2,6 @@
 
 package %PACKAGE%
 
-import "fmt"
-
 type mapElementData struct {
 	key   KReference
 	value KReference
@@ -19,6 +17,12 @@ func (ms *ModelState) IsMap(ref KReference) bool {
 func (ms *ModelState) IsMapWithSort(ref KReference, expectedSort Sort) bool {
 	refType, _, sort, _, _, _ := parseKrefCollection(ref)
 	return refType == mapRef && sort == uint64(expectedSort)
+}
+
+// IsMapWithSortAndLabel returns true if reference points to a map with given sort and label
+func (ms *ModelState) IsMapWithSortAndLabel(ref KReference, expectedSort Sort, expectedLabel KLabel) bool {
+	refType, _, sort, label, _, _ := parseKrefCollection(ref)
+	return refType == mapRef && sort == uint64(expectedSort) && label == uint64(expectedLabel)
 }
 
 // emptyMap yields an empty map reference.
@@ -213,7 +217,6 @@ func (ms *ModelState) MapRemove(mp KReference, key KReference) KReference {
 			})
 			if previousResultIndex != -1 {
 				data.allMapElements[previousResultIndex].next = newIndex
-				fmt.Println(data.allMapElements[previousResultIndex].next)
 			}
 			previousResultIndex = newIndex
 		}
@@ -358,7 +361,7 @@ func (ms *ModelState) MapKeySet(mp KReference) (KReference, bool) {
 	}
 	keySet := make(map[KMapKey]bool)
 	ok := true
-	ms.MapForEach(mp, func(k KReference, v KReference) bool {
+	ms.MapForEach(mp, func(k, _ KReference) bool {
 		kkey, ok := ms.MapKey(k)
 		if !ok {
 			return true
@@ -379,7 +382,7 @@ func (ms *ModelState) MapKeyList(mp KReference) (KReference, bool) {
 		return NoResult, false
 	}
 	var keyList []KReference
-	ms.MapForEach(mp, func(k KReference, v KReference) bool {
+	ms.MapForEach(mp, func(k, _ KReference) bool {
 		keyList = append(keyList, k)
 		return false
 	})
@@ -393,7 +396,7 @@ func (ms *ModelState) MapValueList(mp KReference) (KReference, bool) {
 		return NoResult, false
 	}
 	var valueList []KReference
-	ms.MapForEach(mp, func(k KReference, v KReference) bool {
+	ms.MapForEach(mp, func(_, v KReference) bool {
 		valueList = append(valueList, v)
 		return false
 	})
