@@ -64,6 +64,8 @@ func (ms *ModelState) kprintToStringBuilder(sb *strings.Builder, ref KReference)
 	case ktokenRef:
 		ktoken, _ := ms.GetKTokenObject(ref)
 		kprintKToken(sb, ktoken.Sort, ktoken.Value, false)
+	case setRef:
+		fallthrough
 	case mapRef:
 		toK := ms.CollectionsToK(ref)
 		ms.kprintToStringBuilder(sb, toK)
@@ -122,11 +124,6 @@ func (k *KVariable) kprint(ms *ModelState, sb *strings.Builder) {
 }
 
 func (k *List) kprint(ms *ModelState, sb *strings.Builder) {
-	toK := k.collectionsToK(ms)
-	ms.kprintToStringBuilder(sb, toK)
-}
-
-func (k *Set) kprint(ms *ModelState, sb *strings.Builder) {
 	toK := k.collectionsToK(ms)
 	ms.kprintToStringBuilder(sb, toK)
 }

@@ -52,9 +52,6 @@ func (k *List) preserve(ms *ModelState) {
 	}
 }
 
-func (k *Set) preserve(ms *ModelState) {
-}
-
 func (k *Array) preserve(ms *ModelState) {
 	for i := 0; i < len(k.Data.data); i++ {
 		if k.Data.data[i] != NullReference {

@@ -58,9 +58,6 @@ func (k *List) recycleUnused(ms *ModelState) {
 	}
 }
 
-func (k *Set) recycleUnused(ms *ModelState) {
-}
-
 func (k *Array) recycleUnused(ms *ModelState) {
 	for i := 0; i < len(k.Data.data); i++ {
 		if k.Data.data[i] != NullReference {

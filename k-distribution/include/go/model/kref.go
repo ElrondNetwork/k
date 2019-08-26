@@ -44,7 +44,6 @@ const (
 
 func isCollectionType(refType kreferenceType) bool {
 	return refType == listRef ||
-		refType == setRef ||
 		refType == arrayRef
 }
 

@@ -59,9 +59,6 @@ func (k *List) increaseUsage(ms *ModelState) {
 	}
 }
 
-func (k *Set) increaseUsage(ms *ModelState) {
-}
-
 func (k *Array) increaseUsage(ms *ModelState) {
 	for i := 0; i < len(k.Data.data); i++ {
 		if k.Data.data[i] != NullReference {

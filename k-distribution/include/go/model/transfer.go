@@ -74,6 +74,8 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 	case ktokenRef:
 		_, _, sort, length, index := parseKrefKToken(ref)
 		return to.newKToken(sort, from.allBytes[index:index+length])
+	case setRef:
+		fallthrough
 	case mapRef:
 		_, _, sort, label, index, length := parseKrefCollection(ref)
 		if length == 0 {
@@ -103,7 +105,7 @@ func transfer(from, to *ModelData, ref KReference) KReference {
 			previousToIndex = newIndex
 			fromIndex = elem.next
 		}
-		return createKrefCollection(mapRef, to.selfRef, sort, label, uint64(toIndex), length)
+		return createKrefCollection(refType, to.selfRef, sort, label, uint64(toIndex), length)
 	default:
 		// object types
 		obj := from.getReferencedObject(value)
@@ -123,9 +125,6 @@ func (k *List) transferContents(from, to *ModelData) {
 	for i, elem := range k.Data {
 		k.Data[i] = transfer(from, to, elem)
 	}
-}
-
-func (k *Set) transferContents(from, to *ModelData) {
 }
 
 func (k *Array) transferContents(from, to *ModelData) {

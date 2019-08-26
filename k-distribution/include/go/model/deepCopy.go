@@ -56,6 +56,8 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 	case ktokenRef:
 		ktoken, _ := ms.GetKTokenObject(ref)
 		return ms.NewKToken(ktoken.Sort, ktoken.Value)
+	case setRef:
+		fallthrough
 	case mapRef:
 		_, _, sort, label, index, length := parseKrefCollection(ref)
 		if length == 0 {
@@ -80,7 +82,7 @@ func (ms *ModelState) DeepCopy(ref KReference) KReference {
 			previousToIndex = toIndex
 			fromIndex = elem.next
 		}
-		return createKrefCollection(mapRef, dataRef, sort, label, uint64(toIndex), length)
+		return createKrefCollection(refType, dataRef, sort, label, uint64(toIndex), length)
 	default:
 		// object types
 		md := ms.getData(dataRef)
@@ -113,14 +115,6 @@ func (k *List) deepCopy(ms *ModelState) KObject {
 		Label: k.Label,
 		Data:  listCopy,
 	}
-}
-
-func (k *Set) deepCopy(ms *ModelState) KObject {
-	mapCopy := make(map[KMapKey]bool)
-	for key := range k.Data {
-		mapCopy[key] = true
-	}
-	return &Set{Data: mapCopy}
 }
 
 func (k *Array) deepCopy(ms *ModelState) KObject {
