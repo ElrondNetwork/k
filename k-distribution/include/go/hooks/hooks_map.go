@@ -141,7 +141,7 @@ func (mapHooksType) updateAll(kmap1 m.KReference, kmap2 m.KReference, lbl m.KLab
 	// 	data[key] = value
 	// }
 	// return interpreter.Model.NewMap(m1.Sort, m2.Label, data), nil
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (mapHooksType) removeAll(kmap m.KReference, kset m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
@@ -160,5 +160,5 @@ func (mapHooksType) removeAll(kmap m.KReference, kset m.KReference, lbl m.KLabel
 
 	// }
 	// return interpreter.Model.NewMap(mp.Sort, mp.Label, data), nil
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }

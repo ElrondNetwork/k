@@ -76,7 +76,7 @@ func (arrayHooksType) updateAll(karr m.KReference, kidx m.KReference, klist m.KR
 			return m.NoResult, err
 		}
 	}
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (arrayHooksType) fill(karr m.KReference, kfrom m.KReference, kto m.KReference, elt m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {

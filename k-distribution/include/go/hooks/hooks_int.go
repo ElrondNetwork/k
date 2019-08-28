@@ -256,9 +256,9 @@ func (intHooksType) signExtendBitRange(argI m.KReference, argOffset m.KReference
 }
 
 func (intHooksType) rand(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (intHooksType) srand(c m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }

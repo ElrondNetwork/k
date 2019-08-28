@@ -46,13 +46,6 @@ func (e *evalArityViolatedError) Error() string {
 		e.funcName, e.expectedArity, e.actualArity)
 }
 
-type hookNotImplementedError struct {
-}
-
-func (e *hookNotImplementedError) Error() string {
-	return "Hook not implemented."
-}
-
 type hookInvalidArgsError struct {
 }
 

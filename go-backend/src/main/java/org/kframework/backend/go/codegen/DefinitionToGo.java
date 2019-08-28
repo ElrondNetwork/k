@@ -297,7 +297,7 @@ public class DefinitionToGo {
 
                     sb.writeIndent().append("return hookRes, nil").newLine();
 
-                    sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*hookNotImplementedError); isNotImpl ").beginBlock();
+                    sb.endOneBlockNoNewline().append(" else if _, isNotImpl := hookErr.(*m.HookNotImplementedError); isNotImpl ").beginBlock();
                     sb.writeIndent().append("i.warn(\" Call to hook ").append(hook).append(", which is not implemented.\")").newLine();
                     sb.endOneBlockNoNewline().append(" else").beginBlock();
                     sb.writeIndent().append("return m.NoResult, hookErr").newLine();

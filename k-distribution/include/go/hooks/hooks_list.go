@@ -84,17 +84,17 @@ func (listHooksType) size(klist m.KReference, lbl m.KLabel, sort m.Sort, config 
 }
 
 func (listHooksType) make(c1 m.KReference, c2 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (listHooksType) fill(c1 m.KReference, c2 m.KReference, c3 m.KReference, c4 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (listHooksType) update(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
 
 func (listHooksType) updateAll(c1 m.KReference, c2 m.KReference, c3 m.KReference, lbl m.KLabel, sort m.Sort, config m.KReference, interpreter *Interpreter) (m.KReference, error) {
-	return m.NoResult, &hookNotImplementedError{}
+	return m.NoResult, m.GetHookNotImplementedError()
 }
