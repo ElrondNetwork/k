@@ -154,7 +154,7 @@ public class GoBackend implements Backend {
                     "collectionsToK.go",
                     "data.go",
                     "dataBool.go",
-                    "dataCollections.go", "dataCollectionsLookups.go", "dataCollectionsMap.go",
+                    "dataCollections.go", "dataCollectionsLookups.go", "dataCollectionsMap.go", "dataCollectionsSet.go",
                     "dataInt.go",
                     "dataKApply.go", "dataKSequence.go", "dataKToken.go", "dataKVariable.go",
                     "dataString.go", "dataOthers.go",
@@ -225,6 +225,7 @@ public class GoBackend implements Backend {
                         "hooks_int_test.go",
                         "hooks_kequal_test.go",
                         "hooks_map_test.go",
+                        "hooks_set_test.go",
                         "hooks_string_test.go",
                         "ksequenceutil_test.go",
                         "testutil.go")) {

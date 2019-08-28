@@ -405,6 +405,22 @@ func TestMapConcat13(t *testing.T) {
 		})
 }
 
+func TestMapConcat14(t *testing.T) {
+	testMapConcat(t,
+		[]concatCommonKeyTestKVP{
+			concatCommonKeyTestKVP{key: 1, value: 10},
+			concatCommonKeyTestKVP{key: 2, value: 20},
+			concatCommonKeyTestKVP{key: 3, value: 30},
+			concatCommonKeyTestKVP{key: 4, value: 40},
+		},
+		[]concatCommonKeyTestKVP{
+			concatCommonKeyTestKVP{key: 5, value: 50},
+			concatCommonKeyTestKVP{key: 6, value: 60},
+			concatCommonKeyTestKVP{key: 7, value: 70},
+			concatCommonKeyTestKVP{key: 8, value: 80},
+		})
+}
+
 func TestMapChoice(t *testing.T) {
 	interpreter := newTestInterpreter()
 	var result, choice m.KReference
@@ -449,6 +465,7 @@ func assertMapOk(t *testing.T, expectedValues map[int]int, actual m.KReference, 
 		}
 	}
 
+	realLength := 0
 	interpreter.Model.MapForEach(actual, func(k KReference, v KReference) bool {
 		ik, _ := interpreter.Model.GetInt(k)
 		iv, _ := interpreter.Model.GetInt(v)
@@ -460,6 +477,12 @@ func assertMapOk(t *testing.T, expectedValues map[int]int, actual m.KReference, 
 				t.Errorf("wrong value for key %d. Have: %d Want %d", ik, iv, expectedVal)
 			}
 		}
+		realLength++
 		return false
 	})
+	if len(expectedValues) != realLength {
+		t.Errorf("real map length doesn't match, have: %d\n%s",
+			realLength,
+			interpreter.Model.PrettyPrint(actual))
+	}
 }

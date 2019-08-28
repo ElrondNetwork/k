@@ -116,7 +116,8 @@ func (ms *ModelState) mapUpdate(collectionType kreferenceType, mp KReference, ke
 	if length == 0 {
 		return ms.mainData.newMapSingleton(collectionType, KLabel(label), Sort(sort), key, newValue)
 	}
-	if !ms.MapContainsKey(mp, key) {
+	if (refType == mapRef && !ms.MapContainsKey(mp, key)) ||
+		(refType == setRef && !ms.SetContains(mp, key)) {
 		// simply prepend new element
 		newIndex := len(ms.mainData.allMapElements)
 		ms.mainData.allMapElements = append(ms.mainData.allMapElements, mapElementData{
@@ -124,7 +125,7 @@ func (ms *ModelState) mapUpdate(collectionType kreferenceType, mp KReference, ke
 			value: newValue,
 			next:  int(index),
 		})
-		return createKrefCollection(mapRef, mainDataRef, sort, label, uint64(newIndex), length+1)
+		return createKrefCollection(collectionType, mainDataRef, sort, label, uint64(newIndex), length+1)
 	}
 
 	// key exists, copy all elements above element to update
@@ -271,12 +272,19 @@ func (ms *ModelState) mapConcatNoUpdate(collectionType kreferenceType, mp1, mp2 
 	copyLength := uint64(0)
 	for fromIndex != -1 {
 		elem := md.allMapElements[fromIndex]
-		mp2Value := ms.MapGet(mp2, elem.key, NullReference)
-		if mp2Value != NullReference && !ms.Equals(mp2Value, elem.value) {
-			// if key appears in both, values should also match
-			return NoResult, false
+		var keyFound bool
+		if collectionType == mapRef {
+			mp2Value := ms.MapGet(mp2, elem.key, NullReference)
+			if mp2Value != NullReference && !ms.Equals(mp2Value, elem.value) {
+				// if key appears in both, values should also match
+				return NoResult, false
+			}
+			keyFound = mp2Value != NullReference
+		} else if collectionType == setRef {
+			keyFound = ms.SetContains(mp2, elem.key)
 		}
-		if mp2Value == NullReference {
+
+		if !keyFound {
 			newIndex := len(md.allMapElements)
 			md.allMapElements = append(md.allMapElements, mapElementData{
 				key:   elem.key,
@@ -408,9 +416,6 @@ func (ms *ModelState) MapKeyChoice(mp KReference) (KReference, bool) {
 func (ms *ModelState) mapKeyChoice(collectionType kreferenceType, mp KReference) (KReference, bool) {
 	refType, dataRef, _, _, index, length := parseKrefCollection(mp)
 	if refType != collectionType {
-		return NoResult, false
-	}
-	if refType != mapRef {
 		return NoResult, false
 	}
 	if length == 0 {

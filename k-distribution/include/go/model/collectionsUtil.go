@@ -86,7 +86,7 @@ func (ms *ModelState) mapOrderedKeyValuePairs(ref KReference) []MapKeyValuePair 
 // ordered by the pretty print representation of the elements
 func (ms *ModelState) setOrderedElements(ref KReference) []KReference {
 	refType, _, _, _, _, length := parseKrefCollection(ref)
-	if refType != mapRef {
+	if refType != setRef {
 		panic("setOrderedElements argument not a set")
 	}
 
@@ -111,4 +111,39 @@ func (ms *ModelState) setOrderedElements(ref KReference) []KReference {
 	}
 
 	return result
+}
+
+// checks that the real length matches the declared length, only use for debugging
+// returns input, fon convenience
+func (ms *ModelState) checkCollectionSize(mp KReference) KReference {
+	if !ms.collectionSizeOk(mp) {
+		panic("collection real length doesn't match declared length")
+	}
+	return mp
+}
+
+func (ms *ModelState) collectionSizeOk(mp KReference) bool {
+	refType, _, _, _, _, length := parseKrefCollection(mp)
+	if refType == mapRef {
+		realLength := uint64(0)
+		ms.MapForEach(mp, func(_, _ KReference) bool {
+			realLength++
+			return false
+		})
+		if realLength != length {
+			return false
+		}
+	}
+	if refType == setRef {
+		realLength := uint64(0)
+		ms.SetForEach(mp, func(_ KReference) bool {
+			realLength++
+			return false
+		})
+		if realLength != length {
+			return false
+		}
+	}
+
+	return true
 }
